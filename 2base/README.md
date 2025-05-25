@@ -1,54 +1,111 @@
-# React + TypeScript + Vite
+# Tool Suite - Developer Tools Collection
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, privacy-first collection of developer tools built with React, TypeScript, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Privacy First**: All data processing happens locally in the browser
+- **Frontend Priority**: Basic functions work offline, advanced features optional
+- **Zero Configuration**: Users need no software installation
+- **Modular Architecture**: Independent tool development and loading
+- **Progressive Enhancement**: Core functionality first, then advanced features
 
-## Expanding the ESLint configuration
+## Current Tools
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Programmer Calculator
+- Advanced calculator with base conversion and bitwise operations
+- Binary, Octal, Decimal, Hexadecimal conversion
+- Bitwise operations (AND, OR, XOR, NOT)
+- Bit manipulation and visualization
+- Programming-specific functions
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── ui/                # shadcn/ui components
+│   ├── layout/            # Layout components (sidebar, header)
+│   ├── homepage.tsx       # Main homepage component
+│   └── tool-card.tsx      # Tool display card
+├── tools/                 # Tool implementations
+│   └── programmer-calculator/
+│       ├── ui.tsx         # Tool UI component
+│       ├── toolInfo.ts    # Tool metadata
+│       └── specification.md # Detailed tool design docs
+├── data/
+│   └── tools.ts           # Tool registry and categories
+├── types/
+│   └── tool.ts            # TypeScript type definitions
+└── lib/
+    └── utils.ts           # Utility functions
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Technology Stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **React 19.1.0**: UI framework with functional components and hooks
+- **TypeScript 5.8+**: Type-safe JavaScript with strict mode
+- **Vite 6.3.5**: Modern build tool with fast HMR
+- **Tailwind CSS 4.1**: Atomic CSS framework
+- **shadcn/ui 2.5.0**: Reusable UI components
+- **Radix UI**: Headless UI primitives for accessibility
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+## Getting Started
+
+1. Install dependencies:
+```bash
+pnpm install
 ```
+
+2. Start development server:
+```bash
+pnpm dev
+```
+
+3. Open http://localhost:5173 in your browser
+
+## Development
+
+### Adding New Tools
+
+1. Create tool directory in `src/tools/[tool-name]/`
+2. Add tool metadata in `toolInfo.ts`
+3. Implement UI component in `ui.tsx`
+4. Register tool in `src/data/tools.ts`
+5. Add detailed specification in `[tool-name]-specification.md`
+
+### Code Standards
+
+- Use TypeScript with strict mode
+- Follow React functional component patterns
+- Use shadcn/ui components for consistency
+- Implement proper accessibility features
+- Write comprehensive tests for tool logic
+
+## Design Principles
+
+### Core Values
+- **Privacy First**: All data processing happens locally
+- **Frontend Priority**: Basic functions work offline
+- **Zero Configuration**: No software installation required
+- **Modular Architecture**: Independent tool development
+- **Progressive Enhancement**: Core functionality first
+
+### Technical Constraints
+- First load: < 2 seconds
+- Tool startup: < 1 second  
+- File processing: ≤ 100MB files
+- Memory limit: < 500MB per tool
+- Browser support: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Implement your tool following the project structure
+4. Add comprehensive tests
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details
