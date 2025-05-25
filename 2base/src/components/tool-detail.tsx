@@ -14,12 +14,6 @@ export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
   const { toggleFavorite, isFavorite } = useFavorites();
 
   const handleToggleFavorite = () => {
-    console.log(
-      "Toggling favorite for:",
-      tool.id,
-      "Current state:",
-      isFavorite(tool.id)
-    );
     toggleFavorite(tool.id);
   };
 

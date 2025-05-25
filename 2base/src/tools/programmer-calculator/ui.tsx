@@ -1,8 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ToolLayout } from "@/components/layout/tool-layout";
 import { Display } from "./components/display";
 import { BitGrid } from "./components/bit-grid";
 import { ButtonGrid } from "./components/button-grid";
@@ -39,7 +37,6 @@ const initialState: CalculatorState = {
 };
 
 export default function ProgrammerCalculator() {
-  const navigate = useNavigate();
   const [state, setState] = useState<CalculatorState>(initialState);
 
   const handleButtonClick = useCallback(
@@ -284,119 +281,111 @@ export default function ProgrammerCalculator() {
   }, [state.base, handleBaseChange, handleButtonClick]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
-      {/* Navigation */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Tools
-        </Button>
+    <ToolLayout
+      toolName="Programmer Calculator"
+      toolDescription="Advanced calculator with base conversion, bitwise operations, and scientific functions"
+    >
+      <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">
+              Programmer Calculator
+            </CardTitle>
+            <p className="text-muted-foreground">
+              Advanced calculator with base conversion, bitwise operations, and
+              scientific functions
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column: Display and Settings */}
+              <div className="space-y-4">
+                <Display
+                  value={state.currentValue}
+                  currentBase={state.base}
+                  bitWidth={state.bitWidth}
+                  error={state.error}
+                />
+                <SettingsPanel
+                  base={state.base}
+                  bitWidth={state.bitWidth}
+                  mode={state.mode}
+                  angleUnit={state.angleUnit}
+                  memory={state.memory}
+                  onBaseChange={handleBaseChange}
+                  onBitWidthChange={handleBitWidthChange}
+                  onModeChange={handleModeChange}
+                  onAngleUnitChange={handleAngleUnitChange}
+                />
+              </div>
+
+              {/* Middle Column: Calculator Buttons */}
+              <div>
+                <ButtonGrid
+                  base={state.base}
+                  mode={state.mode}
+                  onButtonClick={handleButtonClick}
+                />
+              </div>
+
+              {/* Right Column: Bit Visualization */}
+              <div>
+                <BitGrid
+                  value={state.currentValue}
+                  base={state.base}
+                  bitWidth={state.bitWidth}
+                  onValueChange={handleBitValueChange}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Keyboard Shortcuts Help */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Keyboard Shortcuts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+              <div>
+                <h4 className="font-medium mb-2">Numbers & Operations</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>0-9, A-F: Input digits</li>
+                  <li>+, -, *, /, %: Arithmetic</li>
+                  <li>&, |, ^, ~: Bitwise ops</li>
+                  <li>Enter/=: Calculate</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Base Switching</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>Ctrl+1: Binary</li>
+                  <li>Ctrl+2: Octal</li>
+                  <li>Ctrl+3: Decimal</li>
+                  <li>Ctrl+4: Hexadecimal</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Special Keys</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>Escape: Clear all</li>
+                  <li>Backspace: Delete digit</li>
+                  <li>Tab: Navigate controls</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Bit Operations</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>Click bits to toggle</li>
+                  <li>Visual binary display</li>
+                  <li>Real-time conversion</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">
-            Programmer Calculator
-          </CardTitle>
-          <p className="text-muted-foreground">
-            Advanced calculator with base conversion, bitwise operations, and
-            scientific functions
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column: Display and Settings */}
-            <div className="space-y-4">
-              <Display
-                value={state.currentValue}
-                currentBase={state.base}
-                bitWidth={state.bitWidth}
-                error={state.error}
-              />
-              <SettingsPanel
-                base={state.base}
-                bitWidth={state.bitWidth}
-                mode={state.mode}
-                angleUnit={state.angleUnit}
-                memory={state.memory}
-                onBaseChange={handleBaseChange}
-                onBitWidthChange={handleBitWidthChange}
-                onModeChange={handleModeChange}
-                onAngleUnitChange={handleAngleUnitChange}
-              />
-            </div>
-
-            {/* Middle Column: Calculator Buttons */}
-            <div>
-              <ButtonGrid
-                base={state.base}
-                mode={state.mode}
-                onButtonClick={handleButtonClick}
-              />
-            </div>
-
-            {/* Right Column: Bit Visualization */}
-            <div>
-              <BitGrid
-                value={state.currentValue}
-                base={state.base}
-                bitWidth={state.bitWidth}
-                onValueChange={handleBitValueChange}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Keyboard Shortcuts Help */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Keyboard Shortcuts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-            <div>
-              <h4 className="font-medium mb-2">Numbers & Operations</h4>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>0-9, A-F: Input digits</li>
-                <li>+, -, *, /, %: Arithmetic</li>
-                <li>&, |, ^, ~: Bitwise ops</li>
-                <li>Enter/=: Calculate</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2">Base Switching</h4>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>Ctrl+1: Binary</li>
-                <li>Ctrl+2: Octal</li>
-                <li>Ctrl+3: Decimal</li>
-                <li>Ctrl+4: Hexadecimal</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2">Special Keys</h4>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>Escape: Clear all</li>
-                <li>Backspace: Delete digit</li>
-                <li>Tab: Navigate controls</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2">Bit Operations</h4>
-              <ul className="space-y-1 text-muted-foreground">
-                <li>Click bits to toggle</li>
-                <li>Visual binary display</li>
-                <li>Real-time conversion</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </ToolLayout>
   );
 }
