@@ -70,7 +70,7 @@ export function ToolLayout({
           </header>
 
           {/* Content */}
-          <div className="flex-1 overflow-auto">{children}</div>
+          <div className="flex-1 overflow-auto bg-muted/30">{children}</div>
         </main>
       </div>
     </SidebarProvider>

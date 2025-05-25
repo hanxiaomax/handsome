@@ -285,7 +285,7 @@ export default function ProgrammerCalculator() {
       toolName="Programmer Calculator"
       toolDescription="Advanced calculator with base conversion, bitwise operations, and scientific functions"
     >
-      <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
+      <div className="w-full p-6 space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl font-bold">
@@ -297,9 +297,9 @@ export default function ProgrammerCalculator() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {/* Left Column: Display and Settings */}
-              <div className="space-y-4">
+              <div className="space-y-4 lg:col-span-1">
                 <Display
                   value={state.currentValue}
                   currentBase={state.base}
@@ -320,7 +320,7 @@ export default function ProgrammerCalculator() {
               </div>
 
               {/* Middle Column: Calculator Buttons */}
-              <div>
+              <div className="lg:col-span-1">
                 <ButtonGrid
                   base={state.base}
                   mode={state.mode}
@@ -329,7 +329,7 @@ export default function ProgrammerCalculator() {
               </div>
 
               {/* Right Column: Bit Visualization */}
-              <div>
+              <div className="lg:col-span-2 xl:col-span-1">
                 <BitGrid
                   value={state.currentValue}
                   base={state.base}
@@ -347,7 +347,7 @@ export default function ProgrammerCalculator() {
             <CardTitle className="text-lg">Keyboard Shortcuts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 text-sm">
               <div>
                 <h4 className="font-medium mb-2">Numbers & Operations</h4>
                 <ul className="space-y-1 text-muted-foreground">
@@ -380,6 +380,24 @@ export default function ProgrammerCalculator() {
                   <li>Click bits to toggle</li>
                   <li>Visual binary display</li>
                   <li>Real-time conversion</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Memory Functions</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>M+: Add to memory</li>
+                  <li>M-: Subtract from memory</li>
+                  <li>MR: Recall memory</li>
+                  <li>MC: Clear memory</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Scientific Functions</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>sin, cos, tan</li>
+                  <li>log, ln, sqrt</li>
+                  <li>x², x³, xʸ</li>
+                  <li>π, e constants</li>
                 </ul>
               </div>
             </div>
