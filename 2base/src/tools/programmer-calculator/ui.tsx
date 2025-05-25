@@ -42,73 +42,6 @@ export default function ProgrammerCalculator() {
   const navigate = useNavigate();
   const [state, setState] = useState<CalculatorState>(initialState);
 
-  // Handle keyboard input
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const { key, ctrlKey } = event;
-
-      // Prevent default for calculator keys
-      if (
-        /[0-9A-Fa-f+\-*/%&|^~()=]/.test(key) ||
-        key === "Enter" ||
-        key === "Escape" ||
-        key === "Backspace"
-      ) {
-        event.preventDefault();
-      }
-
-      // Base switching shortcuts
-      if (ctrlKey) {
-        switch (key) {
-          case "1":
-            handleBaseChange(2);
-            return;
-          case "2":
-            handleBaseChange(8);
-            return;
-          case "3":
-            handleBaseChange(10);
-            return;
-          case "4":
-            handleBaseChange(16);
-            return;
-        }
-      }
-
-      // Handle key input
-      if (/[0-9A-Fa-f]/.test(key)) {
-        handleButtonClick(key.toUpperCase(), "number");
-      } else {
-        switch (key) {
-          case "+":
-          case "-":
-          case "*":
-          case "/":
-          case "%":
-          case "&":
-          case "|":
-          case "^":
-          case "~":
-            handleButtonClick(key, "operation");
-            break;
-          case "Enter":
-          case "=":
-            handleButtonClick("=", "operation");
-            break;
-          case "Escape":
-            handleButtonClick("clear", "special");
-            break;
-          case "Backspace":
-            handleButtonClick("backspace", "special");
-            break;
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [state.base]);
-
   const handleButtonClick = useCallback(
     (value: string, type: ButtonConfig["type"]) => {
       setState((prevState) => {
@@ -282,6 +215,73 @@ export default function ProgrammerCalculator() {
       error: null,
     }));
   }, []);
+
+  // Handle keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const { key, ctrlKey } = event;
+
+      // Prevent default for calculator keys
+      if (
+        /[0-9A-Fa-f+\-*/%&|^~()=]/.test(key) ||
+        key === "Enter" ||
+        key === "Escape" ||
+        key === "Backspace"
+      ) {
+        event.preventDefault();
+      }
+
+      // Base switching shortcuts
+      if (ctrlKey) {
+        switch (key) {
+          case "1":
+            handleBaseChange(2);
+            return;
+          case "2":
+            handleBaseChange(8);
+            return;
+          case "3":
+            handleBaseChange(10);
+            return;
+          case "4":
+            handleBaseChange(16);
+            return;
+        }
+      }
+
+      // Handle key input
+      if (/[0-9A-Fa-f]/.test(key)) {
+        handleButtonClick(key.toUpperCase(), "number");
+      } else {
+        switch (key) {
+          case "+":
+          case "-":
+          case "*":
+          case "/":
+          case "%":
+          case "&":
+          case "|":
+          case "^":
+          case "~":
+            handleButtonClick(key, "operation");
+            break;
+          case "Enter":
+          case "=":
+            handleButtonClick("=", "operation");
+            break;
+          case "Escape":
+            handleButtonClick("clear", "special");
+            break;
+          case "Backspace":
+            handleButtonClick("backspace", "special");
+            break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [state.base, handleBaseChange, handleButtonClick]);
 
   return (
     <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
