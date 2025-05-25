@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ToolCard } from "@/components/tool-card";
@@ -6,6 +7,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { tools } from "@/data/tools";
 
 export function Homepage() {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -35,9 +37,7 @@ export function Homepage() {
   const handleUseTool = (toolId: string) => {
     const tool = tools.find((t) => t.id === toolId);
     if (tool) {
-      // Navigate to tool page - for now just log
-      console.log("Navigate to tool:", tool.path);
-      // TODO: Implement navigation when router is set up
+      navigate(tool.path);
     }
   };
 

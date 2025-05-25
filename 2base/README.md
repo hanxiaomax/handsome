@@ -9,6 +9,8 @@ A modern, privacy-first collection of developer tools built with React, TypeScri
 - **Zero Configuration**: Users need no software installation
 - **Modular Architecture**: Independent tool development and loading
 - **Progressive Enhancement**: Core functionality first, then advanced features
+- **Theme Customization**: Light/dark mode with multiple color schemes
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 
 ## Current Tools
 
@@ -63,6 +65,30 @@ pnpm dev
 ```
 
 3. Open http://localhost:5173 in your browser
+
+## Theme Customization
+
+The application supports comprehensive theme customization:
+
+### Theme Modes
+- **Light Mode**: Bright theme for daytime use
+- **Dark Mode**: Dark theme to reduce eye strain
+- **System Mode**: Automatically follows system preferences
+
+### Color Schemes
+- **Default**: Warm orange color scheme
+- **Blue**: Professional blue theme
+- **Green**: Natural green theme  
+- **Purple**: Elegant purple theme
+- **Orange**: Vibrant orange theme
+- **Red**: Bold red theme
+
+### Usage
+1. Click the theme mode button (sun/moon/monitor icon) in the top-right corner
+2. Click the color scheme button (palette icon) to choose your preferred colors
+3. Settings are automatically saved and restored on next visit
+
+For detailed information, see [THEME_GUIDE.md](./THEME_GUIDE.md)
 
 ## Development
 
