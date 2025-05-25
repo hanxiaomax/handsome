@@ -2,30 +2,67 @@
 
 ## General Guidelines
 
-- Use English for all code, comments, and documentation
+- Use English exclusively for all code, comments, documentation, and user-facing text
+- Absolutely no Chinese characters in code, variable names, function names, comments, or UI text
 - Follow TypeScript best practices with strict type checking
 - Prioritize accessibility and responsive design
 - Maintain consistent code style across the project
 - Use clean, minimal design without emoji or decorative elements
 
+## Design Principles
+
+### Core Values
+- **Privacy First**: All data processing happens locally in the browser
+- **Frontend Priority**: Basic functions work offline, advanced features optional
+- **Zero Configuration**: Users need no software installation
+- **Modular Architecture**: Independent tool development and loading
+- **Progressive Enhancement**: Core functionality first, then advanced features
+
+### Technical Constraints
+- First load: < 2 seconds
+- Tool startup: < 1 second  
+- File processing: ≤ 100MB files
+- Memory limit: < 500MB per tool
+- Browser support: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+
 ## Project Structure
 
 ```
 src/
-├── app/                    # Next.js app router pages
+├── app/                    # App router pages
 ├── components/
 │   ├── ui/                # shadcn/ui components
 │   ├── layout/            # Layout components (header, sidebar, footer)
-│   └── common/            # Reusable components (file-upload, text-input, etc.)
+│   └── common/            # Framework-provided reusable components
 ├── tools/                 # Tool implementations
-│   └── [tool-name]/
-│       ├── ui.tsx         # Tool UI component
-│       ├── toolInfo.ts    # Tool metadata
-│       └── lib.ts         # Tool logic (optional)
+│   ├── [tool-name]/
+│   │   ├── ui.tsx         # Tool UI component
+│   │   ├── toolInfo.ts    # Tool metadata
+│   │   ├── lib.ts         # Tool logic (optional)
+│   │   └── components/    # Tool-specific components (optional)
+│   └── [tool-name]-specification.md  # Detailed tool design docs
 ├── lib/                   # Utility functions and shared logic
 ├── hooks/                 # Custom React hooks
 └── types/                 # TypeScript type definitions
 ```
+
+## Technology Stack
+
+### Core Framework
+- **React 18.2.0**: UI framework with functional components and hooks
+- **TypeScript 5.5+**: Type-safe JavaScript with strict mode
+- **Vite 6.3.5**: Modern build tool with fast HMR
+
+### UI & Styling
+- **Tailwind CSS 4.0**: Atomic CSS framework
+- **shadcn/ui 2.5.0**: Reusable UI components
+- **Radix UI**: Headless UI primitives for accessibility
+
+### Development Tools
+- **ESLint**: Code quality with TypeScript rules
+- **Prettier**: Code formatting
+- **Vitest**: Unit testing framework
+- **Husky**: Git hooks for quality gates
 
 ## Code Standards
 
@@ -37,7 +74,7 @@ src/
 - Use const assertions for readonly data
 
 ### React Components
-- Use functional components with hooks
+- Use functional components with hooks exclusively
 - Prefer named exports over default exports for components
 - Use forwardRef for components that need ref forwarding
 - Implement proper error boundaries
@@ -55,15 +92,18 @@ src/
 import React from 'react'
 import { useState, useEffect } from 'react'
 
-// 2. Internal UI components
+// 2. Internal UI components (shadcn/ui)
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 
-// 3. Internal components and hooks
+// 3. Framework common components
 import { FileUpload } from '@/components/common/file-upload'
+import { ResultDisplay } from '@/components/common/result-display'
+
+// 4. Internal components and hooks
 import { useToolLoader } from '@/hooks/use-tool-loader'
 
-// 4. Utilities and types
+// 5. Utilities and types
 import { cn } from '@/lib/utils'
 import type { ToolInfo } from '@/types/tool'
 ```
@@ -118,7 +158,63 @@ export const toolInfo: ToolInfo = {
 }
 ```
 
+### Tool Layout Flexibility
+- Each tool may have different layout requirements and component arrangements
+- Tools can use any combination of the three main areas (Input, Controls, Output)
+- Some tools may require custom layouts that don't follow the standard three-column pattern
+- Tools should adapt their layout based on their specific functionality needs
+
+## Common Component Usage
+
+### Framework-Provided Common Components
+Always prefer these common components for consistency and efficiency:
+
+- **FileUpload**: Standardized file upload with drag-drop, validation, and progress
+- **TextInput**: Multi-line text editor with syntax highlighting and formatting
+- **ResultDisplay**: Unified result presentation with copy/download capabilities
+- **CopyButton**: Consistent copy-to-clipboard functionality
+- **LoadingSpinner**: Standardized loading states and progress indicators
+- **ErrorBoundary**: Centralized error handling and user-friendly error display
+
+### When to Use Common Components
+- **Consistency**: Use common components to maintain UI consistency across tools
+- **Efficiency**: Leverage pre-built, tested components instead of rebuilding functionality
+- **Maintenance**: Common components are centrally maintained and updated
+- **Accessibility**: Common components include built-in accessibility features
+
+### Tool-Specific Components
+Create custom components only when:
+- Functionality is unique to that specific tool
+- Standard components don't meet the tool's specific requirements
+- Custom interaction patterns are needed for the tool's workflow
+
+### Component Integration Example
+```typescript
+// Example: Tool using both common and custom components
+import { Card } from '@/components/ui/card';           // shadcn/ui base
+import { FileUpload } from '@/components/common/file-upload';  // Framework common
+import { ResultDisplay } from '@/components/common/result-display'; // Framework common
+import { CustomCalculatorGrid } from './components/calculator-grid'; // Tool-specific
+
+export default function MyTool() {
+  return (
+    <Card>
+      <FileUpload onFileSelect={handleFile} />      {/* Common component */}
+      <CustomCalculatorGrid onCalculate={calc} />   {/* Tool-specific */}
+      <ResultDisplay result={result} />             {/* Common component */}
+    </Card>
+  );
+}
+```
+
 ## Styling Guidelines
+
+### Design System Adherence
+- Use shadcn/ui color tokens and spacing system
+- Maintain consistent border radius (0.5rem)
+- Follow 4px base spacing unit (0.25rem)
+- Use Inter font for UI, monospace for code
+- Implement subtle elevation system with consistent shadows
 
 ### Tailwind CSS Usage
 - Use Tailwind classes instead of custom CSS when possible
@@ -130,13 +226,18 @@ export const toolInfo: ToolInfo = {
 - Use cn() utility for conditional classes
 - Keep component styles consistent with design system
 - Support dark mode with appropriate color variants
-- Ensure sufficient color contrast for accessibility
+- Ensure sufficient color contrast for accessibility (WCAG 2.1)
 
-### Design System Adherence
-- Use shadcn/ui color tokens and spacing
-- Maintain consistent border radius (0.5rem)
-- Follow 4px base spacing unit
-- Use Inter font for UI, monospace for code
+### Theme Integration
+```css
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --primary: 221.2 83.2% 53.3%;
+  --border: 214.3 31.8% 91.4%;
+  --radius: 0.5rem;
+}
+```
 
 ## Performance Guidelines
 
@@ -144,112 +245,168 @@ export const toolInfo: ToolInfo = {
 - Use dynamic imports for tool components
 - Implement lazy loading for heavy dependencies
 - Split vendor bundles appropriately
+- Route-based code splitting for pages
 
 ### Memory Management
 - Clean up event listeners and timeouts
 - Dispose of heavy objects when components unmount
 - Monitor memory usage for file processing tools
+- Implement cancellation tokens for long operations
 
 ### Bundle Optimization
 - Use tree shaking for unused code elimination
 - Optimize images and assets
 - Minimize third-party dependencies
+- Lazy load tool-specific libraries
+
+## State Management
+
+### Application State Structure
+```typescript
+interface AppState {
+  theme: 'light' | 'dark' | 'system';
+  tools: ToolInfo[];
+  currentTool: string | null;
+  loading: boolean;
+  error: string | null;
+}
+
+interface ToolPageState {
+  toolId: string;
+  processing: boolean;
+  progress: number;
+  error: string | null;
+  inputType: 'text' | 'file';
+  textInput: string;
+  fileInput: File | null;
+  params: Record<string, any>;
+  output: {
+    type: 'text' | 'file' | 'image';
+    content: string | Blob;
+    metadata?: Record<string, any>;
+  } | null;
+}
+```
 
 ## Testing Requirements
 
 ### Unit Tests
-- Test all utility functions
-- Test custom hooks
+- Test all utility functions with >90% coverage
+- Test custom hooks behavior
 - Test tool logic functions
-- Maintain >90% coverage for critical paths
+- Test component rendering and props
 
 ### Component Tests
-- Test component rendering
-- Test user interactions
-- Test error states
-- Test accessibility features
+- Test component rendering with various props
+- Test user interactions and event handlers
+- Test error states and edge cases
+- Test accessibility features (ARIA, keyboard navigation)
 
 ### Integration Tests
 - Test tool workflows end-to-end
-- Test file upload and processing
+- Test file upload and processing flows
 - Test cross-tool navigation
+- Test responsive layout behavior
 
 ## Accessibility Standards
 
 ### ARIA Support
-- Use semantic HTML elements
-- Add ARIA labels where needed
+- Use semantic HTML elements as foundation
+- Add ARIA labels where needed for complex components
 - Implement proper focus management
-- Support keyboard navigation
+- Support comprehensive keyboard navigation
 
 ### Screen Reader Support
-- Provide alt text for images
-- Use descriptive link text
+- Provide descriptive alt text for images
+- Use descriptive link text and button labels
 - Announce dynamic content changes
-- Test with screen readers
+- Test with actual screen readers
+
+### Visual Accessibility
+- Support high contrast mode
+- Ensure scalable fonts work properly
+- Use color-independent indicators
+- Provide clear focus indicators
+
+### Keyboard Navigation
+- Tab order: Search → Categories → Tools → Actions
+- Arrow keys for navigation within components
+- Enter/Space for activation
+- Escape for dismissal and modal closure
 
 ## Security Guidelines
 
 ### Client-Side Security
-- Validate all user inputs
-- Sanitize file uploads
-- Implement CSP headers
+- Validate all user inputs before processing
+- Sanitize file uploads and content
+- Implement Content Security Policy (CSP) headers
 - Never expose sensitive data in client code
 
 ### Data Handling
-- Process data locally when possible
+- Process data locally when possible (privacy-first)
 - Clear sensitive data after processing
-- Use secure communication protocols
-- Implement proper error handling
+- Use secure communication protocols for any backend calls
+- Implement proper error handling without data leakage
 
 ## Error Handling
+
+### Error Categories
+1. **Input Errors**: Invalid format, size limit, missing data
+2. **Processing Errors**: Parse failure, conversion error, timeout
+3. **Output Errors**: Generation failure, download error, copy failure
 
 ### Error Boundaries
 - Implement error boundaries for tool components
 - Provide user-friendly error messages
-- Log errors for debugging
+- Log errors for debugging (development only)
 - Graceful degradation for unsupported features
 
 ### Input Validation
-- Validate file types and sizes
-- Check text input formats
+- Validate file types and sizes before processing
+- Check text input formats and constraints
 - Handle edge cases gracefully
-- Provide clear validation messages
+- Provide clear, actionable validation messages
 
 ## Documentation Standards
 
 ### Code Comments
 - Use English for all comments
-- Document complex algorithms
-- Explain business logic decisions
-- Keep comments up to date
+- Document complex algorithms and business logic
+- Explain non-obvious decisions and trade-offs
+- Keep comments up to date with code changes
 
 ### Component Documentation
-- Document component props and usage
+- Document component props and usage patterns
 - Provide examples for complex components
-- Document accessibility features
-- Include performance considerations
+- Document accessibility features and keyboard shortcuts
+- Include performance considerations and limitations
+
+### Tool Specifications
+- Each tool must have a detailed specification document
+- Include UI mockups, technical implementation, and testing requirements
+- Document component architecture and data flow
+- Specify responsive design and accessibility requirements
 
 ## Git Workflow
 
 ### Commit Messages
-- Use English for commit messages
-- Follow conventional commit format
-- Include scope when relevant
+- Use English for all commit messages
+- Follow conventional commit format: type(scope): description
+- Include scope when relevant (e.g., feat(calculator): add bitwise operations)
 - Keep messages concise but descriptive
 
 ### Branch Naming
-- Use feature/programmer-calculator for calculator features
+- Use feature/tool-name for new tool development
 - Use fix/issue-description for bug fixes
 - Use refactor/component-name for refactoring
-- Use docs/section-name for documentation
+- Use docs/section-name for documentation updates
 
 ## Development Environment
 
 ### Editor Configuration
 - Use ESLint with recommended TypeScript rules
 - Configure Prettier for consistent formatting
-- Set up path aliases for clean imports
+- Set up path aliases for clean imports (@/components, @/lib, etc.)
 - Enable strict TypeScript checking
 
 ### Development Commands
@@ -263,39 +420,42 @@ npm run type-check   # Check TypeScript types
 
 ## When Implementing New Tools
 
-1. **Planning Phase**
-   - Define tool requirements clearly
-   - Identify input/output formats
-   - Plan error handling scenarios
-   - Consider performance implications
+### Planning Phase
+1. Create detailed tool specification document in tools/ directory
+2. Define tool requirements, input/output formats, and user workflows
+3. Plan error handling scenarios and edge cases
+4. Consider performance implications and optimization strategies
 
-2. **Implementation Phase**
-   - Create tool directory structure
-   - Implement core logic first
-   - Build UI components
-   - Add comprehensive error handling
+### Implementation Phase
+1. Create tool directory structure following conventions
+2. Implement core logic first, then UI components
+3. Use common components where possible for consistency
+4. Add comprehensive error handling and validation
 
-3. **Testing Phase**
-   - Write unit tests for logic
-   - Test with various input types
-   - Verify accessibility features
-   - Test on different devices
+### Testing Phase
+1. Write unit tests for tool logic and utility functions
+2. Test with various input types and edge cases
+3. Verify accessibility features and keyboard navigation
+4. Test responsive design on different devices
 
-4. **Integration Phase**
-   - Register tool in tool registry
-   - Update navigation if needed
-   - Add to documentation
-   - Test full user workflow
+### Integration Phase
+1. Register tool in tool registry system
+2. Update navigation and routing if needed
+3. Add tool to documentation and README
+4. Test complete user workflow from discovery to usage
 
 ## Code Review Checklist
 
-- [ ] TypeScript types are properly defined
-- [ ] Components follow naming conventions
-- [ ] Error handling is implemented
-- [ ] Accessibility features are present
+- [ ] TypeScript types are properly defined with strict typing
+- [ ] Components follow naming conventions and project structure
+- [ ] Error handling is comprehensive and user-friendly
+- [ ] Accessibility features are present and tested
 - [ ] Performance considerations are addressed
-- [ ] Tests are written and passing
-- [ ] Documentation is updated
-- [ ] Code follows project structure
-- [ ] Responsive design is implemented
-- [ ] Dark mode support is included 
+- [ ] Tests are written and passing with good coverage
+- [ ] Documentation is updated and accurate
+- [ ] Code follows project structure and import organization
+- [ ] Responsive design is implemented and tested
+- [ ] Dark mode support is included and functional
+- [ ] No Chinese characters in any code or comments
+- [ ] Common components are used appropriately
+- [ ] Tool-specific components are justified and well-designed 
