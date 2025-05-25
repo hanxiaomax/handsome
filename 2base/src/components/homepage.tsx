@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ToolCard } from "@/components/tool-card";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { tools } from "@/data/tools";
 
 export function Homepage() {
@@ -77,6 +78,7 @@ export function Homepage() {
                   {filteredTools.length !== 1 ? "s" : ""} available
                 </p>
               </div>
+              <ThemeToggle />
             </div>
           </header>
 
