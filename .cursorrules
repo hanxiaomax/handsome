@@ -1,0 +1,301 @@
+# Cursor Rules for Tool Suite Website
+
+## General Guidelines
+
+- Use English for all code, comments, and documentation
+- Follow TypeScript best practices with strict type checking
+- Prioritize accessibility and responsive design
+- Maintain consistent code style across the project
+- Use clean, minimal design without emoji or decorative elements
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js app router pages
+├── components/
+│   ├── ui/                # shadcn/ui components
+│   ├── layout/            # Layout components (header, sidebar, footer)
+│   └── common/            # Reusable components (file-upload, text-input, etc.)
+├── tools/                 # Tool implementations
+│   └── [tool-name]/
+│       ├── ui.tsx         # Tool UI component
+│       ├── toolInfo.ts    # Tool metadata
+│       └── lib.ts         # Tool logic (optional)
+├── lib/                   # Utility functions and shared logic
+├── hooks/                 # Custom React hooks
+└── types/                 # TypeScript type definitions
+```
+
+## Code Standards
+
+### TypeScript
+- Use strict mode with "strict": true
+- Prefer interface over type for object shapes
+- Use generic types where appropriate
+- Always define return types for functions
+- Use const assertions for readonly data
+
+### React Components
+- Use functional components with hooks
+- Prefer named exports over default exports for components
+- Use forwardRef for components that need ref forwarding
+- Implement proper error boundaries
+- Use React.memo for performance optimization when needed
+
+### File Naming
+- Use kebab-case for file and folder names
+- Use PascalCase for React component files (e.g., TextInput.tsx)
+- Use camelCase for utility functions and hooks
+- Use UPPER_CASE for constants
+
+### Import Organization
+```typescript
+// 1. React and external libraries
+import React from 'react'
+import { useState, useEffect } from 'react'
+
+// 2. Internal UI components
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+
+// 3. Internal components and hooks
+import { FileUpload } from '@/components/common/file-upload'
+import { useToolLoader } from '@/hooks/use-tool-loader'
+
+// 4. Utilities and types
+import { cn } from '@/lib/utils'
+import type { ToolInfo } from '@/types/tool'
+```
+
+## Tool Development Guidelines
+
+### Tool Component Structure
+```typescript
+// tools/[tool-name]/ui.tsx
+import { useState, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+interface ToolState {
+  // Define tool-specific state
+}
+
+export default function ToolName() {
+  const [state, setState] = useState<ToolState>({})
+  
+  const handleProcess = useCallback(() => {
+    // Tool logic here
+  }, [/* dependencies */])
+
+  return (
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle>Tool Name</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Tool UI implementation */}
+      </CardContent>
+    </Card>
+  )
+}
+```
+
+### Tool Metadata Structure
+```typescript
+// tools/[tool-name]/toolInfo.ts
+import type { ToolInfo } from '@/types/tool'
+import { SomeIcon } from 'lucide-react'
+
+export const toolInfo: ToolInfo = {
+  id: 'tool-name',
+  name: 'Tool Name',
+  description: 'Tool description',
+  category: 'development' | 'text' | 'file' | 'encode' | 'crypto' | 'image',
+  tags: ['tag1', 'tag2'],
+  requiresBackend: false,
+  icon: SomeIcon,
+  path: '/tools/tool-name'
+}
+```
+
+## Styling Guidelines
+
+### Tailwind CSS Usage
+- Use Tailwind classes instead of custom CSS when possible
+- Follow responsive design patterns: sm:, md:, lg:, xl:
+- Use semantic color classes: primary, secondary, destructive, muted
+- Prefer utility classes over custom CSS for spacing and layout
+
+### Component Styling
+- Use cn() utility for conditional classes
+- Keep component styles consistent with design system
+- Support dark mode with appropriate color variants
+- Ensure sufficient color contrast for accessibility
+
+### Design System Adherence
+- Use shadcn/ui color tokens and spacing
+- Maintain consistent border radius (0.5rem)
+- Follow 4px base spacing unit
+- Use Inter font for UI, monospace for code
+
+## Performance Guidelines
+
+### Code Splitting
+- Use dynamic imports for tool components
+- Implement lazy loading for heavy dependencies
+- Split vendor bundles appropriately
+
+### Memory Management
+- Clean up event listeners and timeouts
+- Dispose of heavy objects when components unmount
+- Monitor memory usage for file processing tools
+
+### Bundle Optimization
+- Use tree shaking for unused code elimination
+- Optimize images and assets
+- Minimize third-party dependencies
+
+## Testing Requirements
+
+### Unit Tests
+- Test all utility functions
+- Test custom hooks
+- Test tool logic functions
+- Maintain >90% coverage for critical paths
+
+### Component Tests
+- Test component rendering
+- Test user interactions
+- Test error states
+- Test accessibility features
+
+### Integration Tests
+- Test tool workflows end-to-end
+- Test file upload and processing
+- Test cross-tool navigation
+
+## Accessibility Standards
+
+### ARIA Support
+- Use semantic HTML elements
+- Add ARIA labels where needed
+- Implement proper focus management
+- Support keyboard navigation
+
+### Screen Reader Support
+- Provide alt text for images
+- Use descriptive link text
+- Announce dynamic content changes
+- Test with screen readers
+
+## Security Guidelines
+
+### Client-Side Security
+- Validate all user inputs
+- Sanitize file uploads
+- Implement CSP headers
+- Never expose sensitive data in client code
+
+### Data Handling
+- Process data locally when possible
+- Clear sensitive data after processing
+- Use secure communication protocols
+- Implement proper error handling
+
+## Error Handling
+
+### Error Boundaries
+- Implement error boundaries for tool components
+- Provide user-friendly error messages
+- Log errors for debugging
+- Graceful degradation for unsupported features
+
+### Input Validation
+- Validate file types and sizes
+- Check text input formats
+- Handle edge cases gracefully
+- Provide clear validation messages
+
+## Documentation Standards
+
+### Code Comments
+- Use English for all comments
+- Document complex algorithms
+- Explain business logic decisions
+- Keep comments up to date
+
+### Component Documentation
+- Document component props and usage
+- Provide examples for complex components
+- Document accessibility features
+- Include performance considerations
+
+## Git Workflow
+
+### Commit Messages
+- Use English for commit messages
+- Follow conventional commit format
+- Include scope when relevant
+- Keep messages concise but descriptive
+
+### Branch Naming
+- Use feature/programmer-calculator for calculator features
+- Use fix/issue-description for bug fixes
+- Use refactor/component-name for refactoring
+- Use docs/section-name for documentation
+
+## Development Environment
+
+### Editor Configuration
+- Use ESLint with recommended TypeScript rules
+- Configure Prettier for consistent formatting
+- Set up path aliases for clean imports
+- Enable strict TypeScript checking
+
+### Development Commands
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run test         # Run test suite
+npm run lint         # Run ESLint
+npm run type-check   # Check TypeScript types
+```
+
+## When Implementing New Tools
+
+1. **Planning Phase**
+   - Define tool requirements clearly
+   - Identify input/output formats
+   - Plan error handling scenarios
+   - Consider performance implications
+
+2. **Implementation Phase**
+   - Create tool directory structure
+   - Implement core logic first
+   - Build UI components
+   - Add comprehensive error handling
+
+3. **Testing Phase**
+   - Write unit tests for logic
+   - Test with various input types
+   - Verify accessibility features
+   - Test on different devices
+
+4. **Integration Phase**
+   - Register tool in tool registry
+   - Update navigation if needed
+   - Add to documentation
+   - Test full user workflow
+
+## Code Review Checklist
+
+- [ ] TypeScript types are properly defined
+- [ ] Components follow naming conventions
+- [ ] Error handling is implemented
+- [ ] Accessibility features are present
+- [ ] Performance considerations are addressed
+- [ ] Tests are written and passing
+- [ ] Documentation is updated
+- [ ] Code follows project structure
+- [ ] Responsive design is implemented
+- [ ] Dark mode support is included 
