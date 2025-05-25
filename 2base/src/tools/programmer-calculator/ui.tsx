@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToolLayout } from "@/components/layout/tool-layout";
 import { Display } from "./components/display";
@@ -37,7 +38,10 @@ const initialState: CalculatorState = {
 };
 
 export default function ProgrammerCalculator() {
+  const navigate = useNavigate();
   const [state, setState] = useState<CalculatorState>(initialState);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleButtonClick = useCallback(
     (value: string, type: ButtonConfig["type"]) => {
@@ -213,6 +217,36 @@ export default function ProgrammerCalculator() {
     }));
   }, []);
 
+  const handleMinimize = useCallback(() => {
+    setIsMinimized(true);
+  }, []);
+
+  const handleFullscreen = useCallback(() => {
+    if (!isFullscreen) {
+      // 进入全屏模式
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      }
+    } else {
+      // 退出全屏模式
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+    setIsFullscreen(!isFullscreen);
+  }, [isFullscreen]);
+
+  // Handle fullscreen state changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -281,129 +315,183 @@ export default function ProgrammerCalculator() {
   }, [state.base, handleBaseChange, handleButtonClick]);
 
   return (
-    <ToolLayout
-      toolName="Programmer Calculator"
-      toolDescription="Advanced calculator with base conversion, bitwise operations, and scientific functions"
-    >
-      <div className="w-full p-6 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold">
-              Programmer Calculator
-            </CardTitle>
-            <p className="text-muted-foreground">
-              Advanced calculator with base conversion, bitwise operations, and
-              scientific functions
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {/* Left Column: Display and Settings */}
-              <div className="space-y-4 lg:col-span-1">
-                <Display
-                  value={state.currentValue}
-                  currentBase={state.base}
-                  bitWidth={state.bitWidth}
-                  error={state.error}
-                />
-                <SettingsPanel
-                  base={state.base}
-                  bitWidth={state.bitWidth}
-                  mode={state.mode}
-                  angleUnit={state.angleUnit}
-                  memory={state.memory}
-                  onBaseChange={handleBaseChange}
-                  onBitWidthChange={handleBitWidthChange}
-                  onModeChange={handleModeChange}
-                  onAngleUnitChange={handleAngleUnitChange}
-                />
-              </div>
+    <>
+      <ToolLayout
+        toolName="Programmer Calculator"
+        toolDescription="Advanced calculator with base conversion, bitwise operations, and scientific functions"
+      >
+        <div className={`w-full p-6 space-y-6 ${isMinimized ? "hidden" : ""}`}>
+          <Card className="relative">
+            {/* macOS-style window controls */}
+            <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+              <button
+                onClick={() => navigate("/")}
+                className="w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 transition-colors group shadow-sm"
+                title="Back to Home"
+              >
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
+                  ×
+                </span>
+              </button>
+              <button
+                onClick={handleMinimize}
+                className="w-5 h-5 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors group shadow-sm"
+                title="Minimize to Drawer"
+              >
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
+                  −
+                </span>
+              </button>
+              <button
+                onClick={handleFullscreen}
+                className="w-5 h-5 rounded-full bg-green-500 hover:bg-green-600 transition-colors group shadow-sm"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              >
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
+                  {isFullscreen ? "⌄" : "⌃"}
+                </span>
+              </button>
+            </div>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {/* Left Column: Display and Settings */}
+                <div className="space-y-4 lg:col-span-1">
+                  <Display
+                    value={state.currentValue}
+                    currentBase={state.base}
+                    bitWidth={state.bitWidth}
+                    error={state.error}
+                  />
+                  <SettingsPanel
+                    base={state.base}
+                    bitWidth={state.bitWidth}
+                    mode={state.mode}
+                    angleUnit={state.angleUnit}
+                    memory={state.memory}
+                    onBaseChange={handleBaseChange}
+                    onBitWidthChange={handleBitWidthChange}
+                    onModeChange={handleModeChange}
+                    onAngleUnitChange={handleAngleUnitChange}
+                  />
+                </div>
 
-              {/* Middle Column: Calculator Buttons */}
-              <div className="lg:col-span-1">
-                <ButtonGrid
-                  base={state.base}
-                  mode={state.mode}
-                  onButtonClick={handleButtonClick}
-                />
-              </div>
+                {/* Middle Column: Calculator Buttons */}
+                <div className="lg:col-span-1">
+                  <ButtonGrid
+                    base={state.base}
+                    mode={state.mode}
+                    onButtonClick={handleButtonClick}
+                  />
+                </div>
 
-              {/* Right Column: Bit Visualization */}
-              <div className="lg:col-span-2 xl:col-span-1">
-                <BitGrid
-                  value={state.currentValue}
-                  base={state.base}
-                  bitWidth={state.bitWidth}
-                  onValueChange={handleBitValueChange}
-                />
+                {/* Right Column: Bit Visualization */}
+                <div className="lg:col-span-2 xl:col-span-1">
+                  <BitGrid
+                    value={state.currentValue}
+                    base={state.base}
+                    bitWidth={state.bitWidth}
+                    onValueChange={handleBitValueChange}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Keyboard Shortcuts Help */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Keyboard Shortcuts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 text-sm">
+                <div>
+                  <h4 className="font-medium mb-2">Numbers & Operations</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>0-9, A-F: Input digits</li>
+                    <li>+, -, *, /, %: Arithmetic</li>
+                    <li>&, |, ^, ~: Bitwise ops</li>
+                    <li>Enter/=: Calculate</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Base Switching</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>Ctrl+1: Binary</li>
+                    <li>Ctrl+2: Octal</li>
+                    <li>Ctrl+3: Decimal</li>
+                    <li>Ctrl+4: Hexadecimal</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Special Keys</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>Escape: Clear all</li>
+                    <li>Backspace: Delete digit</li>
+                    <li>Tab: Navigate controls</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Bit Operations</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>Click bits to toggle</li>
+                    <li>Visual binary display</li>
+                    <li>Real-time conversion</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Memory Functions</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>M+: Add to memory</li>
+                    <li>M-: Subtract from memory</li>
+                    <li>MR: Recall memory</li>
+                    <li>MC: Clear memory</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Scientific Functions</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>sin, cos, tan</li>
+                    <li>log, ln, sqrt</li>
+                    <li>x², x³, xʸ</li>
+                    <li>π, e constants</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </ToolLayout>
+
+      {/* Minimized Drawer */}
+      {isMinimized && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <span className="text-sm font-mono">Calc</span>
+              </div>
+              <div>
+                <h3 className="font-medium">Programmer Calculator</h3>
+                <p className="text-sm text-muted-foreground">Minimized</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Keyboard Shortcuts Help */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Keyboard Shortcuts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 text-sm">
-              <div>
-                <h4 className="font-medium mb-2">Numbers & Operations</h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>0-9, A-F: Input digits</li>
-                  <li>+, -, *, /, %: Arithmetic</li>
-                  <li>&, |, ^, ~: Bitwise ops</li>
-                  <li>Enter/=: Calculate</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">Base Switching</h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>Ctrl+1: Binary</li>
-                  <li>Ctrl+2: Octal</li>
-                  <li>Ctrl+3: Decimal</li>
-                  <li>Ctrl+4: Hexadecimal</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">Special Keys</h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>Escape: Clear all</li>
-                  <li>Backspace: Delete digit</li>
-                  <li>Tab: Navigate controls</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">Bit Operations</h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>Click bits to toggle</li>
-                  <li>Visual binary display</li>
-                  <li>Real-time conversion</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">Memory Functions</h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>M+: Add to memory</li>
-                  <li>M-: Subtract from memory</li>
-                  <li>MR: Recall memory</li>
-                  <li>MC: Clear memory</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">Scientific Functions</h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>sin, cos, tan</li>
-                  <li>log, ln, sqrt</li>
-                  <li>x², x³, xʸ</li>
-                  <li>π, e constants</li>
-                </ul>
-              </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsMinimized(false)}
+                className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+              >
+                Restore
+              </button>
+              <button
+                onClick={() => navigate("/")}
+                className="px-3 py-1 text-sm bg-destructive text-destructive-foreground rounded hover:bg-destructive/90 transition-colors"
+              >
+                Close
+              </button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </ToolLayout>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

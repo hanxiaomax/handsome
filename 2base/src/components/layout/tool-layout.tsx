@@ -2,8 +2,7 @@ import { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 
 interface ToolLayoutProps {
@@ -48,15 +47,6 @@ export function ToolLayout({
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-14 items-center px-4 gap-4">
               <SidebarTrigger />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleNavigateHome}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Home
-              </Button>
               <div className="flex-1">
                 <h2 className="text-lg font-semibold">{toolName}</h2>
                 {toolDescription && (
