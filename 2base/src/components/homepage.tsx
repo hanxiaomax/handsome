@@ -35,6 +35,7 @@ export function Homepage() {
           onSearchChange={setSearchQuery}
           selectedTool={selectedTool}
           onToolSelect={handleToolSelect}
+          onNavigateHome={() => setSelectedTool(null)}
         />
 
         <main className="flex-1 flex flex-col overflow-hidden">

@@ -1,4 +1,4 @@
-import { Search, Wrench } from "lucide-react";
+import { Search, Wrench, Home, Star, ChevronRight } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,9 +9,18 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { tools, categories } from "@/data/tools";
+import { useFavorites } from "@/contexts/favorites-context";
+import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import type { ToolInfo } from "@/types/tool";
 
 interface AppSidebarProps {
@@ -19,6 +28,7 @@ interface AppSidebarProps {
   onSearchChange: (query: string) => void;
   selectedTool: string | null;
   onToolSelect: (toolId: string) => void;
+  onNavigateHome: () => void;
 }
 
 export function AppSidebar({
@@ -26,16 +36,16 @@ export function AppSidebar({
   onSearchChange,
   selectedTool,
   onToolSelect,
+  onNavigateHome,
 }: AppSidebarProps) {
-  // Filter tools based on search query
-  const filteredTools = tools.filter(
-    (tool) =>
-      tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tool.tags.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+  const { favorites, toggleFavorite } = useFavorites();
+  const { results: filteredTools, hasQuery } = useFuzzySearch(
+    tools,
+    searchQuery
   );
+
+  // Get favorite tools
+  const favoriteTools = tools.filter((tool) => favorites.includes(tool.id));
 
   // Group tools by category
   const groupedTools = categories.reduce((acc, category) => {
@@ -48,10 +58,25 @@ export function AppSidebar({
       acc[category.id] = {
         name: category.name,
         tools: categoryTools,
+        count: categoryTools.length,
       };
     }
     return acc;
-  }, {} as Record<string, { name: string; tools: ToolInfo[] }>);
+  }, {} as Record<string, { name: string; tools: ToolInfo[]; count: number }>);
+
+  const handleToolClick = (toolId: string, event: React.MouseEvent) => {
+    // Prevent event bubbling to collapsible trigger
+    event.stopPropagation();
+    onToolSelect(toolId);
+  };
+
+  const handleRemoveFromFavorites = (
+    toolId: string,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation();
+    toggleFavorite(toolId);
+  };
 
   return (
     <Sidebar className="border-r">
@@ -76,38 +101,102 @@ export function AppSidebar({
             className="pl-9"
           />
         </div>
+        {hasQuery && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Found {filteredTools.length} tool
+            {filteredTools.length !== 1 ? "s" : ""}
+          </p>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Favorites Group */}
+        {favoriteTools.length > 0 && (
+          <Collapsible defaultOpen>
+            <SidebarGroup>
+              <CollapsibleTrigger asChild>
+                <SidebarGroupLabel className="group/collapsible hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer">
+                  <Star className="h-4 w-4 mr-2" />
+                  Favorites ({favoriteTools.length})
+                  <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                </SidebarGroupLabel>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {favoriteTools.map((tool) => (
+                      <SidebarMenuItem key={`fav-${tool.id}`}>
+                        <SidebarMenuButton
+                          onClick={(e) => handleToolClick(tool.id, e)}
+                          isActive={selectedTool === tool.id}
+                          className="w-full justify-start group"
+                        >
+                          <tool.icon className="h-4 w-4 mr-2" />
+                          <span className="truncate flex-1">{tool.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) =>
+                              handleRemoveFromFavorites(tool.id, e)
+                            }
+                          >
+                            <Star className="h-3 w-3 fill-current text-yellow-500" />
+                          </Button>
+                          {tool.requiresBackend && (
+                            <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
+                              API
+                            </span>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
+        )}
+
+        {/* Category Groups */}
         {Object.entries(groupedTools).map(([categoryId, categoryData]) => (
-          <SidebarGroup key={categoryId}>
-            <SidebarGroupLabel>{categoryData.name}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {categoryData.tools.map((tool) => (
-                  <SidebarMenuItem key={tool.id}>
-                    <SidebarMenuButton
-                      onClick={() => onToolSelect(tool.id)}
-                      isActive={selectedTool === tool.id}
-                      className="w-full justify-start"
-                    >
-                      <tool.icon className="h-4 w-4 mr-2" />
-                      <span className="truncate">{tool.name}</span>
-                      {tool.requiresBackend && (
-                        <span className="ml-auto text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
-                          API
-                        </span>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <Collapsible key={categoryId} defaultOpen>
+            <SidebarGroup>
+              <CollapsibleTrigger asChild>
+                <SidebarGroupLabel className="group/collapsible hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer">
+                  {categoryData.name} ({categoryData.count})
+                  <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                </SidebarGroupLabel>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {categoryData.tools.map((tool) => (
+                      <SidebarMenuItem key={tool.id}>
+                        <SidebarMenuButton
+                          onClick={(e) => handleToolClick(tool.id, e)}
+                          isActive={selectedTool === tool.id}
+                          className="w-full justify-start"
+                        >
+                          <tool.icon className="h-4 w-4 mr-2" />
+                          <span className="truncate flex-1">{tool.name}</span>
+                          {tool.requiresBackend && (
+                            <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
+                              API
+                            </span>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
         ))}
 
         {/* Show message when no tools found */}
-        {Object.keys(groupedTools).length === 0 && (
+        {Object.keys(groupedTools).length === 0 && favoriteTools.length === 0 && (
           <SidebarGroup>
             <SidebarGroupContent>
               <div className="p-4 text-center text-muted-foreground text-sm">
@@ -119,6 +208,17 @@ export function AppSidebar({
           </SidebarGroup>
         )}
       </SidebarContent>
+
+      <SidebarFooter className="p-4">
+        <Button
+          variant="outline"
+          onClick={onNavigateHome}
+          className="w-full justify-start"
+        >
+          <Home className="h-4 w-4 mr-2" />
+          Back to Home
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   );
 }

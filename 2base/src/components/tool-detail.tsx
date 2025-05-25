@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Play, Info } from "lucide-react";
+import { ExternalLink, Play, Info, Star } from "lucide-react";
+import { useFavorites } from "@/contexts/favorites-context";
 import type { ToolInfo } from "@/types/tool";
 
 interface ToolDetailProps {
@@ -10,6 +11,18 @@ interface ToolDetailProps {
 }
 
 export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
+  const { toggleFavorite, isFavorite } = useFavorites();
+
+  const handleToggleFavorite = () => {
+    console.log(
+      "Toggling favorite for:",
+      tool.id,
+      "Current state:",
+      isFavorite(tool.id)
+    );
+    toggleFavorite(tool.id);
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Tool Header */}
@@ -43,6 +56,19 @@ export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
         >
           <Play className="h-4 w-4" />
           Use Tool
+        </Button>
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={handleToggleFavorite}
+          className="flex items-center gap-2"
+        >
+          <Star
+            className={`h-4 w-4 ${
+              isFavorite(tool.id) ? "fill-current text-yellow-500" : ""
+            }`}
+          />
+          {isFavorite(tool.id) ? "Remove from Favorites" : "Add to Favorites"}
         </Button>
         <Button variant="outline" size="lg" className="flex items-center gap-2">
           <Info className="h-4 w-4" />
