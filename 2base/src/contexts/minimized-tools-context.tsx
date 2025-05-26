@@ -86,8 +86,7 @@ export function MinimizedToolsProvider({
   const restoreTool = (toolId: string) => {
     // Don't remove from minimized list, just let the tool handle restoration
     // The tool component will decide whether to stay minimized or not
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _ = toolId;
+    void toolId; // Explicitly mark as intentionally unused
   };
 
   const closeTool = (toolId: string) => {
