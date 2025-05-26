@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Play, Info, Star } from "lucide-react";
 import { useFavorites } from "@/contexts/favorites-context";
 import type { ToolInfo } from "@/types/tool";
+import { getToolVersionInfo } from "@/lib/tool-utils";
 
 interface ToolDetailProps {
   tool: ToolInfo;
@@ -12,6 +13,7 @@ interface ToolDetailProps {
 
 export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
   const { toggleFavorite, isFavorite } = useFavorites();
+  const versionInfo = getToolVersionInfo(tool);
 
   const handleToggleFavorite = () => {
     toggleFavorite(tool.id);
@@ -27,6 +29,12 @@ export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h1 className="text-2xl font-bold">{tool.name}</h1>
+            <Badge
+              variant={versionInfo.isPaid ? "destructive" : "secondary"}
+              className="text-sm"
+            >
+              {versionInfo.pricing}
+            </Badge>
             {tool.requiresBackend && (
               <Badge
                 variant="outline"
@@ -37,7 +45,14 @@ export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
               </Badge>
             )}
           </div>
-          <p className="text-muted-foreground text-lg">{tool.description}</p>
+          <p className="text-muted-foreground text-lg mb-2">
+            {tool.description}
+          </p>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span className="font-medium">{versionInfo.version}</span>
+            <span>•</span>
+            <span>Released {versionInfo.releaseDate}</span>
+          </div>
         </div>
       </div>
 

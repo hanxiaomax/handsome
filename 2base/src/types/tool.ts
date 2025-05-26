@@ -9,6 +9,9 @@ export interface ToolInfo {
   requiresBackend: boolean;
   icon: LucideIcon;
   path: string;
+  version: string;
+  releaseDate: string; // ISO date string (YYYY-MM-DD)
+  pricing: "free" | "paid";
 }
 
 export interface ToolPageState {

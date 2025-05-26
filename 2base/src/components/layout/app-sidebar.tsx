@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,6 +23,7 @@ import { tools, categories } from "@/data/tools";
 import { useFavorites } from "@/contexts/favorites-context";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import type { ToolInfo } from "@/types/tool";
+import { getToolVersionInfo } from "@/lib/tool-utils";
 
 interface AppSidebarProps {
   searchQuery: string;
@@ -124,33 +126,44 @@ export function AppSidebar({
               <CollapsibleContent>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {favoriteTools.map((tool) => (
-                      <SidebarMenuItem key={`fav-${tool.id}`}>
-                        <SidebarMenuButton
-                          onClick={(e) => handleToolClick(tool.id, e)}
-                          isActive={selectedTool === tool.id}
-                          className="w-full justify-start group"
-                        >
-                          <tool.icon className="h-4 w-4 mr-2" />
-                          <span className="truncate flex-1">{tool.name}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) =>
-                              handleRemoveFromFavorites(tool.id, e)
-                            }
+                    {favoriteTools.map((tool) => {
+                      const versionInfo = getToolVersionInfo(tool);
+                      return (
+                        <SidebarMenuItem key={`fav-${tool.id}`}>
+                          <SidebarMenuButton
+                            onClick={(e) => handleToolClick(tool.id, e)}
+                            isActive={selectedTool === tool.id}
+                            className="w-full justify-start group"
                           >
-                            <Star className="h-3 w-3 fill-current text-yellow-500" />
-                          </Button>
-                          {tool.requiresBackend && (
-                            <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
-                              API
-                            </span>
-                          )}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
+                            <tool.icon className="h-4 w-4 mr-2" />
+                            <span className="truncate flex-1">{tool.name}</span>
+                            {versionInfo.isNew && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] px-1 py-0 h-4 bg-green-100 text-green-700 border-green-200 font-medium mr-1"
+                              >
+                                NEW
+                              </Badge>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) =>
+                                handleRemoveFromFavorites(tool.id, e)
+                              }
+                            >
+                              <Star className="h-3 w-3 fill-current text-yellow-500" />
+                            </Button>
+                            {tool.requiresBackend && (
+                              <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
+                                API
+                              </span>
+                            )}
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </CollapsibleContent>
@@ -171,23 +184,34 @@ export function AppSidebar({
               <CollapsibleContent>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {categoryData.tools.map((tool) => (
-                      <SidebarMenuItem key={tool.id}>
-                        <SidebarMenuButton
-                          onClick={(e) => handleToolClick(tool.id, e)}
-                          isActive={selectedTool === tool.id}
-                          className="w-full justify-start"
-                        >
-                          <tool.icon className="h-4 w-4 mr-2" />
-                          <span className="truncate flex-1">{tool.name}</span>
-                          {tool.requiresBackend && (
-                            <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
-                              API
-                            </span>
-                          )}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
+                    {categoryData.tools.map((tool) => {
+                      const versionInfo = getToolVersionInfo(tool);
+                      return (
+                        <SidebarMenuItem key={tool.id}>
+                          <SidebarMenuButton
+                            onClick={(e) => handleToolClick(tool.id, e)}
+                            isActive={selectedTool === tool.id}
+                            className="w-full justify-start"
+                          >
+                            <tool.icon className="h-4 w-4 mr-2" />
+                            <span className="truncate flex-1">{tool.name}</span>
+                            {versionInfo.isNew && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] px-1 py-0 h-4 bg-green-100 text-green-700 border-green-200 font-medium mr-1"
+                              >
+                                NEW
+                              </Badge>
+                            )}
+                            {tool.requiresBackend && (
+                              <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
+                                API
+                              </span>
+                            )}
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </CollapsibleContent>

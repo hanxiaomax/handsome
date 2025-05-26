@@ -11,4 +11,7 @@ export const toolInfo: ToolInfo = {
   requiresBackend: false,
   icon: Calculator,
   path: "/tools/programmer-calculator",
+  version: "1.2.0",
+  releaseDate: "2025-05-15", // This is a new tool, released within 3 months
+  pricing: "free",
 };

@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -7,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { ToolInfo } from "@/types/tool";
+import { getToolVersionInfo } from "@/lib/tool-utils";
 
 interface ToolCardProps {
   tool: ToolInfo;
@@ -16,9 +18,22 @@ interface ToolCardProps {
 
 export function ToolCard({ tool, onUse, onInfo }: ToolCardProps) {
   const IconComponent = tool.icon;
+  const versionInfo = getToolVersionInfo(tool);
 
   return (
     <div className="group relative bg-card border border-border rounded-lg p-6 hover:shadow-md transition-all duration-200 hover:border-primary/20">
+      {/* NEW Badge - Top Right Corner */}
+      {versionInfo.isNew && (
+        <div className="absolute top-3 right-3">
+          <Badge
+            variant="secondary"
+            className="text-xs bg-green-100 text-green-700 border-green-200 font-medium"
+          >
+            NEW
+          </Badge>
+        </div>
+      )}
+
       {/* Tool Icon */}
       <div className="flex items-center justify-between mb-4">
         <div className="p-3 bg-primary/10 rounded-lg">
@@ -45,12 +60,25 @@ export function ToolCard({ tool, onUse, onInfo }: ToolCardProps) {
 
       {/* Tool Info */}
       <div className="mb-4">
-        <h3 className="font-semibold text-lg text-foreground mb-2 line-clamp-1">
-          {tool.name}
-        </h3>
-        <p className="text-muted-foreground text-sm line-clamp-2 leading-relaxed">
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="font-semibold text-lg text-foreground line-clamp-1 flex-1">
+            {tool.name}
+          </h3>
+          <Badge
+            variant={versionInfo.isPaid ? "destructive" : "secondary"}
+            className="text-xs"
+          >
+            {versionInfo.pricing}
+          </Badge>
+        </div>
+        <p className="text-muted-foreground text-sm line-clamp-2 leading-relaxed mb-2">
           {tool.description}
         </p>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{versionInfo.version}</span>
+          <span>•</span>
+          <span>{versionInfo.releaseDate}</span>
+        </div>
       </div>
 
       {/* Tags */}
