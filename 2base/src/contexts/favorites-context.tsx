@@ -22,10 +22,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      console.log("Loading favorites from localStorage:", stored);
       if (stored) {
         const parsedFavorites = JSON.parse(stored);
-        console.log("Parsed favorites:", parsedFavorites);
         setFavorites(parsedFavorites);
       }
       setIsLoaded(true);
@@ -40,7 +38,6 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     if (!isLoaded) return; // Don't save during initial load
 
     try {
-      console.log("Saving favorites to localStorage:", favorites);
       localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
     } catch (error) {
       console.error("Failed to save favorites:", error);
@@ -63,14 +60,10 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleFavorite = (toolId: string) => {
-    console.log("toggleFavorite called for:", toolId);
     setFavorites((prev) => {
-      console.log("Current favorites before toggle:", prev);
       if (prev.includes(toolId)) {
-        console.log("Removing from favorites:", toolId);
         return prev.filter((id) => id !== toolId);
       } else {
-        console.log("Adding to favorites:", toolId);
         return [...prev, toolId];
       }
     });

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { tools, categories } from "@/data/tools";
 import { Calculator, FileText, Image, Lock, Code, Zap } from "lucide-react";
+import { DashboardCharts } from "@/components/dashboard-charts";
 
 export function WelcomePage() {
   const categoryIcons = {
@@ -36,33 +37,8 @@ export function WelcomePage() {
         </div>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-primary mb-1">
-              {tools.length}
-            </div>
-            <div className="text-sm text-muted-foreground">Total Tools</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-green-600 mb-1">
-              {tools.filter((t) => !t.requiresBackend).length}
-            </div>
-            <div className="text-sm text-muted-foreground">Offline Tools</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-blue-600 mb-1">
-              {activeCategories.length}
-            </div>
-            <div className="text-sm text-muted-foreground">Categories</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Dashboard Charts */}
+      <DashboardCharts />
 
       {/* Categories Overview */}
       <Card>
