@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -14,9 +14,18 @@ import { tools } from "@/data/tools";
 
 function HomepageContent() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const { isMobile, setOpenMobile } = useSidebar();
+
+  // Handle URL parameters for tool selection
+  useEffect(() => {
+    const toolParam = searchParams.get("tool");
+    if (toolParam && tools.find((t) => t.id === toolParam)) {
+      setSelectedTool(toolParam);
+    }
+  }, [searchParams]);
 
   const handleUseTool = (toolId: string) => {
     const tool = tools.find((t) => t.id === toolId);
@@ -31,6 +40,8 @@ function HomepageContent() {
 
   const handleToolSelect = (toolId: string) => {
     setSelectedTool(toolId);
+    // Update URL parameters
+    setSearchParams({ tool: toolId });
   };
 
   const handleNavigateToFavorites = () => {
@@ -39,6 +50,12 @@ function HomepageContent() {
       setOpenMobile(false);
     }
     navigate("/favorites");
+  };
+
+  const handleNavigateHome = () => {
+    setSelectedTool(null);
+    // Clear URL parameters
+    setSearchParams({});
   };
 
   const selectedToolData = selectedTool
@@ -52,7 +69,7 @@ function HomepageContent() {
         onSearchChange={setSearchQuery}
         selectedTool={selectedTool}
         onToolSelect={handleToolSelect}
-        onNavigateHome={() => setSelectedTool(null)}
+        onNavigateHome={handleNavigateHome}
         onNavigateToFavorites={handleNavigateToFavorites}
       />
       <SidebarInset>

@@ -5,6 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Copy, RotateCcw, Plus, Check } from 'lucide-react'
 import { ToolLayout } from '@/components/layout/tool-layout'
+import { useMinimizedTools } from '@/contexts/minimized-tools-context'
+import { useNavigate } from 'react-router-dom'
 import { UUIDGenerator, type UUIDGeneratorState, type UUIDFormat } from './lib'
 import { toolInfo } from './toolInfo'
 
@@ -19,9 +21,12 @@ const initialState: UUIDGeneratorState = {
 }
 
 function UUIDGeneratorTool() {
+  const navigate = useNavigate()
+  const { minimizeTool } = useMinimizedTools()
   const [state, setState] = useState<UUIDGeneratorState>(initialState)
   const [copiedUUID, setCopiedUUID] = useState<string | null>(null)
   const [copiedAll, setCopiedAll] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const generator = useRef(new UUIDGenerator())
   
   const handleGenerate = useCallback(() => {
@@ -80,6 +85,33 @@ function UUIDGeneratorTool() {
       config: { ...s.config, quantity }
     }))
   }, [])
+
+  const handleClose = useCallback(() => {
+    navigate('/')
+  }, [navigate])
+
+  const handleMinimize = useCallback(() => {
+    minimizeTool(toolInfo, { uuidState: state })
+    navigate('/')
+  }, [minimizeTool, state, navigate])
+
+  const handleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+    } else {
+      document.exitFullscreen()
+    }
+  }, [])
+
+  // Monitor fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
   
   // Keyboard shortcuts
   useEffect(() => {
@@ -124,133 +156,145 @@ function UUIDGeneratorTool() {
     <ToolLayout
       toolName={toolInfo.name}
       toolDescription={toolInfo.description}
+      onClose={handleClose}
+      onMinimize={handleMinimize}
+      onFullscreen={handleFullscreen}
+      isFullscreen={isFullscreen}
     >
-      <div className="p-6">
-        <Card className="w-full">
-          <CardContent className="p-6 space-y-6">
-            {/* Controls */}
-            <div className="flex flex-wrap items-center gap-4">
-              <Select value={state.config.version.toString()} onValueChange={handleVersionChange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="4">v4 Random</SelectItem>
-                  <SelectItem value="1">v1 Time</SelectItem>
-                  <SelectItem value="7">v7 Unix</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select value={state.config.format} onValueChange={handleFormatChange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="uppercase">Uppercase</SelectItem>
-                  <SelectItem value="no-hyphens">No Hyphens</SelectItem>
-                  <SelectItem value="braces">Braces</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Qty:</span>
-                <Input 
-                  type="number" 
-                  min="1" 
-                  max="100" 
-                  value={state.config.quantity}
-                  onChange={handleQuantityChange}
-                  className="w-20"
-                />
-              </div>
-              
-              <Button 
-                onClick={handleGenerate} 
-                disabled={state.isGenerating}
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                {state.config.quantity === 1 ? 'Generate UUID' : 'Generate UUIDs'}
-              </Button>
+      <div className="w-full p-6 space-y-6 mt-5">
+        {/* Main tool interface - NO Card wrapper */}
+        <div className="space-y-6">
+          {/* Controls */}
+          <div className="flex flex-wrap items-center gap-4">
+            <Select value={state.config.version.toString()} onValueChange={handleVersionChange}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="4">v4 Random</SelectItem>
+                <SelectItem value="1">v1 Time</SelectItem>
+                <SelectItem value="7">v7 Unix</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={state.config.format} onValueChange={handleFormatChange}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard</SelectItem>
+                <SelectItem value="uppercase">Uppercase</SelectItem>
+                <SelectItem value="no-hyphens">No Hyphens</SelectItem>
+                <SelectItem value="braces">Braces</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Qty:</span>
+              <Input 
+                type="number" 
+                min="1" 
+                max="100" 
+                value={state.config.quantity}
+                onChange={handleQuantityChange}
+                className="w-20"
+              />
             </div>
             
-            {/* Output */}
-            {state.generatedUUIDs.length > 0 && (
-              <div className="space-y-4">
-                <div className="border rounded-lg p-4 bg-muted/30 min-h-[120px] max-h-[400px] overflow-y-auto">
-                  <div className="space-y-1">
-                    {state.generatedUUIDs.map((item) => (
-                      <div 
-                        key={item.id}
-                        className="font-mono text-sm py-2 px-3 cursor-pointer hover:bg-accent rounded-md transition-colors group flex items-center justify-between"
-                        onClick={() => handleCopyUUID(item.uuid)}
-                        title="Click to copy"
-                      >
-                        <span className="select-all">{item.uuid}</span>
-                        {copiedUUID === item.uuid ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <Copy className="w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleCopyAll}
-                    className="flex items-center gap-2"
-                  >
-                    {copiedAll ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                    Copy All
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleClear}
-                    className="flex items-center gap-2"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    Clear
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleGenerate}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Generate More
-                  </Button>
-                </div>
-                
-                {/* Info */}
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <div>Generated {state.generatedUUIDs.length} UUID{state.generatedUUIDs.length > 1 ? 's' : ''} using {getVersionLabel(state.config.version)} in {getFormatLabel(state.config.format)} format</div>
-                  <div className="flex flex-wrap gap-4">
-                    <span>Spacebar: Generate</span>
-                    <span>Ctrl+C: Copy All</span>
-                    <span>Ctrl+Enter: Generate More</span>
-                    <span>Escape: Clear</span>
-                  </div>
+            <Button 
+              onClick={handleGenerate} 
+              disabled={state.isGenerating}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              {state.config.quantity === 1 ? 'Generate UUID' : 'Generate UUIDs'}
+            </Button>
+          </div>
+          
+          {/* Output */}
+          {state.generatedUUIDs.length > 0 && (
+            <div className="space-y-4">
+              <div className="border rounded-lg p-4 bg-muted/30 min-h-[120px] max-h-[400px] overflow-y-auto">
+                <div className="space-y-1">
+                  {state.generatedUUIDs.map((item) => (
+                    <div 
+                      key={item.id}
+                      className="font-mono text-sm py-2 px-3 cursor-pointer hover:bg-accent rounded-md transition-colors group flex items-center justify-between"
+                      onClick={() => handleCopyUUID(item.uuid)}
+                      title="Click to copy"
+                    >
+                      <span className="select-all">{item.uuid}</span>
+                      {copiedUUID === item.uuid ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity" />
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
-            )}
-            
-            {/* Empty state */}
-            {state.generatedUUIDs.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                <div className="text-lg font-medium mb-2">Ready to Generate UUIDs</div>
-                <div className="text-sm">
-                  Click "Generate UUID" or press Spacebar to create {state.config.quantity === 1 ? 'a' : state.config.quantity} {getVersionLabel(state.config.version)} UUID{state.config.quantity > 1 ? 's' : ''}
-                </div>
+              
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={handleCopyAll}
+                  className="flex items-center gap-2"
+                >
+                  {copiedAll ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                  Copy All
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleClear}
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Clear
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleGenerate}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Generate More
+                </Button>
               </div>
-            )}
+              
+              {/* Info */}
+              <div className="text-xs text-muted-foreground space-y-1">
+                <div>Generated {state.generatedUUIDs.length} UUID{state.generatedUUIDs.length > 1 ? 's' : ''} using {getVersionLabel(state.config.version)} in {getFormatLabel(state.config.format)} format</div>
+              </div>
+            </div>
+          )}
+          
+          {/* Empty state */}
+          {state.generatedUUIDs.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              <div className="text-lg font-medium mb-2">Ready to Generate UUIDs</div>
+              <div className="text-sm">
+                Click "Generate UUID" or press Spacebar to create {state.config.quantity === 1 ? 'a' : state.config.quantity} {getVersionLabel(state.config.version)} UUID{state.config.quantity > 1 ? 's' : ''}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Keyboard shortcuts help - CAN use Card */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-xs text-muted-foreground">
+              <div className="font-medium mb-2">Keyboard Shortcuts</div>
+              <div className="flex flex-wrap gap-4">
+                <span>Spacebar: Generate</span>
+                <span>Ctrl+C: Copy All</span>
+                <span>Ctrl+Enter: Generate More</span>
+                <span>Escape: Clear</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

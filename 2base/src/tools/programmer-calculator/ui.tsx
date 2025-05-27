@@ -219,25 +219,22 @@ export default function ProgrammerCalculator() {
     }));
   }, []);
 
+  const handleClose = useCallback(() => {
+    navigate("/");
+  }, [navigate]);
+
   const handleMinimize = useCallback(() => {
     minimizeTool(toolInfo, { calculatorState: state });
     navigate("/");
   }, [minimizeTool, state, navigate]);
 
   const handleFullscreen = useCallback(() => {
-    if (!isFullscreen) {
-      // 进入全屏模式
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-      }
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
     } else {
-      // 退出全屏模式
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+      document.exitFullscreen();
     }
-    setIsFullscreen(!isFullscreen);
-  }, [isFullscreen]);
+  }, []);
 
   // Handle fullscreen state changes
   useEffect(() => {
@@ -319,85 +316,55 @@ export default function ProgrammerCalculator() {
 
   return (
     <ToolLayout
-      toolName="Programmer Calculator"
-      toolDescription="Advanced calculator with base conversion, bitwise operations, and scientific functions"
+      toolName={toolInfo.name}
+      toolDescription={toolInfo.description}
+      onClose={handleClose}
+      onMinimize={handleMinimize}
+      onFullscreen={handleFullscreen}
+      isFullscreen={isFullscreen}
     >
-      <div className="w-full p-6 space-y-6">
-        <Card className="relative">
-          {/* macOS-style window controls */}
-          <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-            <button
-              onClick={() => navigate("/")}
-              className="w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 transition-colors group shadow-sm"
-              title="Back to Home"
-            >
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
-                ×
-              </span>
-            </button>
-            <button
-              onClick={handleMinimize}
-              className="w-5 h-5 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors group shadow-sm"
-              title="Minimize to Drawer"
-            >
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
-                −
-              </span>
-            </button>
-            <button
-              onClick={handleFullscreen}
-              className="w-5 h-5 rounded-full bg-green-500 hover:bg-green-600 transition-colors group shadow-sm"
-              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-            >
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
-                {isFullscreen ? "⌄" : "⌃"}
-              </span>
-            </button>
+      <div className="w-full p-6 space-y-6 mt-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* Left Column: Display and Settings */}
+          <div className="space-y-4 lg:col-span-1">
+            <Display
+              value={state.currentValue}
+              currentBase={state.base}
+              bitWidth={state.bitWidth}
+              error={state.error}
+            />
+            <SettingsPanel
+              base={state.base}
+              bitWidth={state.bitWidth}
+              mode={state.mode}
+              angleUnit={state.angleUnit}
+              memory={state.memory}
+              onBaseChange={handleBaseChange}
+              onBitWidthChange={handleBitWidthChange}
+              onModeChange={handleModeChange}
+              onAngleUnitChange={handleAngleUnitChange}
+            />
           </div>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {/* Left Column: Display and Settings */}
-              <div className="space-y-4 lg:col-span-1">
-                <Display
-                  value={state.currentValue}
-                  currentBase={state.base}
-                  bitWidth={state.bitWidth}
-                  error={state.error}
-                />
-                <SettingsPanel
-                  base={state.base}
-                  bitWidth={state.bitWidth}
-                  mode={state.mode}
-                  angleUnit={state.angleUnit}
-                  memory={state.memory}
-                  onBaseChange={handleBaseChange}
-                  onBitWidthChange={handleBitWidthChange}
-                  onModeChange={handleModeChange}
-                  onAngleUnitChange={handleAngleUnitChange}
-                />
-              </div>
 
-              {/* Middle Column: Calculator Buttons */}
-              <div className="lg:col-span-1">
-                <ButtonGrid
-                  base={state.base}
-                  mode={state.mode}
-                  onButtonClick={handleButtonClick}
-                />
-              </div>
+          {/* Middle Column: Calculator Buttons */}
+          <div className="lg:col-span-1">
+            <ButtonGrid
+              base={state.base}
+              mode={state.mode}
+              onButtonClick={handleButtonClick}
+            />
+          </div>
 
-              {/* Right Column: Bit Visualization */}
-              <div className="lg:col-span-2 xl:col-span-1">
-                <BitGrid
-                  value={state.currentValue}
-                  base={state.base}
-                  bitWidth={state.bitWidth}
-                  onValueChange={handleBitValueChange}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Right Column: Bit Visualization */}
+          <div className="lg:col-span-2 xl:col-span-1">
+            <BitGrid
+              value={state.currentValue}
+              base={state.base}
+              bitWidth={state.bitWidth}
+              onValueChange={handleBitValueChange}
+            />
+          </div>
+        </div>
 
         {/* Keyboard Shortcuts Help */}
         <Card>
