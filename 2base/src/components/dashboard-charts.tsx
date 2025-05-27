@@ -1,362 +1,187 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-} from "recharts";
+import { Card, CardContent } from "@/components/ui/card";
 import { tools, categories } from "@/data/tools";
 import { getToolVersionInfo } from "@/lib/tool-utils";
 
 export function DashboardCharts() {
-  // Prepare data for category distribution chart
-  const categoryData = categories
-    .filter((cat) => cat.id !== "all" && cat.count > 0)
-    .map((cat) => ({
-      name: cat.name,
-      count: cat.count,
-      percentage: Math.round((cat.count / tools.length) * 100),
-    }));
+  // Note: Calendar-related functions are preserved for future use but commented out
+  /*
+  const generateCalendarData = () => {
+    const data = [];
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setFullYear(today.getFullYear() - 1);
 
-  // Prepare data for pricing distribution
-  const pricingData = [
-    {
-      name: "Free Tools",
-      count: tools.filter((t) => t.pricing === "free").length,
-      color: "#10b981",
-    },
-    {
-      name: "Paid Tools",
-      count: tools.filter((t) => t.pricing === "paid").length,
-      color: "#f59e0b",
-    },
-  ];
+    const releaseMap = new Map();
+    tools.forEach((tool) => {
+      const releaseDate = new Date(tool.releaseDate);
+      const dateKey = releaseDate.toISOString().split("T")[0];
+      releaseMap.set(dateKey, (releaseMap.get(dateKey) || 0) + 1);
+    });
 
-  // Prepare data for tool release timeline (simulated monthly data)
-  const timelineData = [
-    { month: "Jun 2024", tools: 1, newTools: 1 },
-    { month: "Jul 2024", tools: 2, newTools: 1 },
-    { month: "Aug 2024", tools: 3, newTools: 1 },
-    { month: "Sep 2024", tools: 3, newTools: 0 },
-    { month: "Oct 2024", tools: 3, newTools: 0 },
-    { month: "Nov 2024", tools: 4, newTools: 1 },
-    { month: "Dec 2024", tools: 5, newTools: 1 },
-    { month: "Jan 2025", tools: 6, newTools: 1 },
-  ];
-
-  // Prepare data for tool features comparison
-  const featureData = tools.map((tool) => {
-    const versionInfo = getToolVersionInfo(tool);
-    return {
-      name:
-        tool.name.length > 15 ? tool.name.substring(0, 15) + "..." : tool.name,
-      fullName: tool.name,
-      tags: tool.tags.length,
-      version: parseFloat(tool.version.replace("v", "")),
-      isNew: versionInfo.isNew ? 1 : 0,
-      category: tool.category,
-    };
-  });
-
-  interface TooltipProps {
-    active?: boolean;
-    payload?: Array<{
-      color: string;
-      dataKey: string;
-      value: number;
-    }>;
-    label?: string;
-  }
-
-  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{label}</p>
-          {payload.map((entry, index: number) => (
-            <p key={index} style={{ color: entry.color }}>
-              {entry.dataKey}: {entry.value}
-            </p>
-          ))}
-        </div>
-      );
+    for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateKey = d.toISOString().split("T")[0];
+      const count = releaseMap.get(dateKey) || 0;
+      data.push({
+        date: dateKey,
+        count,
+        level: count === 0 ? 0 : count === 1 ? 1 : count === 2 ? 2 : 3,
+      });
     }
-    return null;
+
+    return data;
   };
+
+  const getWeeksData = () => {
+    const weeks = [];
+    let currentWeek = [];
+    calendarData.forEach((day, index) => {
+      const dayOfWeek = new Date(day.date).getDay();
+      if (dayOfWeek === 0 && currentWeek.length > 0) {
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+      currentWeek.push(day);
+      if (index === calendarData.length - 1) {
+        weeks.push(currentWeek);
+      }
+    });
+    return weeks;
+  };
+
+  const getIntensityColor = (level) => {
+    switch (level) {
+      case 0: return "bg-muted";
+      case 1: return "bg-green-200 dark:bg-green-900";
+      case 2: return "bg-green-400 dark:bg-green-700";
+      case 3: return "bg-green-600 dark:bg-green-500";
+      default: return "bg-muted";
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+  */
 
   return (
     <div className="space-y-6">
-      {/* Tool Statistics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Tools
-                </p>
-                <p className="text-2xl font-bold">{tools.length}</p>
-              </div>
-              <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 text-sm font-bold">T</span>
-              </div>
+      {/* Minimal Statistics Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border-0 shadow-none bg-muted/30">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-foreground">
+              {tools.length}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Total Tools
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Free Tools
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {tools.filter((t) => t.pricing === "free").length}
-                </p>
-              </div>
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-600 text-sm font-bold">F</span>
-              </div>
+        <Card className="border-0 shadow-none bg-muted/30">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {tools.filter((t) => t.pricing === "free").length}
             </div>
+            <div className="text-xs text-muted-foreground mt-1">Free Tools</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  New Tools
-                </p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {tools.filter((t) => getToolVersionInfo(t).isNew).length}
-                </p>
-              </div>
-              <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <span className="text-orange-600 text-sm font-bold">N</span>
-              </div>
+        <Card className="border-0 shadow-none bg-muted/30">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-orange-600">
+              {tools.filter((t) => getToolVersionInfo(t).isNew).length}
             </div>
+            <div className="text-xs text-muted-foreground mt-1">New Tools</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Categories
-                </p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {
-                    categories.filter((c) => c.id !== "all" && c.count > 0)
-                      .length
-                  }
-                </p>
-              </div>
-              <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-purple-600 text-sm font-bold">C</span>
-              </div>
+        <Card className="border-0 shadow-none bg-muted/30">
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-purple-600">
+              {categories.filter((c) => c.id !== "all" && c.count > 0).length}
             </div>
+            <div className="text-xs text-muted-foreground mt-1">Categories</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Category Distribution Bar Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tools by Category</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={categoryData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="count" fill="#0088FE" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Pricing Distribution Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Pricing Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={pricingData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, count }) =>
-                    `${name}: ${count} (${Math.round(
-                      (count / tools.length) * 100
-                    )}%)`
-                  }
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {pricingData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Tool Release Timeline */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tool Release Timeline</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={timelineData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <Tooltip content={<CustomTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="tools"
-                  stroke="#8884d8"
-                  fill="#8884d8"
-                  fillOpacity={0.6}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="newTools"
-                  stroke="#82ca9d"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Tool Features Comparison */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tool Features Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={featureData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  tick={{ fontSize: 10 }}
-                  width={100}
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="bg-background border rounded-lg p-3 shadow-lg">
-                          <p className="font-medium">{data.fullName}</p>
-                          <p>Tags: {data.tags}</p>
-                          <p>Version: v{data.version}</p>
-                          <p>Category: {data.category}</p>
-                          {data.isNew === 1 && (
-                            <Badge variant="secondary" className="mt-1">
-                              NEW
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="tags" fill="#00C49F" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tool Version Distribution */}
+      {/* 
+      GitHub-style Release Calendar - Hidden for now
+      The calendar component code is preserved here for future use:
+      
       <Card>
         <CardHeader>
-          <CardTitle>Tool Version Distribution</CardTitle>
+          <CardTitle className="text-lg">Tool Release Activity</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {calendarData.filter((d) => d.count > 0).length} releases in the past year
+          </p>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={featureData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 10 }}
-                angle={-45}
-                textAnchor="end"
-                height={80}
-              />
-              <YAxis />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
+          <div className="space-y-3">
+            <div className="flex gap-1 overflow-x-auto pb-2">
+              {weeksData.map((week, weekIndex) => (
+                <div key={weekIndex} className="flex flex-col gap-1">
+                  {week.map((day) => (
+                    <div
+                      key={day.date}
+                      className={`w-3 h-3 rounded-sm ${getIntensityColor(day.level)} cursor-pointer transition-all hover:ring-2 hover:ring-primary/50`}
+                      title={`${formatDate(day.date)}: ${day.count} release${day.count !== 1 ? "s" : ""}`}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Less</span>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-muted"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-200 dark:bg-green-900"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-400 dark:bg-green-700"></div>
+                <div className="w-3 h-3 rounded-sm bg-green-600 dark:bg-green-500"></div>
+              </div>
+              <span>More</span>
+            </div>
+            <div className="mt-6">
+              <h4 className="text-sm font-medium mb-3">Recent Releases</h4>
+              <div className="space-y-2">
+                {tools
+                  .sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
+                  .slice(0, 5)
+                  .map((tool) => {
+                    const versionInfo = getToolVersionInfo(tool);
                     return (
-                      <div className="bg-background border rounded-lg p-3 shadow-lg">
-                        <p className="font-medium">{data.fullName}</p>
-                        <p>Version: v{data.version}</p>
-                        <p>Category: {data.category}</p>
+                      <div key={tool.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30">
+                        <div className="flex items-center gap-3">
+                          <tool.icon className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <div className="text-sm font-medium">{tool.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {versionInfo.version} • {versionInfo.releaseDate}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {versionInfo.isNew && (
+                            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">NEW</Badge>
+                          )}
+                          <Badge variant={versionInfo.isPaid ? "destructive" : "secondary"} className="text-[10px] px-1 py-0 h-4">
+                            {versionInfo.pricing}
+                          </Badge>
+                        </div>
                       </div>
                     );
-                  }
-                  return null;
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="version"
-                stroke="#FF8042"
-                strokeWidth={2}
-                dot={{ fill: "#FF8042", strokeWidth: 2, r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+                  })}
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
+      */}
     </div>
   );
 }

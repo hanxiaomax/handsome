@@ -1,4 +1,5 @@
-import { Search, Wrench, Home, Star, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { Search, Wrench, Home, Heart, ChevronRight } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -10,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,10 +22,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { tools, categories } from "@/data/tools";
-import { useFavorites } from "@/contexts/favorites-context";
-import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
+import { useToolSearch } from "@/hooks/use-tool-search";
+import { ToolFilters, type FilterOptions } from "@/components/layout/tool-filters";
 import type { ToolInfo } from "@/types/tool";
 import { getToolVersionInfo } from "@/lib/tool-utils";
+import { useFavorites } from "@/contexts/favorites-context";
 
 interface AppSidebarProps {
   searchQuery: string;
@@ -31,6 +34,7 @@ interface AppSidebarProps {
   selectedTool: string | null;
   onToolSelect: (toolId: string) => void;
   onNavigateHome: () => void;
+  onNavigateToFavorites: () => void;
 }
 
 export function AppSidebar({
@@ -39,15 +43,22 @@ export function AppSidebar({
   selectedTool,
   onToolSelect,
   onNavigateHome,
+  onNavigateToFavorites,
 }: AppSidebarProps) {
-  const { favorites, toggleFavorite } = useFavorites();
-  const { results: filteredTools, hasQuery } = useFuzzySearch(
-    tools,
-    searchQuery
-  );
+  const { isMobile, setOpenMobile } = useSidebar();
+  const { favorites } = useFavorites();
+  const [filters, setFilters] = useState<FilterOptions>({
+    categories: [],
+    pricing: [],
+    isNew: null,
+    requiresBackend: null,
+  });
 
-  // Get favorite tools
-  const favoriteTools = tools.filter((tool) => favorites.includes(tool.id));
+  const { results: filteredTools, hasQuery, hasFilters, filteredCount } = useToolSearch({
+    tools,
+    searchQuery,
+    filters,
+  });
 
   // Group tools by category
   const groupedTools = categories.reduce((acc, category) => {
@@ -70,15 +81,14 @@ export function AppSidebar({
     // Prevent event bubbling to collapsible trigger
     event.stopPropagation();
     onToolSelect(toolId);
+    
+    // Close mobile sidebar when tool is selected
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
-  const handleRemoveFromFavorites = (
-    toolId: string,
-    event: React.MouseEvent
-  ) => {
-    event.stopPropagation();
-    toggleFavorite(toolId);
-  };
+
 
   return (
     <Sidebar className="border-r">
@@ -103,73 +113,22 @@ export function AppSidebar({
             className="pl-9"
           />
         </div>
-        {hasQuery && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Found {filteredTools.length} tool
-            {filteredTools.length !== 1 ? "s" : ""}
+
+        {/* Filters */}
+        <ToolFilters filters={filters} onFiltersChange={setFilters} />
+
+        {(hasQuery || hasFilters) && (
+          <p className="text-xs text-muted-foreground">
+            Found {filteredCount} tool{filteredCount !== 1 ? "s" : ""}
+            {hasFilters && !hasQuery && " matching filters"}
+            {hasQuery && !hasFilters && ` for "${searchQuery}"`}
+            {hasQuery && hasFilters && ` for "${searchQuery}" with filters`}
           </p>
         )}
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Favorites Group */}
-        {favoriteTools.length > 0 && (
-          <Collapsible defaultOpen>
-            <SidebarGroup>
-              <CollapsibleTrigger asChild>
-                <SidebarGroupLabel className="group/collapsible hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer">
-                  <Star className="h-4 w-4 mr-2" />
-                  Favorites ({favoriteTools.length})
-                  <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarGroupLabel>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {favoriteTools.map((tool) => {
-                      const versionInfo = getToolVersionInfo(tool);
-                      return (
-                        <SidebarMenuItem key={`fav-${tool.id}`}>
-                          <SidebarMenuButton
-                            onClick={(e) => handleToolClick(tool.id, e)}
-                            isActive={selectedTool === tool.id}
-                            className="w-full justify-start group"
-                          >
-                            <tool.icon className="h-4 w-4 mr-2" />
-                            <span className="truncate flex-1">{tool.name}</span>
-                            {versionInfo.isNew && (
-                              <Badge
-                                variant="secondary"
-                                className="text-[10px] px-1 py-0 h-4 bg-green-100 text-green-700 border-green-200 font-medium mr-1"
-                              >
-                                NEW
-                              </Badge>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) =>
-                                handleRemoveFromFavorites(tool.id, e)
-                              }
-                            >
-                              <Star className="h-3 w-3 fill-current text-yellow-500" />
-                            </Button>
-                            {tool.requiresBackend && (
-                              <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
-                                API
-                              </span>
-                            )}
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </SidebarGroup>
-          </Collapsible>
-        )}
+
 
         {/* Category Groups */}
         {Object.entries(groupedTools).map(([categoryId, categoryData]) => (
@@ -220,7 +179,7 @@ export function AppSidebar({
         ))}
 
         {/* Show message when no tools found */}
-        {Object.keys(groupedTools).length === 0 && favoriteTools.length === 0 && (
+        {Object.keys(groupedTools).length === 0 && (
           <SidebarGroup>
             <SidebarGroupContent>
               <div className="p-4 text-center text-muted-foreground text-sm">
@@ -234,14 +193,32 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        <Button
-          variant="outline"
-          onClick={onNavigateHome}
-          className="w-full justify-start"
-        >
-          <Home className="h-4 w-4 mr-2" />
-          Back to Home
-        </Button>
+        <div className="space-y-2">
+          <Button
+            variant="outline"
+            onClick={onNavigateToFavorites}
+            className="w-full justify-start"
+          >
+            <Heart className="h-4 w-4 mr-2" />
+            Favorites
+            {favorites.length > 0 && (
+              <Badge
+                variant="destructive"
+                className="ml-auto text-xs"
+              >
+                {favorites.length}
+              </Badge>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onNavigateHome}
+            className="w-full justify-start"
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

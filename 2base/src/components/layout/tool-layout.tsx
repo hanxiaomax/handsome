@@ -31,6 +31,10 @@ export function ToolLayout({
     navigate("/");
   };
 
+  const handleNavigateToFavorites = () => {
+    navigate("/favorites");
+  };
+
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="flex h-screen w-full">
@@ -40,6 +44,7 @@ export function ToolLayout({
           selectedTool={selectedTool}
           onToolSelect={handleToolSelect}
           onNavigateHome={handleNavigateHome}
+          onNavigateToFavorites={handleNavigateToFavorites}
         />
 
         <main className="flex-1 flex flex-col overflow-hidden">
