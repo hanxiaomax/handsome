@@ -123,11 +123,15 @@ Tool Categories
 ```
 
 #### Tool Card Design
-- **Icon**: 48x48px tool icon
-- **Title**: Tool name (H3)
-- **Description**: 2-line text description
-- **Tags**: Category tags
-- **Action**: Use button (primary) + info button (secondary)
+- **Layout**: Uniform height cards with flexible content distribution
+- **Height Consistency**: min-h-[280px] for standard mode, min-h-[200px] for compact mode
+- **Icon**: Tool-specific icon in primary color container (48x48px standard, 32x32px compact)
+- **Title**: Tool name with truncation support (H3 typography)
+- **Description**: Multi-line text description (up to 3 lines with line-clamp)
+- **Version Info**: Version number with NEW/FREE/PAID badges
+- **Minimal Design**: Clean interface focusing on essential information only
+- **Action**: Primary "Use Tool" button pinned to bottom with heart icon for favorites
+- **Structure**: Flexbox layout ensuring content distribution and bottom alignment
 
 ### Tool Page Layout
 

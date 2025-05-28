@@ -11,6 +11,8 @@ A modern, privacy-first collection of developer tools built with React, TypeScri
 - **Progressive Enhancement**: Core functionality first, then advanced features
 - **Theme Customization**: Light/dark mode with multiple color schemes
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- **Minimal UI Design**: Clean, focused interface with consistent card layouts
+- **Layout Consistency**: Uniform height cards with optimized content distribution
 
 ## Current Tools
 
