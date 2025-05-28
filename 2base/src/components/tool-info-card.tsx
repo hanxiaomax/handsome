@@ -44,9 +44,9 @@ export function ToolInfoCard({
 
   return (
     <Card
-      className={`group hover:shadow-lg transition-all duration-200 ${
-        onSelect ? "cursor-pointer" : ""
-      }`}
+      className={`group hover:shadow-lg transition-all duration-200 flex flex-col ${
+        compact ? "min-h-[200px]" : "min-h-[280px]"
+      } ${onSelect ? "cursor-pointer" : ""}`}
       onClick={handleCardClick}
     >
       <CardHeader className={compact ? "pb-2 p-3" : "pb-3 p-4"}>
@@ -55,7 +55,7 @@ export function ToolInfoCard({
             <div
               className={`${
                 compact ? "p-1.5" : "p-2"
-              } rounded-lg bg-primary/10`}
+              } rounded-lg bg-primary/10 flex-shrink-0`}
             >
               <tool.icon
                 className={`${compact ? "h-4 w-4" : "h-5 w-5"} text-primary`}
@@ -103,7 +103,9 @@ export function ToolInfoCard({
               variant="ghost"
               size="sm"
               onClick={handleToggleFavorite}
-              className={compact ? "h-6 w-6 p-0" : "h-8 w-8 p-0"}
+              className={`${
+                compact ? "h-6 w-6 p-0" : "h-8 w-8 p-0"
+              } flex-shrink-0`}
             >
               <Heart
                 className={`${compact ? "h-3 w-3" : "h-4 w-4"} ${
@@ -114,38 +116,20 @@ export function ToolInfoCard({
           )}
         </div>
       </CardHeader>
-      <CardContent className={compact ? "pt-0 p-3" : "pt-0 p-4"}>
+      <CardContent
+        className={`${compact ? "pt-0 p-3" : "pt-0 p-4"} flex-1 flex flex-col`}
+      >
         <p
           className={`${
-            compact ? "text-xs mb-3" : "text-sm mb-4"
-          } text-muted-foreground line-clamp-2`}
+            compact ? "text-xs" : "text-sm"
+          } text-muted-foreground line-clamp-3 flex-1 mb-4`}
         >
           {tool.description}
         </p>
 
-        <div className={`flex flex-wrap gap-1 ${compact ? "mb-3" : "mb-4"}`}>
-          {tool.tags.slice(0, compact ? 2 : 3).map((tag) => (
-            <Badge
-              key={tag}
-              variant="outline"
-              className={compact ? "text-[10px]" : "text-xs"}
-            >
-              {tag}
-            </Badge>
-          ))}
-          {tool.tags.length > (compact ? 2 : 3) && (
-            <Badge
-              variant="outline"
-              className={compact ? "text-[10px]" : "text-xs"}
-            >
-              +{tool.tags.length - (compact ? 2 : 3)}
-            </Badge>
-          )}
-        </div>
-
         {onUseTool && (
           <Button
-            className={`w-full ${compact ? "h-7" : ""}`}
+            className={`w-full mt-auto ${compact ? "h-7" : ""}`}
             size="sm"
             onClick={handleUseTool}
           >
