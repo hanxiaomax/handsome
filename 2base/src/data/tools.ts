@@ -2,6 +2,7 @@ import { Hash, FileText, Image, Lock, Code2 } from "lucide-react";
 import type { ToolInfo } from "@/types/tool";
 import { toolInfo as programmerCalculatorInfo } from "@/tools/programmer-calculator/toolInfo";
 import { toolInfo as uuidGeneratorInfo } from "@/tools/uuid-generator/toolInfo";
+import { toolInfo as worldClockInfo } from "@/tools/world-clock/toolInfo";
 
 // Import other tool info when they are created
 // import { toolInfo as hashGeneratorInfo } from "@/tools/hash-generator/toolInfo";
@@ -12,6 +13,7 @@ export const tools: ToolInfo[] = [
   // Use imported tool info for existing tools
   programmerCalculatorInfo,
   uuidGeneratorInfo,
+  worldClockInfo,
 
   // Temporary definitions for tools that don't have toolInfo.ts yet
   {

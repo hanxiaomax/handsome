@@ -4,6 +4,80 @@
 
 A standardized layout framework for all tool pages in the suite, providing consistent user experience, navigation, and window management controls. Based on the programmer calculator implementation with enhanced functionality.
 
+## Design Principles
+
+### Component Standards
+- **shadcn/ui Components**: All UI components must use shadcn/ui library exclusively
+- **Theme Colors**: Only use theme-defined colors, no hardcoded color values
+- **Minimal Design**: Clean, simple interface without unnecessary decorative elements
+- **Consistency**: Maintain visual consistency across all tools
+
+### Color Usage Guidelines
+- **Primary Colors**: Use `primary`, `secondary`, `accent` for main interface elements
+- **Text Colors**: Use `foreground`, `muted-foreground` for text hierarchy
+- **Status Colors**: Use `destructive` for errors/warnings, `primary` for success states
+- **Background Colors**: Use `background`, `card`, `muted` for surface colors
+- **Border Colors**: Use `border`, `input` for component borders
+
+### Component Requirements
+- **Installation**: Use `pnpm add` to install missing shadcn components
+- **Import**: Always import from `@/components/ui/[component]`
+- **Customization**: Extend shadcn components through className props, not custom CSS
+- **Accessibility**: Leverage built-in accessibility features of shadcn components
+
+### Color Usage Examples
+
+#### Correct Theme Color Usage
+```typescript
+// ✅ Good - Using theme colors
+<div className="bg-primary text-primary-foreground">Primary Action</div>
+<div className="bg-secondary text-secondary-foreground">Secondary Content</div>
+<div className="text-muted-foreground">Helper Text</div>
+<div className="border-destructive text-destructive">Error State</div>
+<div className="bg-accent/20 border-accent/30">Subtle Highlight</div>
+
+// ✅ Good - Status indicators with theme colors
+{isSuccess ? (
+  <span className="text-primary">✅</span>
+) : (
+  <span className="text-destructive">❌</span>
+)}
+```
+
+#### Incorrect Hardcoded Colors
+```typescript
+// ❌ Bad - Hardcoded colors
+<div className="bg-blue-500 text-white">Primary Action</div>
+<div className="bg-gradient-to-r from-pink-200 via-purple-200">Background</div>
+<div className="text-green-600 dark:text-green-400">Success</div>
+<div className="border-red-500">Error Border</div>
+<div className="bg-slate-700">Dark Background</div>
+```
+
+#### Component Styling Best Practices
+```typescript
+// ✅ Good - Clean, minimal styling with theme colors
+<Card className="border-border bg-card">
+  <CardHeader>
+    <CardTitle className="text-foreground">Tool Settings</CardTitle>
+  </CardHeader>
+  <CardContent className="text-muted-foreground">
+    Configuration options for the tool
+  </CardContent>
+</Card>
+
+// ✅ Good - Status-based styling
+<Button 
+  variant={isActive ? "default" : "outline"}
+  className={cn(
+    "transition-colors",
+    isActive && "bg-primary text-primary-foreground"
+  )}
+>
+  Toggle Option
+</Button>
+```
+
 ## Core Components
 
 ### 1. Tool Layout Structure

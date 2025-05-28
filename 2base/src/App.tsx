@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Homepage } from "@/components/homepage";
 import ProgrammerCalculator from "@/tools/programmer-calculator/ui";
 import UUIDGenerator from "@/tools/uuid-generator/ui";
+import WorldClock from "@/tools/world-clock/ui";
 import FavoritesPage from "@/app/favorites/page";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { MinimizedToolsProvider } from "@/contexts/minimized-tools-context";
@@ -20,6 +21,7 @@ function App() {
               element={<ProgrammerCalculator />}
             />
             <Route path="/tools/uuid-generator" element={<UUIDGenerator />} />
+            <Route path="/tools/world-clock" element={<WorldClock />} />
           </Routes>
           <MinimizedToolsIndicator />
         </Router>
