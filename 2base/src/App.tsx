@@ -3,10 +3,12 @@ import { Homepage } from "@/components/homepage";
 import ProgrammerCalculator from "@/tools/programmer-calculator/ui";
 import UUIDGenerator from "@/tools/uuid-generator/ui";
 import WorldClock from "@/tools/world-clock/ui";
+import UnitConverter from "@/tools/unit-converter/ui";
 import FavoritesPage from "@/app/favorites/page";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { MinimizedToolsProvider } from "@/contexts/minimized-tools-context";
 import { MinimizedToolsIndicator } from "@/components/layout/minimized-tools-indicator";
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   return (
@@ -22,8 +24,10 @@ function App() {
             />
             <Route path="/tools/uuid-generator" element={<UUIDGenerator />} />
             <Route path="/tools/world-clock" element={<WorldClock />} />
+            <Route path="/tools/unit-converter" element={<UnitConverter />} />
           </Routes>
           <MinimizedToolsIndicator />
+          <Toaster />
         </Router>
       </MinimizedToolsProvider>
     </FavoritesProvider>
