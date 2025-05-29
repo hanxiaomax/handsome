@@ -4,6 +4,7 @@ import { toolInfo as programmerCalculatorInfo } from "@/tools/programmer-calcula
 import { toolInfo as uuidGeneratorInfo } from "@/tools/uuid-generator/toolInfo";
 import { toolInfo as worldClockInfo } from "@/tools/world-clock/toolInfo";
 import { toolInfo as unitConverterInfo } from "@/tools/unit-converter/toolInfo";
+import { toolInfo as unixTimestampConverterInfo } from "@/tools/unix-timestamp-converter/toolInfo";
 
 // Import other tool info when they are created
 // import { toolInfo as hashGeneratorInfo } from "@/tools/hash-generator/toolInfo";
@@ -16,6 +17,7 @@ export const tools: ToolInfo[] = [
   uuidGeneratorInfo,
   worldClockInfo,
   unitConverterInfo,
+  unixTimestampConverterInfo,
 
   // Temporary definitions for tools that don't have toolInfo.ts yet
   {

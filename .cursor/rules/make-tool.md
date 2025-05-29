@@ -11,7 +11,7 @@
 
 ## 技术要求
 - 使用 TypeScript + React 18.2.0 + tailwindcss 4
-- 基于 shadcn/ui 组件库，使用pnpm安装缺失的组件
+- 基于 shadcn/ui 组件库，但不要自行安装
 - 遵循工具布局框架规范
 - 支持响应式设计
 - 包含完整的键盘快捷键支持
