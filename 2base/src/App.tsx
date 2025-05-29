@@ -5,6 +5,7 @@ import UUIDGenerator from "@/tools/uuid-generator/ui";
 import WorldClock from "@/tools/world-clock/ui";
 import UnitConverter from "@/tools/unit-converter/ui";
 import UnixTimestampConverter from "@/tools/unix-timestamp-converter/ui";
+import MarkdownEditor from "@/tools/markdown-editor/ui";
 import FavoritesPage from "@/app/favorites/page";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { MinimizedToolsProvider } from "@/contexts/minimized-tools-context";
@@ -30,6 +31,7 @@ function App() {
               path="/tools/unix-timestamp-converter"
               element={<UnixTimestampConverter />}
             />
+            <Route path="/tools/markdown-editor" element={<MarkdownEditor />} />
           </Routes>
           <MinimizedToolsIndicator />
           <Toaster />
