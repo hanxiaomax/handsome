@@ -22,6 +22,8 @@ import { toolInfo } from "./toolInfo";
 import { ScientificCalculator } from "./components/calculator";
 import { Combobox, UnitCombobox } from "./components/combobox";
 import { KeyboardShortcuts, QuickTips } from "./components/tips";
+import { MoreCard } from "./components/more-card";
+import { CustomConversionDialog, type CustomConversion } from "./components/custom-conversion-dialog";
 
 // Initial state - replace favorites with focusedUnits
 const initialState: ConverterState = {
@@ -44,6 +46,8 @@ export default function UnitConverter() {
   const { minimizeTool } = useMinimizedTools();
   const [state, setState] = useState<ConverterState>(initialState);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [customDialogOpen, setCustomDialogOpen] = useState(false);
+  const [customConversions, setCustomConversions] = useState<CustomConversion[]>([]);
   const converter = useRef(new UnitConverterEngine(unitCategories));
 
   // Initialize conversions on component mount
@@ -67,7 +71,8 @@ export default function UnitConverter() {
 
   const handleMinimize = useCallback(() => {
     minimizeTool(toolInfo);
-  }, [minimizeTool]);
+    navigate('/');
+  }, [minimizeTool, navigate]);
 
   const handleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -196,6 +201,17 @@ export default function UnitConverter() {
     toast.success(`Value set to ${value}`);
   }, [state.inputUnit, state.selectedCategory, debouncedConvert]);
 
+  // Handle custom conversion creation
+  const handleCreateCustom = useCallback(() => {
+    setCustomDialogOpen(true);
+  }, []);
+
+  // Handle save custom conversion
+  const handleSaveCustomConversion = useCallback((conversion: CustomConversion) => {
+    setCustomConversions(prev => [...prev, conversion]);
+    toast.success(`Custom conversion "${conversion.name}" added!`);
+  }, []);
+
   // Get current category data
   const selectedCategory = unitCategories.find((c) => c.id === state.selectedCategory);
 
@@ -261,7 +277,7 @@ export default function UnitConverter() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Conversion Results</Label>
-              {state.results.length > 8 && (
+              {state.results.length > 7 && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -282,8 +298,9 @@ export default function UnitConverter() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-              {(state.showAllUnits ? state.results : state.results.slice(0, 8)).map((result) => (
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+              {/* Show regular conversion results - limit to 6 when not showing all to leave room for custom conversions and More card */}
+              {(state.showAllUnits ? state.results : state.results.slice(0, 6)).map((result) => (
                 <ResultCard
                   key={result.unit.id}
                   result={result}
@@ -291,6 +308,34 @@ export default function UnitConverter() {
                   onToggleFocus={() => handleToggleFocus(result.unit.id)}
                   onCopyValue={() => handleCopyValue(result.formattedValue)}
                   onSwapUnits={() => handleSwapUnits(result)}
+                />
+              ))}
+              
+              {/* Custom Conversions - show when not displaying all units */}
+              {!state.showAllUnits && customConversions.slice(0, 1).map((conversion) => (
+                <CustomConversionCard
+                  key={conversion.id}
+                  conversion={conversion}
+                  inputValue={state.inputValue}
+                />
+              ))}
+              
+              {/* More Card - always show when there are results and not showing all */}
+              {!state.showAllUnits && <MoreCard onCreateCustom={handleCreateCustom} />}
+            </div>
+          </div>
+        )}
+
+        {/* Show all custom conversions when expanded or when there are many */}
+        {state.showAllUnits && customConversions.length > 0 && (
+          <div className="space-y-4">
+            <Label className="text-sm font-medium">Custom Conversions</Label>
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+              {customConversions.map((conversion) => (
+                <CustomConversionCard
+                  key={conversion.id}
+                  conversion={conversion}
+                  inputValue={state.inputValue}
                 />
               ))}
             </div>
@@ -303,6 +348,13 @@ export default function UnitConverter() {
           <QuickTips />
         </div>
       </div>
+
+      {/* Custom Conversion Dialog */}
+      <CustomConversionDialog
+        isOpen={customDialogOpen}
+        onOpenChange={setCustomDialogOpen}
+        onSave={handleSaveCustomConversion}
+      />
     </ToolLayout>
   );
 }
@@ -321,47 +373,47 @@ function ResultCard({ result, isFocused, onToggleFocus, onCopyValue, onSwapUnits
     <Card className={`group hover:shadow-md transition-all aspect-square ${
       isFocused ? 'ring-2 ring-primary bg-primary/5' : ''
     }`}>
-      <CardContent className="p-3 h-full flex flex-col justify-between">
+      <CardContent className="p-2 h-full flex flex-col justify-between">
         {/* Header with unit name and actions */}
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start justify-between mb-1">
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-sm truncate">{result.unit.name}</h4>
-            <p className="text-xs text-muted-foreground">{result.unit.symbol}</p>
+            <h4 className="font-medium text-xs truncate">{result.unit.name}</h4>
+            <p className="text-xs text-destructive font-semibold">{result.unit.symbol}</p>
           </div>
-          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="ghost"
               size="sm"
               onClick={onToggleFocus}
-              className="h-5 w-5 p-0"
+              className="h-4 w-4 p-0"
               title={isFocused ? "Remove focus" : "Focus unit"}
             >
-              <Focus className={`h-3 w-3 ${isFocused ? "text-primary" : "text-muted-foreground"}`} />
+              <Focus className={`h-2.5 w-2.5 ${isFocused ? "text-primary" : "text-muted-foreground"}`} />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={onSwapUnits}
-              className="h-5 w-5 p-0"
+              className="h-4 w-4 p-0"
               title="Swap units"
             >
-              <ArrowRightLeft className="h-3 w-3" />
+              <ArrowRightLeft className="h-2.5 w-2.5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={onCopyValue}
-              className="h-5 w-5 p-0"
+              className="h-4 w-4 p-0"
               title="Copy value"
             >
-              <Copy className="h-3 w-3" />
+              <Copy className="h-2.5 w-2.5" />
             </Button>
           </div>
         </div>
 
         {/* Value display */}
         <div className="space-y-1 flex-1 flex flex-col justify-center">
-          <p className="font-mono text-base font-semibold truncate" title={result.formattedValue}>
+          <p className="font-mono text-sm font-semibold truncate" title={result.formattedValue}>
             {result.formattedValue}
           </p>
           {result.scientificValue && (
@@ -374,6 +426,87 @@ function ResultCard({ result, isFocused, onToggleFocus, onCopyValue, onSwapUnits
               ~
             </Badge>
           )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Custom Conversion Card Component
+interface CustomConversionCardProps {
+  conversion: CustomConversion;
+  inputValue: number;
+}
+
+function CustomConversionCard({ conversion, inputValue }: CustomConversionCardProps) {
+  const [result, setResult] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      if (conversion.isJavaScript) {
+        // Execute JavaScript conversion
+        const func = new Function('value', conversion.formula + '\nreturn convert(value);');
+        const converted = func(inputValue);
+        setResult(converted);
+        setError(null);
+      } else {
+        // Execute basic formula (replace x with value)
+        const formula = conversion.formula.replace(/x/g, inputValue.toString());
+        const converted = eval(formula);
+        setResult(converted);
+        setError(null);
+      }
+    } catch {
+      setError('Conversion error');
+      setResult(null);
+    }
+  }, [conversion, inputValue]);
+
+  const handleCopy = () => {
+    if (result !== null) {
+      navigator.clipboard.writeText(result.toString());
+      toast.success("Value copied to clipboard");
+    }
+  };
+
+  return (
+    <Card className="group hover:shadow-md transition-all aspect-square bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+      <CardContent className="p-3 h-full flex flex-col justify-between">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1 min-w-0">
+            <h4 className="font-medium text-sm truncate">{conversion.name}</h4>
+            <p className="text-xs text-muted-foreground">{conversion.symbol}</p>
+          </div>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopy}
+              className="h-5 w-5 p-0"
+              title="Copy value"
+              disabled={result === null}
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Value display */}
+        <div className="space-y-1 flex-1 flex flex-col justify-center">
+          {error ? (
+            <p className="text-xs text-red-500">Error</p>
+          ) : result !== null ? (
+            <p className="font-mono text-base font-semibold truncate">
+              {result.toFixed(3)}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">Calculating...</p>
+          )}
+          <Badge variant="outline" className="text-xs w-fit">
+            Custom
+          </Badge>
         </div>
       </CardContent>
     </Card>

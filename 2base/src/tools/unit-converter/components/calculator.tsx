@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -16,6 +16,14 @@ export function ScientificCalculator({ onValueSelect }: CalculatorProps) {
   const [previousValue, setPreviousValue] = useState<number | null>(null);
   const [operation, setOperation] = useState<string | null>(null);
   const [waitingForNewValue, setWaitingForNewValue] = useState(false);
+
+  // Auto-use value when display changes and is a valid result
+  useEffect(() => {
+    const value = parseFloat(display);
+    if (!isNaN(value) && display !== "0" && !waitingForNewValue) {
+      onValueSelect(value);
+    }
+  }, [display, waitingForNewValue, onValueSelect]);
 
   const inputNumber = (num: string) => {
     if (waitingForNewValue) {
@@ -131,17 +139,10 @@ export function ScientificCalculator({ onValueSelect }: CalculatorProps) {
     setWaitingForNewValue(true);
   };
 
-  const useValue = () => {
-    const value = parseFloat(display);
-    if (!isNaN(value)) {
-      onValueSelect(value);
-    }
-  };
-
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="ml-2">
+        <Button variant="destructive" size="sm" className="ml-2">
           <Calculator className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
@@ -149,6 +150,9 @@ export function ScientificCalculator({ onValueSelect }: CalculatorProps) {
         <div className="space-y-4">
           <div className="text-center">
             <h4 className="font-medium mb-2">Scientific Calculator</h4>
+            <p className="text-xs text-muted-foreground">
+              Values are auto-applied as you calculate
+            </p>
           </div>
 
           {/* Display */}
@@ -370,11 +374,6 @@ export function ScientificCalculator({ onValueSelect }: CalculatorProps) {
               =
             </Button>
           </div>
-
-          {/* Use Value Button */}
-          <Button onClick={useValue} className="w-full">
-            Use Value: {display}
-          </Button>
         </div>
       </PopoverContent>
     </Popover>
