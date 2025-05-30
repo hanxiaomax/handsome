@@ -6,6 +6,7 @@ import { toolInfo as worldClockInfo } from "@/tools/world-clock/toolInfo";
 import { toolInfo as unitConverterInfo } from "@/tools/unit-converter/toolInfo";
 import { toolInfo as unixTimestampConverterInfo } from "@/tools/unix-timestamp-converter/toolInfo";
 import { toolInfo as markdownEditorInfo } from "@/tools/markdown-editor/toolInfo";
+import { toolInfo as emojiLibraryInfo } from "@/tools/emoji-library/toolInfo";
 
 // Import other tool info when they are created
 // import { toolInfo as hashGeneratorInfo } from "@/tools/hash-generator/toolInfo";
@@ -20,6 +21,7 @@ export const tools: ToolInfo[] = [
   unitConverterInfo,
   unixTimestampConverterInfo,
   markdownEditorInfo,
+  emojiLibraryInfo,
 
   // Temporary definitions for tools that don't have toolInfo.ts yet
   {

@@ -133,11 +133,69 @@ tools/<工具名称>/
      tags: ['<标签1>', '<标签2>'],
      requiresBackend: false,
      icon: <IconComponent>,
-     path: '/tools/<工具路径>'
+     path: '/tools/<工具路径>',
+     version: '1.0.0',
+     releaseDate: '2024-01-20',
+     pricing: 'free'
    }
    ```
 
-### 3. 安装所需组件
+### 3. 注册工具到系统 ⭐ **重要步骤**
+**必须完成工具注册才能在应用中使用！**
+
+#### 3.1 在工具数据文件中注册
+编辑 `src/data/tools.ts` 文件：
+
+1. **导入工具信息**:
+   ```typescript
+   import { toolInfo as <工具名称>Info } from "@/tools/<工具名称>/toolInfo";
+   ```
+
+2. **添加到工具数组**:
+   ```typescript
+   export const tools: ToolInfo[] = [
+     // 现有工具...
+     <工具名称>Info,  // 添加新工具
+     // 其他工具...
+   ];
+   ```
+
+#### 3.2 创建路由页面
+在 `src/app/tools/<工具名称>/page.tsx` 创建路由页面：
+
+```typescript
+import <ToolComponent> from "@/tools/<工具名称>/ui";
+
+export default function <ToolName>Page() {
+  return <<ToolComponent> />;
+}
+```
+
+#### 3.3 配置主路由 ⭐ **关键步骤**
+**必须在主应用路由中注册工具路由！**
+
+编辑 `src/App.tsx` 文件：
+
+1. **导入工具组件**:
+   ```typescript
+   import <ToolComponent> from "@/tools/<工具名称>/ui";
+   ```
+
+2. **添加路由规则**:
+   ```typescript
+   <Routes>
+     {/* 现有路由... */}
+     <Route path="/tools/<工具名称>" element={<<ToolComponent> />} />
+   </Routes>
+   ```
+
+#### 3.4 验证注册成功
+- 工具应出现在主页工具列表中
+- 可以通过 `/tools/<工具名称>` 路径访问
+- 分类计数正确更新
+- 搜索功能可以找到该工具
+
+### 4. 安装所需组件
 确保安装所有必需的shadcn/ui组件：
 ```bash
 # 示例安装命令（根据实际需要调整）
@@ -147,7 +205,7 @@ npx shadcn@latest add input
 # 其他所需组件...
 ```
 
-### 4. 编码规范要求
+### 5. 编码规范要求
 - **Language**: 所有代码、注释、变量名使用英文
 - **TypeScript**: 严格类型检查，定义完整的接口
 - **Import Order**: 遵循标准导入顺序（React -> shadcn/ui -> 内部组件 -> 工具类型）
@@ -155,9 +213,11 @@ npx shadcn@latest add input
 - **Performance**: 使用useCallback、useMemo优化性能
 - **Accessibility**: 完整的键盘导航和屏幕阅读器支持
 
-### 5. 测试验证
+### 6. 测试验证
 实现完成后需要验证：
 - [ ] 工具可以正常构建和运行
+- [ ] **工具已正确注册并出现在主页列表中** ⭐
+- [ ] **可以通过路由访问工具页面** ⭐
 - [ ] 所有核心功能正常工作
 - [ ] 响应式布局在不同屏幕尺寸下正常显示
 - [ ] 键盘快捷键正常工作
@@ -166,7 +226,7 @@ npx shadcn@latest add input
 - [ ] 无障碍功能正常工作
 
 ## 开始实现
-请按照上述要求，首先创建详细的设计文档，然后实现完整的工具功能。确保遵循所有设计原则和技术要求。
+请按照上述要求，首先创建详细的设计文档，然后实现完整的工具功能。**确保完成工具注册步骤**，这是工具能够在应用中正常使用的关键！
 ```
 
 ---
@@ -177,7 +237,8 @@ npx shadcn@latest add input
 2. **完整的参考文档** - 引用了所有必要的规范和示例
 3. **明确的技术要求** - TypeScript、React、shadcn/ui等
 4. **详细的实现指导** - 从设计文档到代码实现的完整流程
-5. **质量保证** - 包含测试验证清单
+5. **⭐ 重点强调工具注册步骤** - 确保工具能正常集成到系统中
+6. **质量保证** - 包含测试验证清单
 
 使用时只需要：
 1. 替换 `<工具名称>` 为实际工具名
