@@ -3,6 +3,7 @@ import type {
   FormattedDate,
   TimezoneInfo,
   ConversionResult,
+  CodeExample,
   TimestampInputFormat,
 } from "./types";
 
@@ -95,7 +96,90 @@ export class UnixTimestampEngine {
   }
 
   /**
-   * Convert Unix timestamp to human-readable date
+   * Generate enhanced formatted dates with all supported formats
+   */
+  private generateFormattedDates(date: Date): FormattedDate {
+    // US Format: 05/29/2025 @ 3:28pm UTC
+    const usFormat = this.formatUSStyle(date);
+
+    // RFC 2822 Alternative: Thursday, 29-May-25 15:28:02 UTC
+    const rfc2822Alternative = this.formatRFC2822Alternative(date);
+
+    return {
+      iso8601: date.toISOString(),
+      iso8601Extended: date
+        .toISOString()
+        .replace("T", " ")
+        .replace(/\.\d{3}Z$/, " UTC"),
+      rfc2822: date.toUTCString(),
+      rfc2822Alternative,
+      rfc3339: date.toISOString(),
+      usFormat,
+      locale: date.toLocaleString(),
+      localeDate: date.toLocaleDateString(),
+      localeTime: date.toLocaleTimeString(),
+    };
+  }
+
+  /**
+   * Format date in US style: 05/29/2025 @ 3:28pm UTC
+   */
+  private formatUSStyle(date: Date): string {
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const year = date.getUTCFullYear();
+
+    let hour = date.getUTCHours();
+    const minute = String(date.getUTCMinutes()).padStart(2, "0");
+    const ampm = hour >= 12 ? "pm" : "am";
+
+    hour = hour % 12;
+    if (hour === 0) hour = 12;
+
+    return `${month}/${day}/${year} @ ${hour}:${minute}${ampm} UTC`;
+  }
+
+  /**
+   * Format date in RFC 2822 alternative style: Thursday, 29-May-25 15:28:02 UTC
+   */
+  private formatRFC2822Alternative(date: Date): string {
+    const weekdays = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const weekday = weekdays[date.getUTCDay()];
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = months[date.getUTCMonth()];
+    const year = String(date.getUTCFullYear()).slice(-2);
+    const hour = String(date.getUTCHours()).padStart(2, "0");
+    const minute = String(date.getUTCMinutes()).padStart(2, "0");
+    const second = String(date.getUTCSeconds()).padStart(2, "0");
+
+    return `${weekday}, ${day}-${month}-${year} ${hour}:${minute}:${second} UTC`;
+  }
+
+  /**
+   * Convert Unix timestamp to human-readable date with enhanced formatting
    */
   convertSingleTimestamp(
     input: string,
@@ -141,12 +225,8 @@ export class UnixTimestampEngine {
       microseconds: timestampMs * 1000,
     };
 
-    // Generate formatted dates
-    const formatted: FormattedDate = {
-      iso8601: date.toISOString(),
-      rfc2822: date.toUTCString(),
-      locale: date.toLocaleString(),
-    };
+    // Generate enhanced formatted dates
+    const formatted: FormattedDate = this.generateFormattedDates(date);
 
     // Generate timezone-specific times
     const timezones = this.timezones.slice(0, 6).map((tz) => ({
@@ -169,10 +249,7 @@ export class UnixTimestampEngine {
   /**
    * Convert date string to Unix timestamp
    */
-  convertDateToTimestamp(
-    input: string,
-    timezone?: string
-  ): ConversionResult | null {
+  convertDateToTimestamp(input: string): ConversionResult | null {
     if (!this.validateInput(input, "datetime")) {
       return null;
     }
@@ -199,12 +276,8 @@ export class UnixTimestampEngine {
       microseconds: timestampMs * 1000,
     };
 
-    // Generate formatted dates
-    const formatted: FormattedDate = {
-      iso8601: date.toISOString(),
-      rfc2822: date.toUTCString(),
-      locale: date.toLocaleString(),
-    };
+    // Generate enhanced formatted dates
+    const formatted: FormattedDate = this.generateFormattedDates(date);
 
     // Generate timezone-specific times
     const timezones = this.timezones.slice(0, 6).map((tz) => ({
@@ -222,6 +295,108 @@ export class UnixTimestampEngine {
       timezones,
       relative,
     };
+  }
+
+  /**
+   * Convert Date with time to Unix timestamp
+   */
+  convertDatePickerToTimestamp(
+    date: Date,
+    time: { hour: number; minute: number; second: number }
+  ): ConversionResult | null {
+    try {
+      // Create new date with the selected time
+      const combinedDate = new Date(date);
+      combinedDate.setHours(time.hour, time.minute, time.second, 0);
+
+      if (isNaN(combinedDate.getTime())) {
+        return null;
+      }
+
+      const timestampMs = combinedDate.getTime();
+
+      // Generate all timestamp formats
+      const timestamp: TimestampFormat = {
+        seconds: Math.floor(timestampMs / 1000),
+        milliseconds: timestampMs,
+        microseconds: timestampMs * 1000,
+      };
+
+      // Generate enhanced formatted dates
+      const formatted: FormattedDate =
+        this.generateFormattedDates(combinedDate);
+
+      // Generate timezone-specific times
+      const timezones = this.timezones.slice(0, 6).map((tz) => ({
+        timezone: tz,
+        formatted: this.formatDateInTimezone(combinedDate, tz.id),
+      }));
+
+      // Generate relative time
+      const relative = this.formatRelativeTime(timestamp.seconds);
+
+      const inputString = `${combinedDate.toLocaleDateString()} ${String(
+        time.hour
+      ).padStart(2, "0")}:${String(time.minute).padStart(2, "0")}:${String(
+        time.second
+      ).padStart(2, "0")}`;
+
+      return {
+        input: inputString,
+        timestamp,
+        formatted,
+        timezones,
+        relative,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Convert timestamp to Date and time
+   */
+  convertTimestampToDatePicker(
+    timestamp: number,
+    format: TimestampInputFormat
+  ): {
+    date: Date;
+    time: { hour: number; minute: number; second: number };
+  } | null {
+    try {
+      let timestampMs: number;
+
+      // Convert to milliseconds based on input format
+      switch (format) {
+        case "seconds":
+          timestampMs = timestamp * 1000;
+          break;
+        case "milliseconds":
+          timestampMs = timestamp;
+          break;
+        case "microseconds":
+          timestampMs = timestamp / 1000;
+          break;
+        default:
+          return null;
+      }
+
+      const date = new Date(timestampMs);
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+
+      return {
+        date: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
+        time: {
+          hour: date.getHours(),
+          minute: date.getMinutes(),
+          second: date.getSeconds(),
+        },
+      };
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -307,90 +482,51 @@ export class UnixTimestampEngine {
   }
 
   /**
-   * Parse batch input into individual timestamps
+   * Get code examples for creating timestamps
    */
-  parseBatchInput(input: string): string[] {
-    if (!input || input.trim() === "") return [];
+  getCodeExamples(timestamp: number): CodeExample[] {
+    const date = new Date(timestamp * 1000);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const hour = date.getHours();
+    const minute = date.getMinutes();
+    const second = date.getSeconds();
 
-    return input
-      .trim()
-      .split(/[\n,\s]+/)
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
-  }
+    return [
+      {
+        language: "javascript",
+        name: "JavaScript",
+        description: "Create timestamp using Date object",
+        code: `// Current timestamp
+Math.floor(Date.now() / 1000)
 
-  /**
-   * Process batch conversion
-   */
-  processBatchConversion(
-    inputs: string[],
-    format: TimestampInputFormat
-  ): ConversionResult[] {
-    const results: ConversionResult[] = [];
+// Specific date
+Math.floor(new Date(${year}, ${
+          month - 1
+        }, ${day}, ${hour}, ${minute}, ${second}).getTime() / 1000)
 
-    for (const input of inputs) {
-      const result = this.convertSingleTimestamp(input, format);
-      if (result) {
-        results.push(result);
-      }
-    }
+// From ISO string
+Math.floor(new Date("${date.toISOString()}").getTime() / 1000)`,
+      },
+      {
+        language: "python",
+        name: "Python",
+        description: "Create timestamp using datetime and time modules",
+        code: `import time
+import datetime
 
-    return results;
-  }
+# Current timestamp
+int(time.time())
 
-  /**
-   * Generate CSV content from batch results
-   */
-  generateCSV(results: ConversionResult[]): string {
-    const headers = [
-      "Input",
-      "Seconds",
-      "Milliseconds",
-      "Microseconds",
-      "ISO 8601",
-      "RFC 2822",
-      "Locale",
-      "Relative",
+# From datetime object
+datetime.datetime(${year}, ${month}, ${day}, ${hour}, ${minute}, ${second}).timestamp()
+
+# From ISO string
+datetime.datetime.fromisoformat("${date
+          .toISOString()
+          .replace("Z", "+00:00")}").timestamp()`,
+      },
     ];
-
-    const rows = results.map((result) => [
-      result.input,
-      result.timestamp.seconds.toString(),
-      result.timestamp.milliseconds.toString(),
-      result.timestamp.microseconds.toString(),
-      result.formatted.iso8601,
-      result.formatted.rfc2822,
-      result.formatted.locale,
-      result.relative.past || result.relative.future || "",
-    ]);
-
-    return [headers, ...rows]
-      .map((row) =>
-        row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")
-      )
-      .join("\n");
-  }
-
-  /**
-   * Download CSV file
-   */
-  downloadCSV(results: ConversionResult[], filename?: string): void {
-    const csvContent = this.generateCSV(results);
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute(
-        "download",
-        filename || `timestamp-conversions-${Date.now()}.csv`
-      );
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
   }
 }

@@ -11,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Copy, RefreshCw, Download, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Copy, RefreshCw, ArrowLeftRight, Code } from "lucide-react";
 import { toast } from "sonner";
 import { useMinimizedTools } from "@/contexts/minimized-tools-context";
 import { toolInfo } from "./toolInfo";
@@ -25,13 +25,13 @@ const initialState: ConverterState = {
   inputValue: "",
   inputType: "timestamp",
   selectedFormat: "seconds",
-  selectedTimezone: "UTC",
-  outputFormat: "iso8601",
-  showTimezones: true,
-  showRelative: true,
-  batchInput: "",
-  batchResults: [],
-  history: [],
+  selectedDate: undefined,
+  selectedTime: {
+    hour: new Date().getHours(),
+    minute: new Date().getMinutes(),
+    second: new Date().getSeconds(),
+  },
+  showCodeExamples: false,
   isProcessing: false,
   error: null,
 };
@@ -77,43 +77,32 @@ export default function UnixTimestampConverter() {
 
   // Convert timestamp
   const handleConvert = useCallback(() => {
-    if (!state.inputValue.trim()) {
-      setResult(null);
-      return;
-    }
-
     setState((s) => ({ ...s, isProcessing: true, error: null }));
 
     let conversionResult: ConversionResult | null = null;
 
-    if (state.inputType === "timestamp") {
+    if (state.inputType === "datepicker") {
+      // Convert from date picker
+      if (state.selectedDate) {
+        conversionResult = engine.current.convertDatePickerToTimestamp(
+          state.selectedDate,
+          state.selectedTime
+        );
+      }
+    } else if (state.inputType === "timestamp") {
       conversionResult = engine.current.convertSingleTimestamp(
         state.inputValue,
         state.selectedFormat
       );
     } else {
       conversionResult = engine.current.convertDateToTimestamp(
-        state.inputValue,
-        state.selectedTimezone
+        state.inputValue
       );
     }
 
     if (conversionResult) {
       setResult(conversionResult);
-      setState((s) => ({
-        ...s,
-        isProcessing: false,
-        history: [
-          {
-            id: Date.now().toString(),
-            timestamp: new Date(),
-            input: state.inputValue,
-            inputType: state.inputType,
-            result: conversionResult!,
-          },
-          ...s.history.slice(0, 49), // Keep only 50 items
-        ],
-      }));
+      setState((s) => ({ ...s, isProcessing: false }));
     } else {
       setState((s) => ({
         ...s,
@@ -124,16 +113,20 @@ export default function UnixTimestampConverter() {
       toast.error("Invalid input format");
     }
   }, [
-    state.inputValue,
     state.inputType,
+    state.selectedDate,
+    state.selectedTime,
+    state.inputValue,
     state.selectedFormat,
-    state.selectedTimezone,
   ]);
 
   // Auto-convert when input changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (state.inputValue.trim()) {
+      if (
+        (state.inputType === "datepicker" && state.selectedDate) ||
+        (state.inputType !== "datepicker" && state.inputValue.trim())
+      ) {
         handleConvert();
       } else {
         setResult(null);
@@ -142,44 +135,68 @@ export default function UnixTimestampConverter() {
 
     return () => clearTimeout(timeoutId);
   }, [
-    state.inputValue,
     state.inputType,
+    state.selectedDate,
+    state.selectedTime,
+    state.inputValue,
     state.selectedFormat,
-    state.selectedTimezone,
     handleConvert,
   ]);
 
-  // Batch conversion
-  const handleBatchConvert = useCallback(() => {
-    if (!state.batchInput.trim()) {
-      setState((s) => ({ ...s, batchResults: [] }));
-      return;
+  // Swap input and output
+  const handleSwap = useCallback(() => {
+    if (result) {
+      if (state.inputType === "timestamp") {
+        // Convert timestamp result to date picker
+        const dateTime = engine.current.convertTimestampToDatePicker(
+          result.timestamp.seconds,
+          "seconds"
+        );
+        if (dateTime) {
+          setState((s) => ({
+            ...s,
+            selectedDate: dateTime.date,
+            selectedTime: dateTime.time,
+            inputType: "datepicker",
+          }));
+          toast.success("Swapped to date picker");
+        }
+      } else {
+        // Convert date result to timestamp input
+        setState((s) => ({
+          ...s,
+          inputValue: result.timestamp.seconds.toString(),
+          inputType: "timestamp",
+          selectedFormat: "seconds",
+        }));
+        toast.success("Swapped to timestamp input");
+      }
     }
+  }, [result, state.inputType]);
 
-    setState((s) => ({ ...s, isProcessing: true }));
-
-    const timestamps = engine.current.parseBatchInput(state.batchInput);
-    const results = engine.current.processBatchConversion(
-      timestamps,
-      state.selectedFormat
-    );
-
-    setState((s) => ({ ...s, batchResults: results, isProcessing: false }));
-    toast.success(`Converted ${results.length} timestamps`);
-  }, [state.batchInput, state.selectedFormat]);
-
-  // Export batch results
-  const handleExportCSV = useCallback(() => {
-    if (state.batchResults.length === 0) {
-      toast.error("No results to export");
-      return;
-    }
-
-    engine.current.downloadCSV(state.batchResults);
-    toast.success("Results exported to CSV");
-  }, [state.batchResults]);
+  // Update time
+  const updateTime = useCallback(
+    (field: "hour" | "minute" | "second", value: string) => {
+      const numValue = Math.max(
+        0,
+        Math.min(parseInt(value) || 0, field === "hour" ? 23 : 59)
+      );
+      setState((s) => ({
+        ...s,
+        selectedTime: {
+          ...s.selectedTime,
+          [field]: numValue,
+        },
+      }));
+    },
+    []
+  );
 
   const currentTimestamp = engine.current.getCurrentTimestamp();
+  const currentDate = new Date();
+  const codeExamples = result
+    ? engine.current.getCodeExamples(result.timestamp.seconds)
+    : [];
 
   return (
     <ToolLayout
@@ -190,296 +207,382 @@ export default function UnixTimestampConverter() {
       onFullscreen={handleFullscreen}
       isFullscreen={isFullscreen}
     >
-      <div className="w-full p-6 space-y-6 mt-5">
-        {/* Current Timestamp Display */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Current Unix Timestamp
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <p className="text-sm text-muted-foreground">Seconds</p>
-                  <p className="font-mono text-lg">
-                    {currentTimestamp.seconds}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    handleCopy(
-                      currentTimestamp.seconds.toString(),
-                      "Timestamp (seconds)"
-                    )
-                  }
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <p className="text-sm text-muted-foreground">Milliseconds</p>
-                  <p className="font-mono text-lg">
-                    {currentTimestamp.milliseconds}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    handleCopy(
-                      currentTimestamp.milliseconds.toString(),
-                      "Timestamp (milliseconds)"
-                    )
-                  }
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div>
-                  <p className="text-sm text-muted-foreground">Microseconds</p>
-                  <p className="font-mono text-lg">
-                    {currentTimestamp.microseconds}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() =>
-                    handleCopy(
-                      currentTimestamp.microseconds.toString(),
-                      "Timestamp (microseconds)"
-                    )
-                  }
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                Human Readable (UTC)
-              </p>
-              <p className="font-mono">{new Date().toISOString()}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Converter */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw className="h-5 w-5" />
-              Timestamp Converter
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Input Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Input Type</label>
-                <Select
-                  value={state.inputType}
-                  onValueChange={(value) =>
-                    setState((s) => ({
-                      ...s,
-                      inputType: value as "timestamp" | "datetime",
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="timestamp">Unix Timestamp</SelectItem>
-                    <SelectItem value="datetime">Date/Time String</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {state.inputType === "timestamp" ? (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Timestamp Format
-                  </label>
-                  <Select
-                    value={state.selectedFormat}
-                    onValueChange={(value) =>
-                      setState((s) => ({
-                        ...s,
-                        selectedFormat: value as
-                          | "seconds"
-                          | "milliseconds"
-                          | "microseconds",
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="seconds">Seconds</SelectItem>
-                      <SelectItem value="milliseconds">Milliseconds</SelectItem>
-                      <SelectItem value="microseconds">Microseconds</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Timezone</label>
-                  <Select
-                    value={state.selectedTimezone}
-                    onValueChange={(value) =>
-                      setState((s) => ({ ...s, selectedTimezone: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {engine.current.getTimezones().map((tz) => (
-                        <SelectItem key={tz.id} value={tz.id}>
-                          {tz.name} ({tz.abbreviation})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-
-            {/* Input Field */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {state.inputType === "timestamp"
-                  ? "Unix Timestamp"
-                  : "Date/Time String"}
-              </label>
-              <Input
-                value={state.inputValue}
-                onChange={(e) =>
-                  setState((s) => ({ ...s, inputValue: e.target.value }))
-                }
-                placeholder={
-                  state.inputType === "timestamp"
-                    ? "1704067200"
-                    : "2024-01-01 00:00:00 or 2024-01-01T00:00:00Z"
-                }
-                className="font-mono"
-              />
-              {state.error && (
-                <p className="text-sm text-destructive">{state.error}</p>
-              )}
-            </div>
-
-            {/* Results */}
-            {result && (
-              <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-semibold">Conversion Results</h4>
-
-                {/* Timestamp Formats */}
-                <div>
-                  <h5 className="text-sm font-medium mb-2">
-                    Timestamp Formats
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div className="flex items-center justify-between p-2 bg-muted rounded">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Seconds</p>
-                        <p className="font-mono text-sm">
-                          {result.timestamp.seconds}
-                        </p>
+      <div className="w-full p-6 space-y-8 mt-5">
+        {/* Artistic Current Timestamp Display */}
+        <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-blue-950 dark:via-gray-900 dark:to-purple-950 border-2">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+          <CardContent className="relative p-8">
+            <div className="text-center space-y-6">
+              {/* Timestamp and Readable Time Side by Side */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                {/* Timestamp (Left) */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground uppercase tracking-wider">
+                      SECONDS
+                    </p>
+                    <div className="relative group">
+                      <div className="text-5xl lg:text-6xl font-mono font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                        {currentTimestamp.seconds.toLocaleString()}
                       </div>
                       <Button
-                        size="sm"
                         variant="ghost"
+                        size="sm"
+                        className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() =>
                           handleCopy(
-                            result.timestamp.seconds.toString(),
-                            "Seconds"
+                            currentTimestamp.seconds.toString(),
+                            "Current timestamp"
                           )
                         }
                       >
-                        <Copy className="h-3 w-3" />
+                        <Copy className="h-4 w-4" />
                       </Button>
                     </div>
+                  </div>
 
-                    <div className="flex items-center justify-between p-2 bg-muted rounded">
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Milliseconds
-                        </p>
-                        <p className="font-mono text-sm">
-                          {result.timestamp.milliseconds}
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          handleCopy(
-                            result.timestamp.milliseconds.toString(),
-                            "Milliseconds"
-                          )
-                        }
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                  {/* Milliseconds and Microseconds */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        MILLISECONDS
+                      </p>
+                      <p className="text-lg font-mono font-semibold">
+                        {currentTimestamp.milliseconds}
+                      </p>
                     </div>
-
-                    <div className="flex items-center justify-between p-2 bg-muted rounded">
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Microseconds
-                        </p>
-                        <p className="font-mono text-sm">
-                          {result.timestamp.microseconds}
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          handleCopy(
-                            result.timestamp.microseconds.toString(),
-                            "Microseconds"
-                          )
-                        }
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                    <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        MICROSECONDS
+                      </p>
+                      <p className="text-lg font-mono font-semibold">
+                        {currentTimestamp.microseconds}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Date Formats */}
-                <div>
-                  <h5 className="text-sm font-medium mb-2">Date Formats</h5>
+                {/* Readable Time (Right) */}
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    {Object.entries(result.formatted).map(([format, value]) => (
+                    <p className="text-sm text-muted-foreground uppercase tracking-wider">
+                      HUMAN READABLE
+                    </p>
+                    {/* Time (Upper) */}
+                    <div className="relative group">
+                      <div className="text-5xl lg:text-6xl font-mono font-bold text-destructive tracking-tight">
+                        {currentDate.toLocaleTimeString("en-US", {
+                          hour12: false,
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        })}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() =>
+                          handleCopy(
+                            currentDate.toLocaleTimeString("en-US", {
+                              hour12: false,
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            }),
+                            "Current time"
+                          )
+                        }
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Date and Timezone */}
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                      </p>
+                      <div className="relative group">
+                        <p className="text-lg font-mono font-semibold text-gray-900 dark:text-gray-100">
+                          {currentDate.toLocaleDateString("en-US", {
+                            weekday: "short",
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() =>
+                            handleCopy(
+                              currentDate.toLocaleDateString("en-US", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              }),
+                              "Current date"
+                            )
+                          }
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Compact Timestamp Converter */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-5 w-5" />
+                Timestamp Converter
+              </div>
+              {result && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSwap}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeftRight className="h-4 w-4" />
+                  Swap
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Input Type Selector */}
+            <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+              <Button
+                variant={state.inputType === "timestamp" ? "default" : "ghost"}
+                size="sm"
+                onClick={() =>
+                  setState((s) => ({ ...s, inputType: "timestamp" }))
+                }
+                className="data-[state=active]:bg-background"
+              >
+                Timestamp
+              </Button>
+              <Button
+                variant={state.inputType === "datepicker" ? "default" : "ghost"}
+                size="sm"
+                onClick={() =>
+                  setState((s) => ({ ...s, inputType: "datepicker" }))
+                }
+                className="data-[state=active]:bg-background"
+              >
+                Date Picker
+              </Button>
+              <Button
+                variant={state.inputType === "datetime" ? "default" : "ghost"}
+                size="sm"
+                onClick={() =>
+                  setState((s) => ({ ...s, inputType: "datetime" }))
+                }
+                className="data-[state=active]:bg-background"
+              >
+                Date String
+              </Button>
+            </div>
+
+            {/* Input Section */}
+            {state.inputType === "datepicker" ? (
+              /* Date Picker Input */
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Date Picker */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Date</label>
+                    <Input
+                      type="date"
+                      value={
+                        state.selectedDate
+                          ? state.selectedDate.toISOString().split("T")[0]
+                          : ""
+                      }
+                      onChange={(e) => {
+                        const dateValue = e.target.value;
+                        setState((s) => ({
+                          ...s,
+                          selectedDate: dateValue
+                            ? new Date(dateValue)
+                            : undefined,
+                        }));
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Time Input */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Time (HH:MM:SS)
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="23"
+                        value={state.selectedTime.hour}
+                        onChange={(e) => updateTime("hour", e.target.value)}
+                        className="text-center"
+                        placeholder="HH"
+                      />
+                      <span className="flex items-center text-muted-foreground">
+                        :
+                      </span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={state.selectedTime.minute}
+                        onChange={(e) => updateTime("minute", e.target.value)}
+                        className="text-center"
+                        placeholder="MM"
+                      />
+                      <span className="flex items-center text-muted-foreground">
+                        :
+                      </span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={state.selectedTime.second}
+                        onChange={(e) => updateTime("second", e.target.value)}
+                        className="text-center"
+                        placeholder="SS"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Timestamp/String Input */
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Input Type</label>
+                    <Select
+                      value={state.inputType}
+                      onValueChange={(value) =>
+                        setState((s) => ({
+                          ...s,
+                          inputType: value as "timestamp" | "datetime",
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="timestamp">
+                          Unix Timestamp
+                        </SelectItem>
+                        <SelectItem value="datetime">
+                          Date/Time String
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {state.inputType === "timestamp" && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Format</label>
+                      <Select
+                        value={state.selectedFormat}
+                        onValueChange={(value) =>
+                          setState((s) => ({
+                            ...s,
+                            selectedFormat: value as
+                              | "seconds"
+                              | "milliseconds"
+                              | "microseconds",
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="seconds">Seconds</SelectItem>
+                          <SelectItem value="milliseconds">
+                            Milliseconds
+                          </SelectItem>
+                          <SelectItem value="microseconds">
+                            Microseconds
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    {state.inputType === "timestamp"
+                      ? "Unix Timestamp"
+                      : "Date/Time String"}
+                  </label>
+                  <Input
+                    value={state.inputValue}
+                    onChange={(e) =>
+                      setState((s) => ({ ...s, inputValue: e.target.value }))
+                    }
+                    placeholder={
+                      state.inputType === "timestamp"
+                        ? "1704067200"
+                        : "2024-01-01 00:00:00 or 2024-01-01T00:00:00Z"
+                    }
+                    className="font-mono"
+                  />
+                  {state.error && (
+                    <p className="text-sm text-destructive">{state.error}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Compact Results */}
+            {result && (
+              <div className="space-y-4 pt-4 border-t">
+                {/* Timestamp Formats - Compact Grid */}
+                <div>
+                  <h5 className="text-sm font-medium mb-2">
+                    Timestamp Formats
+                  </h5>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries({
+                      Seconds: result.timestamp.seconds,
+                      Milliseconds: result.timestamp.milliseconds,
+                      Microseconds: result.timestamp.microseconds,
+                    }).map(([label, value]) => (
                       <div
-                        key={format}
-                        className="flex items-center justify-between p-2 bg-muted rounded"
+                        key={label}
+                        className="flex items-center justify-between p-2 bg-muted rounded text-sm"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-muted-foreground capitalize">
-                            {format.replace(/([A-Z])/g, " $1")}
+                          <p className="text-xs text-muted-foreground">
+                            {label}
                           </p>
                           <p className="font-mono text-sm truncate">{value}</p>
                         </div>
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleCopy(value, format)}
+                          onClick={() => handleCopy(value.toString(), label)}
+                          className="ml-1 h-6 w-6 p-0"
                         >
                           <Copy className="h-3 w-3" />
                         </Button>
@@ -488,175 +591,118 @@ export default function UnixTimestampConverter() {
                   </div>
                 </div>
 
-                {/* Relative Time */}
-                {result.relative.past && (
-                  <div>
-                    <h5 className="text-sm font-medium mb-2">Relative Time</h5>
-                    <div className="p-2 bg-muted rounded">
-                      <Badge variant="secondary">{result.relative.past}</Badge>
-                    </div>
+                {/* Standard Formats - Compact List */}
+                <div>
+                  <h5 className="text-sm font-medium mb-2">Standard Formats</h5>
+                  <div className="space-y-1">
+                    {Object.entries({
+                      "US Format": result.formatted.usFormat,
+                      "ISO 8601": result.formatted.iso8601,
+                      "ISO Extended": result.formatted.iso8601Extended,
+                      "RFC 2822": result.formatted.rfc2822,
+                      "RFC 2822 Alt": result.formatted.rfc2822Alternative,
+                      "RFC 3339": result.formatted.rfc3339,
+                      Local: result.formatted.locale,
+                    }).map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="flex items-center justify-between p-2 bg-muted rounded text-sm"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs text-muted-foreground mr-2">
+                            {label}:
+                          </span>
+                          <span className="font-mono">{value}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleCopy(value, label)}
+                          className="ml-1 h-6 w-6 p-0"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
 
-                {/* Timezones */}
-                {state.showTimezones && result.timezones.length > 0 && (
+                {/* Relative Time & Timezones - Compact */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Relative Time */}
+                  {result.relative.past && (
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">
+                        Relative Time
+                      </h5>
+                      <Badge variant="secondary" className="text-sm">
+                        {result.relative.past}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* Key Timezones */}
                   <div>
-                    <h5 className="text-sm font-medium mb-2">
-                      Multiple Timezones
-                    </h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {result.timezones.slice(0, 6).map((tz) => (
+                    <h5 className="text-sm font-medium mb-2">Key Timezones</h5>
+                    <div className="space-y-1">
+                      {result.timezones.slice(0, 3).map((tz) => (
                         <div
                           key={tz.timezone.id}
-                          className="flex items-center justify-between p-2 bg-muted rounded"
+                          className="flex justify-between text-sm"
                         >
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-muted-foreground">
-                              {tz.timezone.abbreviation}
-                            </p>
-                            <p className="font-mono text-sm truncate">
-                              {tz.formatted}
-                            </p>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() =>
-                              handleCopy(tz.formatted, tz.timezone.abbreviation)
-                            }
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
+                          <span className="text-muted-foreground">
+                            {tz.timezone.abbreviation}:
+                          </span>
+                          <span className="font-mono">{tz.formatted}</span>
                         </div>
                       ))}
                     </div>
                   </div>
+                </div>
+
+                {/* Code Examples Toggle */}
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="flex items-center gap-2">
+                    <Code className="h-4 w-4" />
+                    <span className="text-sm font-medium">Code Examples</span>
+                  </div>
+                  <Switch
+                    checked={state.showCodeExamples}
+                    onCheckedChange={(checked) =>
+                      setState((s) => ({ ...s, showCodeExamples: checked }))
+                    }
+                  />
+                </div>
+
+                {/* Code Examples */}
+                {state.showCodeExamples && codeExamples.length > 0 && (
+                  <div className="space-y-3">
+                    {codeExamples.map((example) => (
+                      <div key={example.language} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h6 className="text-sm font-medium">
+                            {example.name}
+                          </h6>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              handleCopy(example.code, `${example.name} code`)
+                            }
+                          >
+                            <Copy className="h-3 w-3 mr-1" />
+                            Copy
+                          </Button>
+                        </div>
+                        <pre className="p-3 bg-muted rounded text-xs overflow-x-auto">
+                          <code>{example.code}</code>
+                        </pre>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Batch Converter */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Batch Converter</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Timestamps (one per line)
-              </label>
-              <Textarea
-                value={state.batchInput}
-                onChange={(e) =>
-                  setState((s) => ({ ...s, batchInput: e.target.value }))
-                }
-                placeholder="1704067200&#10;1704153600&#10;1704240000"
-                rows={5}
-                className="font-mono"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleBatchConvert}
-                disabled={state.isProcessing || !state.batchInput.trim()}
-              >
-                Convert All
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setState((s) => ({ ...s, batchInput: "", batchResults: [] }))
-                }
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Clear
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleExportCSV}
-                disabled={state.batchResults.length === 0}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-            </div>
-
-            {state.batchResults.length > 0 && (
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                <h5 className="text-sm font-medium">
-                  Results ({state.batchResults.length})
-                </h5>
-                {state.batchResults.map((result, index) => (
-                  <div key={index} className="p-2 bg-muted rounded text-sm">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-mono text-xs text-muted-foreground">
-                          {result.input}
-                        </p>
-                        <p className="font-mono">{result.formatted.iso8601}</p>
-                        {result.relative.past && (
-                          <Badge variant="outline" className="text-xs">
-                            {result.relative.past}
-                          </Badge>
-                        )}
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          handleCopy(result.formatted.iso8601, "ISO 8601")
-                        }
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Keyboard Shortcuts */}
-        <Card>
-          <CardContent className="pt-6">
-            <h4 className="font-semibold mb-3">Keyboard Shortcuts & Tips</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <h5 className="font-medium mb-2">Shortcuts</h5>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>
-                    <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
-                      Ctrl+C
-                    </kbd>{" "}
-                    Copy focused result
-                  </li>
-                  <li>
-                    <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
-                      Tab
-                    </kbd>{" "}
-                    Navigate between inputs
-                  </li>
-                  <li>
-                    <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
-                      Enter
-                    </kbd>{" "}
-                    Convert timestamp
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h5 className="font-medium mb-2">Tips</h5>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>• Conversion happens automatically as you type</li>
-                  <li>• Supports various date formats for input</li>
-                  <li>• Export batch results to CSV for analysis</li>
-                </ul>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>
