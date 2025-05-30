@@ -7,6 +7,7 @@ import { toolInfo as unitConverterInfo } from "@/tools/unit-converter/toolInfo";
 import { toolInfo as unixTimestampConverterInfo } from "@/tools/unix-timestamp-converter/toolInfo";
 import { toolInfo as markdownEditorInfo } from "@/tools/markdown-editor/toolInfo";
 import { toolInfo as emojiLibraryInfo } from "@/tools/emoji-library/toolInfo";
+import { toolInfo as colorPaletteInfo } from "@/tools/color-palette/toolInfo";
 
 // Import other tool info when they are created
 // import { toolInfo as hashGeneratorInfo } from "@/tools/hash-generator/toolInfo";
@@ -22,6 +23,7 @@ export const tools: ToolInfo[] = [
   unixTimestampConverterInfo,
   markdownEditorInfo,
   emojiLibraryInfo,
+  colorPaletteInfo,
 
   // Temporary definitions for tools that don't have toolInfo.ts yet
   {

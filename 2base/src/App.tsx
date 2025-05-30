@@ -7,6 +7,7 @@ import UnitConverter from "@/tools/unit-converter/ui";
 import UnixTimestampConverter from "@/tools/unix-timestamp-converter/ui";
 import MarkdownEditor from "@/tools/markdown-editor/ui";
 import EmojiLibrary from "@/tools/emoji-library/ui";
+import ColorPalette from "@/tools/color-palette/ui";
 import FavoritesPage from "@/app/favorites/page";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { MinimizedToolsProvider } from "@/contexts/minimized-tools-context";
@@ -34,6 +35,7 @@ function App() {
             />
             <Route path="/tools/markdown-editor" element={<MarkdownEditor />} />
             <Route path="/tools/emoji-library" element={<EmojiLibrary />} />
+            <Route path="/tools/color-palette" element={<ColorPalette />} />
           </Routes>
           <MinimizedToolsIndicator />
           <Toaster />
