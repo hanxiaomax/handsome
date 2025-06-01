@@ -1,199 +1,342 @@
-# Programmer Calculator - Tool Specification
+# Programmer Calculator - Design Specification
 
 ## Overview
 
-A comprehensive calculator designed specifically for programmers, featuring base conversion, bitwise operations, and advanced mathematical functions commonly used in software development.
+A comprehensive calculator designed for developers featuring number base conversion, bitwise operations, and multiple data type support. This tool provides essential computational functions needed in programming and system development.
 
-## Features
+## Core Features
 
-### Core Calculator Functions
-- Basic arithmetic operations (+, -, *, /, %)
-- Advanced mathematical functions (sin, cos, tan, log, sqrt, etc.)
-- Memory operations (store, recall, clear)
-- History tracking with undo/redo
-
-### Base Conversion
-- **Supported Bases**: Binary (2), Octal (8), Decimal (10), Hexadecimal (16)
-- **Real-time Conversion**: Display values in all bases simultaneously
-- **Input Flexibility**: Accept input in any supported base
-- **Bit Width Options**: 8, 16, 32, 64-bit representations
+### Number Base Conversion
+- **Binary (BIN)**: Base-2 representation with bit grouping
+- **Octal (OCT)**: Base-8 representation
+- **Decimal (DEC)**: Standard base-10 representation
+- **Hexadecimal (HEX)**: Base-16 representation with A-F letters
 
 ### Bitwise Operations
-- **Logical Operations**: AND (&), OR (|), XOR (^), NOT (~)
-- **Shift Operations**: Left shift (<<), Right shift (>>)
-- **Bit Manipulation**: Set, clear, toggle, test individual bits
-- **Visual Bit Display**: Interactive bit grid showing binary representation
+- **AND**: Bitwise AND operation between two values
+- **OR**: Bitwise OR operation between two values
+- **XOR**: Bitwise exclusive OR operation
+- **NOT**: Bitwise complement (inversion)
+- **Left Shift (<<)**: Shift bits to the left
+- **Right Shift (>>)**: Shift bits to the right
 
-### Programming-Specific Features
-- **Data Type Conversions**: Integer, float, double representations
-- **Character Encoding**: ASCII, Unicode code point conversion
-- **Color Code Conversion**: RGB, HSL, HEX color values
-- **Unit Conversions**: Bytes, KB, MB, GB, TB
+### Data Type Support
+- **8-bit**: 0 to 255 (unsigned), -128 to 127 (signed)
+- **16-bit**: 0 to 65,535 (unsigned), -32,768 to 32,767 (signed)
+- **32-bit**: Standard 32-bit integer range
+- **64-bit**: Extended 64-bit integer range
 
-## User Interface Design
+### Basic Arithmetic
+- **Addition (+)**: Standard addition
+- **Subtraction (-)**: Standard subtraction
+- **Multiplication (*)**: Standard multiplication
+- **Division (/)**: Integer division
+- **Modulo (%)**: Remainder operation
 
-### Layout Structure
+### Memory Functions
+- **Memory Store (MS)**: Store current value in memory
+- **Memory Recall (MR)**: Recall value from memory
+- **Memory Clear (MC)**: Clear memory
+- **Memory Add (M+)**: Add current value to memory
+- **Memory Subtract (M-)**: Subtract current value from memory
+
+## UI Layout Design
+
+### Display Panel
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ Header: Programmer Calculator                                │
-├─────────────────────────────────────────────────────────────┤
-│ Display Area                                                │
-│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │
-│ │ HEX: 0x1A2B     │ │ DEC: 6699       │ │ OCT: 015053     │ │
-│ │ BIN: 1101010...  │ │                 │ │                 │ │
-│ └─────────────────┘ └─────────────────┘ └─────────────────┘ │
-├─────────────────────────────────────────────────────────────┤
-│ Bit Visualization (64-bit grid)                            │
-│ [0][1][1][0][1][0][1][0]...[1][0][1][1]                   │
-├─────────────────────────────────────────────────────────────┤
-│ Calculator Buttons                                          │
-│ ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐     │
-│ │ AND │ OR  │ XOR │ NOT │ <<  │ >>  │ (   │ )   │ C   │     │
-│ ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤     │
-│ │ A   │ B   │ C   │ D   │ E   │ F   │ /   │ *   │ ←   │     │
-│ ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤     │
-│ │ 7   │ 8   │ 9   │ +   │ -   │ %   │ sin │ cos │ tan │     │
-│ ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤     │
-│ │ 4   │ 5   │ 6   │ =   │ ±   │ .   │ log │ ln  │ √   │     │
-│ ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┤     │
-│ │ 1   │ 2   │ 3   │ 0   │ M+  │ M-  │ MR  │ MC  │ =   │     │
-│ └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘     │
-├─────────────────────────────────────────────────────────────┤
-│ Settings & Options                                          │
-│ Base: [BIN][OCT][DEC][HEX] | Bits: [8][16][32][64]        │
-│ Mode: [Programmer][Scientific] | Angle: [DEG][RAD]         │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│ HEX: 0x1A2B                        │
+│ DEC: 6,699                         │
+│ OCT: 015053                        │
+│ BIN: 0001 1010 0010 1011          │
+└─────────────────────────────────────┘
 ```
 
-### Responsive Design
-- **Desktop**: Full layout with all features visible
-- **Tablet**: Collapsible sections, optimized button sizes
-- **Mobile**: Vertical stack, swipeable sections, larger touch targets
+### Button Layout
+```
+┌─────┬─────┬─────┬─────┬─────┐
+│ MC  │ MR  │ M+  │ M-  │ MS  │ Memory Functions
+├─────┼─────┼─────┼─────┼─────┤
+│  C  │ CE  │ ⌫   │  /  │     │ Clear Functions
+├─────┼─────┼─────┼─────┼─────┤
+│  7  │  8  │  9  │  *  │     │ Numbers & Operators
+├─────┼─────┼─────┼─────┼─────┤
+│  4  │  5  │  6  │  -  │     │
+├─────┼─────┼─────┼─────┼─────┤
+│  1  │  2  │  3  │  +  │     │
+├─────┼─────┼─────┼─────┼─────┤
+│  0  │  .  │ ±   │  =  │     │
+└─────┴─────┴─────┴─────┴─────┘
+
+┌─────┬─────┬─────┬─────┐
+│ AND │ OR  │ XOR │ NOT │ Bitwise Operations
+├─────┼─────┼─────┼─────┤
+│ <<  │ >>  │ MOD │     │
+└─────┴─────┴─────┴─────┘
+
+┌─────┬─────┬─────┬─────┬─────┬─────┐
+│  A  │  B  │  C  │  D  │  E  │  F  │ Hex Digits
+└─────┴─────┴─────┴─────┴─────┴─────┘
+
+┌─────┬─────┬─────┬─────┐
+│ HEX │ DEC │ OCT │ BIN │ Base Selection
+└─────┴─────┴─────┴─────┘
+
+┌─────┬─────┬─────┬─────┐
+│ 8   │ 16  │ 32  │ 64  │ Data Type (bits)
+└─────┴─────┴─────┴─────┘
+```
+
+### History Panel
+```
+┌─────────────────────────────────────┐
+│ History                        [×]  │
+├─────────────────────────────────────┤
+│ 15 + 27 = 42                  [Copy]│
+│ HEX: 0x2A  DEC: 42  BIN: 101010    │
+├─────────────────────────────────────┤
+│ 0xFF & 0x0F = 15              [Copy]│
+│ HEX: 0xF   DEC: 15  BIN: 1111      │
+└─────────────────────────────────────┘
+```
 
 ## Technical Implementation
 
-### Component Architecture
-```typescript
-ProgrammerCalculator/
-├── ui.tsx                 # Main calculator component
-├── components/
-│   ├── display.tsx        # Multi-base display component
-│   ├── bit-grid.tsx       # Interactive bit visualization
-│   ├── button-grid.tsx    # Calculator button layout
-│   ├── settings-panel.tsx # Base/mode selection
-│   └── history-panel.tsx  # Calculation history
-├── lib/
-│   ├── calculator.ts      # Core calculation logic
-│   ├── base-converter.ts  # Base conversion utilities
-│   ├── bitwise.ts         # Bitwise operation functions
-│   └── formatter.ts       # Number formatting utilities
-└── types.ts               # TypeScript definitions
-```
+### Core Data Structures
 
-### State Management
 ```typescript
+interface NumberDisplay {
+  binary: string;    // Binary with grouping: "0001 1010"
+  octal: string;     // Octal with prefix: "0o32"
+  decimal: string;   // Decimal with commas: "1,234"
+  hex: string;       // Hex with prefix: "0x4D2"
+}
+
 interface CalculatorState {
-  currentValue: string;
-  previousValue: string;
+  currentValue: bigint;
+  previousValue: bigint;
   operation: string | null;
-  base: 2 | 8 | 10 | 16;
-  bitWidth: 8 | 16 | 32 | 64;
-  mode: 'programmer' | 'scientific';
-  angleUnit: 'deg' | 'rad';
-  memory: number;
-  history: CalculationEntry[];
+  dataType: 8 | 16 | 32 | 64;
+  inputBase: 'bin' | 'oct' | 'dec' | 'hex';
+  memory: bigint;
+  history: CalculationHistory[];
+  isNewNumber: boolean;
 }
 
-interface CalculationEntry {
+interface CalculationHistory {
+  id: string;
   expression: string;
-  result: string;
+  result: bigint;
   timestamp: Date;
-  base: number;
+  bases: NumberDisplay;
 }
 ```
 
-### Key Functions
+### Calculator Engine
+
 ```typescript
-// Base conversion
-function convertBase(value: string, fromBase: number, toBase: number): string;
-
-// Bitwise operations
-function bitwiseAnd(a: number, b: number, bitWidth: number): number;
-function bitwiseOr(a: number, b: number, bitWidth: number): number;
-function bitwiseXor(a: number, b: number, bitWidth: number): number;
-function bitwiseNot(value: number, bitWidth: number): number;
-function leftShift(value: number, positions: number, bitWidth: number): number;
-function rightShift(value: number, positions: number, bitWidth: number): number;
-
-// Bit manipulation
-function setBit(value: number, position: number): number;
-function clearBit(value: number, position: number): number;
-function toggleBit(value: number, position: number): number;
-function testBit(value: number, position: number): boolean;
+class ProgrammerCalculator {
+  private state: CalculatorState;
+  
+  // Number base conversion
+  convertToBase(value: bigint, base: 'bin' | 'oct' | 'dec' | 'hex'): string {
+    // Implementation for base conversion with proper formatting
+  }
+  
+  // Bitwise operations
+  bitwiseAnd(a: bigint, b: bigint): bigint {
+    return a & b;
+  }
+  
+  bitwiseOr(a: bigint, b: bigint): bigint {
+    return a | b;
+  }
+  
+  bitwiseXor(a: bigint, b: bigint): bigint {
+    return a ^ b;
+  }
+  
+  bitwiseNot(value: bigint): bigint {
+    // Implement based on current data type
+    return ~value & this.getDataTypeMask();
+  }
+  
+  leftShift(value: bigint, positions: number): bigint {
+    return (value << BigInt(positions)) & this.getDataTypeMask();
+  }
+  
+  rightShift(value: bigint, positions: number): bigint {
+    return value >> BigInt(positions);
+  }
+  
+  // Data type constraints
+  constrainToDataType(value: bigint, dataType: number): bigint {
+    const mask = (1n << BigInt(dataType)) - 1n;
+    return value & mask;
+  }
+  
+  private getDataTypeMask(): bigint {
+    return (1n << BigInt(this.state.dataType)) - 1n;
+  }
+  
+  // Memory operations
+  memoryStore(value: bigint): void {
+    this.state.memory = value;
+  }
+  
+  memoryRecall(): bigint {
+    return this.state.memory;
+  }
+  
+  memoryClear(): void {
+    this.state.memory = 0n;
+  }
+  
+  memoryAdd(value: bigint): void {
+    this.state.memory = this.constrainToDataType(
+      this.state.memory + value, 
+      this.state.dataType
+    );
+  }
+  
+  memorySubtract(value: bigint): void {
+    this.state.memory = this.constrainToDataType(
+      this.state.memory - value, 
+      this.state.dataType
+    );
+  }
+}
 ```
 
-## User Experience
+## Component Architecture
 
-### Keyboard Shortcuts
-- **Numbers**: 0-9, A-F (for hex input)
-- **Operations**: +, -, *, /, %, &, |, ^, ~
-- **Special**: Enter (=), Escape (Clear), Backspace (Delete)
-- **Base Switch**: Ctrl+1 (Binary), Ctrl+2 (Octal), Ctrl+3 (Decimal), Ctrl+4 (Hex)
+### Main Calculator Component
+```typescript
+// tools/programmer-calculator/ui.tsx
+export default function ProgrammerCalculator() {
+  const [state, setState] = useState<CalculatorState>(initialState);
+  const calculator = useRef(new ProgrammerCalculator());
+  
+  return (
+    <div className="calculator-container">
+      <DisplayPanel state={state} />
+      <ControlPanel 
+        onDataTypeChange={handleDataTypeChange}
+        onBaseChange={handleBaseChange}
+      />
+      <ButtonGrid onButtonClick={handleButtonClick} />
+      <HistoryPanel 
+        history={state.history}
+        onHistoryItemClick={handleHistoryClick}
+      />
+    </div>
+  );
+}
+```
+
+### Common Components Used
+- **Button**: From `@/components/ui/button` for all calculator buttons
+- **Card**: From `@/components/ui/card` for main container
+- **Badge**: From `@/components/ui/badge` for data type indicators
+- **ScrollArea**: From `@/components/ui/scroll-area` for history panel
+- **Separator**: From `@/components/ui/separator` for visual divisions
+
+### Custom Components
+- **DisplayPanel**: Multi-base number display
+- **ButtonGrid**: Calculator button layout
+- **HistoryPanel**: Calculation history with copy functionality
+- **ControlPanel**: Data type and base selection
+
+## Responsive Design
+
+### Desktop Layout (≥1024px)
+- Full calculator with all functions visible
+- History panel on the right side
+- Wide button spacing for mouse interaction
+
+### Tablet Layout (768px-1023px)
+- Compact button layout
+- Collapsible history panel
+- Touch-friendly button sizes
+
+### Mobile Layout (<768px)
+- Vertical stacked layout
+- Swipeable panels for advanced functions
+- Large touch targets
+- Bottom sheet for history
+
+## Keyboard Support
+
+### Number Input
+- **0-9**: Direct number input
+- **A-F**: Hexadecimal digits (when in HEX mode)
+
+### Operations
+- **+, -, *, /**: Basic arithmetic
+- **%**: Modulo operation
+- **Enter/=**: Calculate result
+- **Escape/C**: Clear current input
+- **Backspace**: Delete last digit
+
+### Function Keys
+- **F1**: Switch to HEX mode
+- **F2**: Switch to DEC mode
+- **F3**: Switch to OCT mode
+- **F4**: Switch to BIN mode
+
+### Advanced Functions
+- **Ctrl+M**: Memory store
+- **Ctrl+R**: Memory recall
+- **Ctrl+L**: Memory clear
+- **Ctrl+Z**: Undo last operation
+- **Ctrl+H**: Toggle history panel
+
+## Error Handling
 
 ### Input Validation
-- **Base-specific**: Only allow valid digits for selected base
-- **Range Checking**: Ensure values fit within selected bit width
-- **Error Handling**: Clear error messages for invalid operations
-- **Auto-correction**: Smart input parsing and correction
+- Invalid characters for current base
+- Number overflow for selected data type
+- Division by zero
+- Invalid shift amounts
 
-### Accessibility
-- **Screen Reader**: Full ARIA labels and descriptions
-- **Keyboard Navigation**: Tab order through all interactive elements
-- **High Contrast**: Support for high contrast themes
-- **Font Scaling**: Responsive to user font size preferences
+### Error Display
+- Inline error messages below display
+- Visual feedback for invalid operations
+- Clear error recovery paths
 
-## Performance Requirements
-- **Calculation Speed**: < 1ms for basic operations
-- **Base Conversion**: < 5ms for any base conversion
-- **Memory Usage**: < 10MB total memory footprint
-- **Startup Time**: < 500ms to fully interactive
-
-## Testing Strategy
+## Testing Requirements
 
 ### Unit Tests
-- Base conversion accuracy
+- Number base conversion accuracy
 - Bitwise operation correctness
-- Edge cases (overflow, underflow)
-- Input validation
+- Data type constraint validation
+- Memory function behavior
 
 ### Integration Tests
-- User interaction flows
-- Keyboard shortcut functionality
-- State persistence
-- Error handling
+- Complete calculation workflows
+- Keyboard navigation
+- Responsive layout behavior
+- Error handling scenarios
 
 ### Accessibility Tests
 - Screen reader compatibility
-- Keyboard navigation
-- Color contrast ratios
+- Keyboard-only navigation
+- High contrast mode support
 - Focus management
 
-## Future Enhancements
+## Performance Considerations
 
-### Phase 2 Features
-- **Custom Functions**: User-defined calculation functions
-- **Macro Recording**: Record and replay calculation sequences
-- **Export Options**: Save calculations as text, CSV, or JSON
-- **Themes**: Multiple visual themes and customization options
+### Optimization Strategies
+- Memoized base conversion results
+- Efficient BigInt operations
+- Lazy loading of history items
+- Debounced input handling
 
-### Phase 3 Features
-- **Plugin System**: Third-party calculation modules
-- **Cloud Sync**: Synchronize history and settings across devices
-- **Collaboration**: Share calculations with team members
-- **Advanced Visualizations**: Graphs, charts, and data analysis tools
+### Memory Management
+- Limited history item count (max 100)
+- Cleanup of unused calculation objects
+- Efficient string formatting for large numbers
 
-## Success Metrics
-- **User Engagement**: Average session duration > 5 minutes
-- **Feature Usage**: Bitwise operations used in > 60% of sessions
-- **Error Rate**: < 1% calculation errors reported
-- **Performance**: 95th percentile response time < 100ms 
+---
+
+**Implementation Priority**: This calculator serves as the MVP tool to validate the complete framework architecture while providing genuine value to developers. 

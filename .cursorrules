@@ -469,6 +469,47 @@ npm run lint         # Run ESLint
 npm run type-check   # Check TypeScript types
 ```
 
+### ShadCN Component Installation
+Before installing any new shadcn/ui components, always check if they are already installed:
+
+1. **Check Existing Components**: Verify if the component already exists in `@/components/ui/`
+2. **Installation Command**: If not installed, use pnpm for consistent package management:
+   ```bash
+   pnpm dlx shadcn@latest add [component-name]
+   ```
+3. **Verification**: After installation, verify the component is properly imported and functional
+4. **Documentation**: Update component usage documentation if adding new components
+
+## Task Completion and Reporting
+
+### Mandatory Reporting Requirements
+After completing any development task, you **MUST** either update existing reports or create new reports:
+
+1. **Task Documentation**: Create detailed reports covering:
+   - **Task Overview**: Clear description of what was accomplished
+   - **Implementation Details**: Technical changes made, files modified, new features added
+   - **Impact Analysis**: How the changes affect the project, users, or development workflow
+   - **Testing Results**: Verification that changes work as expected
+   - **Next Steps**: Recommendations for follow-up work or improvements
+
+2. **Report Types**:
+   - **Migration Reports**: For file moves, restructuring, or organizational changes
+   - **Feature Reports**: For new tool implementations or enhancements
+   - **Bug Fix Reports**: For issue resolutions and problem fixes
+   - **Refactoring Reports**: For code improvements and optimizations
+   - **Documentation Reports**: For documentation updates or additions
+
+3. **Report Standards**:
+   - Use descriptive filenames with UPPER_CASE format (e.g., `DOCUMENTATION_MIGRATION_REPORT.md`)
+   - Include comprehensive details with before/after comparisons
+   - Provide statistics and metrics where applicable
+   - Document any challenges encountered and solutions applied
+   - Include verification steps and validation results
+
+4. **Report Location**: Place reports in the root directory for easy discovery and reference
+
+5. **Update Existing Reports**: When tasks are related to previous work, update existing reports rather than creating duplicate documentation
+
 ## When Implementing New Tools
 
 ### Planning Phase
