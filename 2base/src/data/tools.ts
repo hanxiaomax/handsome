@@ -10,6 +10,7 @@ import { toolInfo as emojiLibraryInfo } from "@/tools/emoji-library/toolInfo";
 import { toolInfo as colorPaletteInfo } from "@/tools/color-palette/toolInfo";
 import { toolInfo as productChartGeneratorInfo } from "@/tools/product-chart-generator/toolInfo";
 import { toolInfo as arxmlParserInfo } from "@/tools/arxml-parser/toolInfo";
+import { toolInfo as layoutDemoInfo } from "@/tools/layout-demo/toolInfo";
 
 // Import other tool info when they are created
 // import { toolInfo as hashGeneratorInfo } from "@/tools/hash-generator/toolInfo";
@@ -18,6 +19,7 @@ import { toolInfo as arxmlParserInfo } from "@/tools/arxml-parser/toolInfo";
 
 export const tools: ToolInfo[] = [
   // Use imported tool info for existing tools
+  layoutDemoInfo, // Demo tool for layout showcase
   programmerCalculatorInfo,
   uuidGeneratorInfo,
   worldClockInfo,

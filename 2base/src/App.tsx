@@ -10,6 +10,7 @@ import EmojiLibrary from "@/tools/emoji-library/ui";
 import ColorPalette from "@/tools/color-palette/ui";
 import ProductChartGenerator from "@/tools/product-chart-generator/ui";
 import ARXMLParser from "@/tools/arxml-parser/ui";
+import LayoutDemo from "@/tools/layout-demo/ui";
 import FavoritesPage from "@/app/favorites/page";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { MinimizedToolsProvider } from "@/contexts/minimized-tools-context";
@@ -43,6 +44,7 @@ function App() {
               element={<ProductChartGenerator />}
             />
             <Route path="/tools/arxml-parser" element={<ARXMLParser />} />
+            <Route path="/tools/layout-demo" element={<LayoutDemo />} />
           </Routes>
           <MinimizedToolsIndicator />
           <Toaster />
