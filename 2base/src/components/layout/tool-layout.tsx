@@ -28,45 +28,48 @@ function WindowControls({
   isFullscreen = false,
 }: WindowControlsProps) {
   return (
-    <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-      {/* Close Button */}
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 transition-colors group shadow-sm"
-          title="Back to Home"
-        >
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
-            ×
-          </span>
-        </button>
-      )}
+    <div className="w-full flex items-center justify-between px-4 py-3">
+      <div className="flex items-center gap-2"></div>
+      <div className="flex items-center gap-2">
+        {/* Close Button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 transition-colors group shadow-sm"
+            title="Back to Home"
+          >
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
+              ×
+            </span>
+          </button>
+        )}
 
-      {/* Minimize Button */}
-      {onMinimize && (
-        <button
-          onClick={onMinimize}
-          className="w-5 h-5 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors group shadow-sm"
-          title="Minimize to Drawer"
-        >
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
-            −
-          </span>
-        </button>
-      )}
+        {/* Minimize Button */}
+        {onMinimize && (
+          <button
+            onClick={onMinimize}
+            className="w-5 h-5 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors group shadow-sm"
+            title="Minimize to Drawer"
+          >
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
+              −
+            </span>
+          </button>
+        )}
 
-      {/* Fullscreen Button */}
-      {onFullscreen && (
-        <button
-          onClick={onFullscreen}
-          className="w-5 h-5 rounded-full bg-green-500 hover:bg-green-600 transition-colors group shadow-sm"
-          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-        >
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
-            {isFullscreen ? "⌄" : "⌃"}
-          </span>
-        </button>
-      )}
+        {/* Fullscreen Button */}
+        {onFullscreen && (
+          <button
+            onClick={onFullscreen}
+            className="w-5 h-5 rounded-full bg-green-500 hover:bg-green-600 transition-colors group shadow-sm"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
+              {isFullscreen ? "⌄" : "⌃"}
+            </span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -108,6 +111,7 @@ export function ToolLayout({
           } as React.CSSProperties
         }
       >
+        {/* Sidebar Area - App Navigation */}
         <AppSidebar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -118,7 +122,7 @@ export function ToolLayout({
         />
 
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
+          {/* Header Area - Tool Information */}
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-14 items-center px-4 gap-4">
               <SidebarTrigger />
@@ -134,9 +138,9 @@ export function ToolLayout({
             </div>
           </header>
 
-          {/* Content with Window Controls */}
-          <div className="flex-1 overflow-auto bg-muted/30 relative">
-            {/* macOS Window Controls */}
+          {/* Main Content Area - Tool Implementation */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Window Controls Bar - Full Width */}
             <WindowControls
               onClose={onClose}
               onMinimize={onMinimize}
@@ -144,8 +148,8 @@ export function ToolLayout({
               isFullscreen={isFullscreen}
             />
 
-            {/* Tool Content */}
-            {children}
+            {/* Tool Content - Below Controls */}
+            <div className="flex-1 overflow-auto bg-muted/30">{children}</div>
           </div>
         </main>
       </div>
