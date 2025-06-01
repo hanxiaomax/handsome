@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Homepage } from "@/components/homepage";
+import { Homepage } from "@/app/homepage";
 import ProgrammerCalculator from "@/tools/programmer-calculator/ui";
 import UUIDGenerator from "@/tools/uuid-generator/ui";
 import WorldClock from "@/tools/world-clock/ui";
@@ -11,7 +11,7 @@ import ColorPalette from "@/tools/color-palette/ui";
 import ProductChartGenerator from "@/tools/product-chart-generator/ui";
 import XMLParser from "@/tools/xml-parser/ui";
 import LayoutDemo from "@/tools/layout-demo/ui";
-import FavoritesPage from "@/app/favorites/page";
+import FavoritesPage from "@/app/favorites";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { MinimizedToolsProvider } from "@/contexts/minimized-tools-context";
 import { MinimizedToolsIndicator } from "@/components/layout/minimized-tools-indicator";

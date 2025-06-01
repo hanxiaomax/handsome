@@ -27,22 +27,37 @@ A modern, privacy-first collection of developer tools built with React, TypeScri
 
 ```
 src/
-├── components/
-│   ├── ui/                # shadcn/ui components
-│   ├── layout/            # Layout components (sidebar, header)
+├── app/                   # Application pages
 │   ├── homepage.tsx       # Main homepage component
-│   └── tool-card.tsx      # Tool display card
+│   └── favorites.tsx      # Favorites page component
+├── components/            # UI Components
+│   ├── ui/                # shadcn/ui base components
+│   ├── layout/            # Layout templates and wrappers
+│   ├── navigation/        # Navigation-related components
+│   │   ├── theme-toggle.tsx
+│   │   └── welcome-page.tsx
+│   └── tools/             # Tool display components
+│       ├── tool-card.tsx
+│       ├── tool-info-card.tsx
+│       ├── tool-detail.tsx
+│       └── dashboard-charts.tsx
+├── contexts/              # React Context providers
+├── hooks/                 # Custom React hooks
+├── lib/                   # Utility functions
+├── types/                 # TypeScript type definitions
 ├── tools/                 # Tool implementations
-│   └── programmer-calculator/
+│   └── [tool-name]/
 │       ├── ui.tsx         # Tool UI component
 │       ├── toolInfo.ts    # Tool metadata
-│       └── specification.md # Detailed tool design docs
-├── data/
+│       ├── lib.ts         # Simple tool logic
+│       ├── lib/           # Complex tool logic (when needed)
+│       ├── components/    # Tool-specific components (when needed)
+│       └── docs/          # Tool documentation
+│           ├── specification.md
+│           └── api-reference.md
+├── data/                  # Static data and configurations
 │   └── tools.ts           # Tool registry and categories
-├── types/
-│   └── tool.ts            # TypeScript type definitions
-└── lib/
-    └── utils.ts           # Utility functions
+└── assets/                # Static assets (images, icons)
 ```
 
 ## Technology Stack

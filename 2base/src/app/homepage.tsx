@@ -7,9 +7,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { ToolDetail } from "@/components/tool-detail";
-import { WelcomePage } from "@/components/welcome-page";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ToolDetail } from "@/components/tools/tool-detail";
+import { WelcomePage } from "@/components/navigation/welcome-page";
+import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { tools } from "@/data/tools";
 
 function HomepageContent() {

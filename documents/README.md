@@ -121,8 +121,9 @@ npm run test
 ## Development
 
 - **Framework Design**: See [design-specification.md](./design-specification.md) for complete design guidelines and development rules
-- **Tool Specifications**: Individual tool designs are documented in the `tools/` directory
-  - [Programmer Calculator](./tools/programmer-calculator-specification.md)
+- **Tool Development**: See [TOOL_DEVELOPMENT_GUIDE.md](./TOOL_DEVELOPMENT_GUIDE.md) for detailed tool creation guidelines
+- **Tool Specifications**: Individual tool designs are documented in each tool's `docs/` directory
+  - Example: `src/tools/programmer-calculator/docs/specification.md`
 
 ## Docker Environment Details
 

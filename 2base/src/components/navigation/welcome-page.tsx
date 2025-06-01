@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { tools, categories } from "@/data/tools";
 import { Calculator, FileText, Image, Lock, Code, Zap } from "lucide-react";
-import { DashboardCharts } from "@/components/dashboard-charts";
+import { DashboardCharts } from "@/components/tools/dashboard-charts";
 
 export function WelcomePage() {
   const categoryIcons = {

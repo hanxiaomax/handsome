@@ -64,25 +64,66 @@ touch lib.ts          # 业务逻辑（可选）
 src/tools/your-tool-name/
 ├── ui.tsx                    # 必需：主要React组件
 ├── toolInfo.ts              # 必需：工具元数据配置
-├── lib.ts                   # 可选：业务逻辑和工具函数
+├── lib.ts                   # 可选：业务逻辑和工具函数（简单工具）
+├── lib/                     # 可选：复杂逻辑模块目录（复杂工具）
+│   ├── parser.ts
+│   ├── validator.ts
+│   ├── processor.ts
+│   └── __tests__/
+│       ├── parser.test.ts
+│       └── validator.test.ts
 ├── components/              # 可选：工具专用组件
 │   ├── input-panel.tsx
 │   ├── result-display.tsx
 │   └── settings-dialog.tsx
-├── lib/                     # 可选：复杂逻辑模块
-│   ├── parser.ts
-│   ├── validator.ts
-│   └── __tests__/
-│       ├── parser.test.ts
-│       └── validator.test.ts
-├── docs/                    # 可选：详细文档
-│   ├── specification.md
-│   ├── user-guide.md
-│   └── api-reference.md
+├── docs/                    # 推荐：详细文档
+│   ├── specification.md     # 工具规范文档
+│   ├── user-guide.md       # 用户使用指南
+│   └── api-reference.md    # API参考文档
 ├── assets/                  # 可选：静态资源
 │   ├── sample-files/
 │   └── icons/
 └── types.ts                 # 可选：TypeScript类型定义
+```
+
+### 🎯 工具复杂度指导原则
+
+#### 简单工具（≤3个文件）
+```
+src/tools/uuid-generator/
+├── ui.tsx                  # UI组件
+├── toolInfo.ts            # 元数据
+└── lib.ts                 # 简单逻辑
+```
+
+#### 中等复杂度工具（4-8个文件）
+```
+src/tools/unit-converter/
+├── ui.tsx                  # UI组件
+├── toolInfo.ts            # 元数据
+├── lib.ts                 # 主要逻辑
+├── components/            # 工具专用组件
+│   └── combobox.tsx
+└── docs/
+    └── specification.md
+```
+
+#### 复杂工具（≥9个文件）
+```
+src/tools/programmer-calculator/
+├── ui.tsx                  # UI组件
+├── toolInfo.ts            # 元数据
+├── lib/                   # 复杂逻辑模块
+│   ├── calculator.ts
+│   ├── base-converter.ts
+│   └── __tests__/
+├── components/            # 多个专用组件
+│   ├── display.tsx
+│   ├── button-grid.tsx
+│   └── bit-grid.tsx
+└── docs/
+    ├── specification.md
+    └── api-reference.md
 ```
 
 ## 📄 必需文件详解

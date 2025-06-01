@@ -9,9 +9,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { ToolDetail } from "@/components/tool-detail";
-import { ToolInfoCard } from "@/components/tool-info-card";
+import { ThemeToggle } from "@/components/navigation/theme-toggle";
+import { ToolDetail } from "@/components/tools/tool-detail";
+import { ToolInfoCard } from "@/components/tools/tool-info-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";

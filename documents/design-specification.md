@@ -56,21 +56,33 @@ A modern online tool collection website providing common development and office 
 
 ```
 src/
-├── app/                    # App router pages
-├── components/
-│   ├── ui/                # shadcn/ui components
-│   ├── layout/            # Layout components
-│   └── common/            # Reusable components
-├── tools/                 # Tool implementations
-│   ├── [tool-name]/
-│   │   ├── ui.tsx         # Tool UI component
-│   │   ├── toolInfo.ts    # Tool metadata
-│   │   ├── lib.ts         # Tool logic (optional)
-│   │   └── components/    # Tool-specific components (optional)
-│   └── [tool-name]-specification.md  # Detailed tool design docs
-├── lib/                   # Utilities and shared logic
-├── hooks/                 # Custom React hooks
-└── types/                 # TypeScript definitions
+├── app/                     # Application pages (扁平化)
+│   ├── homepage.tsx         # Main homepage component
+│   └── favorites.tsx        # Favorites page component
+├── components/              # UI Components (功能分组)
+│   ├── ui/                  # shadcn/ui base components
+│   ├── layout/              # Layout templates and wrappers
+│   ├── navigation/          # Navigation-related components (高内聚)
+│   │   ├── theme-toggle.tsx # Theme switching component
+│   │   └── welcome-page.tsx # Welcome/landing page component
+│   └── tools/               # Tool display components (高内聚)
+│       ├── tool-card.tsx    # Tool card component
+│       ├── tool-info-card.tsx # Tool information card
+│       ├── tool-detail.tsx  # Tool detail view
+│       └── dashboard-charts.tsx # Dashboard charts
+├── contexts/                # React Context providers (扁平化)
+├── hooks/                   # Custom React hooks (扁平化)
+├── lib/                     # Utility functions (扁平化)
+├── types/                   # TypeScript type definitions (扁平化)
+├── tools/                   # Tool implementations
+│   └── [tool-name]/
+│       ├── ui.tsx           # Tool UI component
+│       ├── toolInfo.ts      # Tool metadata
+│       ├── lib.ts           # Simple tool logic
+│       ├── lib/             # Complex tool logic (when needed)
+│       └── components/      # Tool-specific components (when needed)
+├── data/                    # Static data and configurations
+└── assets/                  # Static assets (images, icons, etc.)
 ```
 
 ## MVP Tool List
