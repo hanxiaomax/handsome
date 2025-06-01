@@ -28,7 +28,7 @@ export function WelcomePage() {
           </div>
         </div>
         <div>
-          <h1 className="text-3xl font-bold mb-2">Welcome to Tool Suite</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome to Tools2Go</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             A comprehensive collection of developer tools designed to boost your
             productivity. All tools run locally in your browser for maximum

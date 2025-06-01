@@ -80,7 +80,7 @@ function HomepageContent() {
             <SidebarTrigger />
             <div className="flex-1">
               <h2 className="text-lg font-semibold">
-                {selectedToolData ? selectedToolData.name : "Tool Suite"}
+                {selectedToolData ? selectedToolData.name : "Tools2Go"}
               </h2>
               <p className="text-sm text-muted-foreground">
                 {selectedToolData

@@ -1,6 +1,6 @@
-# Tool Suite - Developer Tools Collection
+# Tools2Go - Developer Tools Collection
 
-A modern, privacy-first collection of developer tools built with React, TypeScript, and Tailwind CSS.
+A modern, privacy-first collection of developer tools built with React, TypeScript, and Tailwind CSS. Tools2Go provides essential developer utilities in a portable, zero-configuration package that works entirely in your browser.
 
 ## Features
 
