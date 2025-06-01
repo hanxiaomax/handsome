@@ -212,6 +212,45 @@ npx shadcn@latest add input
 - **Error Handling**: 完善的错误处理和用户反馈
 - **Performance**: 使用useCallback、useMemo优化性能
 - **Accessibility**: 完整的键盘导航和屏幕阅读器支持
+- **Component Documentation**: 为关键组件添加清晰的注释和唯一ID便于沟通和维护
+
+#### 组件注释和ID规范：
+```typescript
+{/* Tool Main Container - Primary workspace area */}
+<div id="tool-main-container" className="w-full p-6 space-y-6 mt-5">
+  
+  {/* Input Section - User input area */}
+  <div id="input-section" className="space-y-4">
+    {/* Input controls and form elements */}
+  </div>
+  
+  {/* Control Panel - Action buttons and settings */}
+  <div id="control-panel" className="flex items-center gap-2">
+    {/* Control buttons */}
+  </div>
+  
+  {/* Results Section - Output display area */}
+  <div id="results-section" className="space-y-4">
+    {/* Results and output content */}
+  </div>
+  
+  {/* Status Bar - Tool status and feedback */}
+  <div id="status-bar" className="flex items-center justify-between">
+    {/* Status information */}
+  </div>
+</div>
+```
+
+#### 命名规范：
+- **ID格式**: 使用kebab-case，如 `tool-main-container`、`input-section`
+- **注释格式**: `{/* Component Name - Brief description */}`
+- **必须标注的组件**:
+  - 主要容器区域
+  - 输入/输出区域  
+  - 控制面板
+  - 状态显示区域
+  - 重要的交互组件
+  - 模态框和弹出层
 
 ### 6. 测试验证
 实现完成后需要验证：
