@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
+import { GlobalSearch } from "@/components/navigation/global-search";
 import { ToolDetail } from "@/components/tools/tool-detail";
 import { ToolInfoCard } from "@/components/tools/tool-info-card";
 import { Card, CardContent } from "@/components/ui/card";
@@ -87,6 +88,10 @@ function FavoritesContent() {
                     }`
                   : "No favorite tools yet"}
               </p>
+            </div>
+            {/* Global Search - 全局搜索框 */}
+            <div className="hidden sm:block">
+              <GlobalSearch />
             </div>
             <ThemeToggle />
           </div>
