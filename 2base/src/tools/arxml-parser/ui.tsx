@@ -25,12 +25,15 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Toggle } from "@/components/ui/toggle";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 // Icons
 import {
@@ -39,14 +42,8 @@ import {
   Search,
   Play,
   Trash2,
-  Folder,
-  FolderOpen,
   FileCode,
   AlertCircle,
-  ChevronRight,
-  ChevronDown,
-  Hash,
-  Code,
   Copy,
   Download,
   TreePine,
@@ -67,7 +64,8 @@ import { ToolLayout } from "@/components/layout/tool-layout";
 // Tool components
 import { toolInfo } from "./toolInfo";
 import { XMLStreamParser } from "./lib";
-import type { XMLElement, ParseOptions, ParserState } from "./lib/types";
+import { xmlParser } from "./lib/xmlParser";
+import type { XMLElement, ParserState } from "./lib/types";
 
 interface FileUploadState {
   isDragOver: boolean;
@@ -116,75 +114,117 @@ export default function XMLParser() {
   const [showLineNumbers, setShowLineNumbers] = useState(true);
   const [breadcrumb, setBreadcrumb] = useState<string[]>([]);
   const [autoParseEnabled, setAutoParseEnabled] = useState(true);
+  const [inputMode, setInputMode] = useState<"file" | "text">("file");
+  const [textInput, setTextInput] = useState("");
 
-  // Parse options
-  const [parseOptions] = useState<ParseOptions>({
-    packages: [],
-    elementTypes: [],
-    maxDepth: 50,
-    maxElements: 100000,
-    validateSchema: true,
-    enableReferences: true,
-    memoryLimit: 500 * 1024 * 1024,
-  });
+  // Parse options (kept for compatibility but not actively used with fast-xml-parser)
+  // const [parseOptions] = useState<ParseOptions>({
+  //   packages: [],
+  //   elementTypes: [],
+  //   maxDepth: 50,
+  //   maxElements: 100000,
+  //   validateSchema: true,
+  //   enableReferences: true,
+  //   memoryLimit: 500 * 1024 * 1024,
+  // });
 
   // Improved XML beautification that preserves and enhances indentation
   const getBeautifiedXML = useCallback((content: string): string => {
     try {
-      // First, try to parse and reformat
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(content, "text/xml");
+      // Normalize line endings and remove excessive whitespace
+      const normalized = content
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .replace(/\n\s*\n/g, "\n")
+        .trim();
 
-      // Check for parsing errors
-      const parseErrors = xmlDoc.getElementsByTagName("parsererror");
-      if (parseErrors.length > 0) {
-        // If parsing fails, return manually formatted content
-        return formatXMLManually(content);
-      }
-
-      const serializer = new XMLSerializer();
-      const xmlString = serializer.serializeToString(xmlDoc);
-
-      return formatXMLManually(xmlString);
-    } catch {
-      // Fallback to manual formatting
-      return formatXMLManually(content);
+      // Always use manual formatting for more predictable results
+      // DOM parsing can sometimes alter the structure in unexpected ways
+      return formatXMLManually(normalized);
+    } catch (error) {
+      console.warn("XML beautification error:", error);
+      // Fallback to original content with basic formatting
+      return content.replace(/></g, ">\n<");
     }
   }, []);
 
   const formatXMLManually = (content: string): string => {
-    const formatted = content.replace(/></g, ">\n<");
+    // More robust manual formatting with proper indentation
+    let formatted = content.replace(/></g, ">\n<").replace(/^\s+|\s+$/g, ""); // Trim whitespace
+
+    // Handle mixed content (text between tags) more carefully
+    formatted = formatted.replace(/>\s*([^<>\s][^<]*?)\s*</g, ">$1<");
+
     const lines = formatted.split("\n");
     let indentLevel = 0;
     const indentSize = 2;
+    const result: string[] = [];
 
-    return lines
-      .map((line) => {
-        const trimmed = line.trim();
-        if (!trimmed) return "";
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
 
-        // Decrease indent for closing tags
-        if (trimmed.startsWith("</")) {
-          indentLevel = Math.max(0, indentLevel - 1);
-        }
+      if (!trimmed) continue;
 
-        const indented = " ".repeat(indentLevel * indentSize) + trimmed;
+      // Check for different tag types
+      const isClosingTag = trimmed.startsWith("</");
+      const isSelfClosingTag = trimmed.match(/^<[^>]+\/>$/);
+      const isProcessingInstruction = trimmed.startsWith("<?");
+      const isComment = trimmed.startsWith("<!--");
+      const isDTD =
+        trimmed.startsWith("<!DOCTYPE") ||
+        trimmed.startsWith("<!ELEMENT") ||
+        trimmed.startsWith("<!ATTLIST");
+      const isOpeningTag =
+        trimmed.startsWith("<") &&
+        !isClosingTag &&
+        !isSelfClosingTag &&
+        !isProcessingInstruction &&
+        !isComment &&
+        !isDTD;
 
-        // Increase indent for opening tags (but not self-closing)
-        if (
-          trimmed.startsWith("<") &&
-          !trimmed.startsWith("</") &&
-          !trimmed.endsWith("/>") &&
-          !trimmed.startsWith("<?") &&
-          !trimmed.startsWith("<!--")
-        ) {
-          indentLevel++;
-        }
+      // Handle mixed content (opening tag with text content on same line)
+      const mixedContentMatch = trimmed.match(/^(<[^>]+>)([^<]+)(<\/[^>]+>)$/);
+      if (mixedContentMatch) {
+        // This is a complete element with text content on one line
+        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
+        continue;
+      }
 
-        return indented;
-      })
-      .filter((line) => line.trim())
-      .join("\n");
+      // Handle closing tags - decrease indent level BEFORE applying
+      if (isClosingTag) {
+        indentLevel = Math.max(0, indentLevel - 1);
+        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
+        continue;
+      }
+
+      // Handle self-closing tags - use current indent level
+      if (isSelfClosingTag) {
+        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
+        continue;
+      }
+
+      // Handle processing instructions, comments, and DTD - use current indent level
+      if (isProcessingInstruction || isComment || isDTD) {
+        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
+        continue;
+      }
+
+      // Handle opening tags - use current indent level THEN increase
+      if (isOpeningTag) {
+        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
+        indentLevel++;
+        continue;
+      }
+
+      // Handle text content - use current indent level
+      // Only add if it's meaningful text content
+      if (trimmed.length > 0) {
+        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
+      }
+    }
+
+    return result.join("\n");
   };
 
   // File handling with auto-parse
@@ -207,11 +247,21 @@ export default function XMLParser() {
           originalContent: content, // Store original for reference
         });
 
+        // Switch to file mode when file is selected
+        setInputMode("file");
+
         // Auto-parse if enabled and file is not too large (< 10MB)
         if (autoParseEnabled && file.size < 10 * 1024 * 1024) {
+          toast.info("Starting auto-parse...", {
+            description: "File loaded successfully, parsing XML content",
+          });
           setTimeout(() => {
             handleStartParsing(file);
           }, 100);
+        } else if (!autoParseEnabled) {
+          toast.success("File loaded successfully!", {
+            description: "Click the parse button to process the XML content",
+          });
         }
       } catch (error) {
         console.error("Failed to read file:", error);
@@ -251,50 +301,98 @@ export default function XMLParser() {
     [handleFileSelect]
   );
 
-  // Parsing
+  // Parsing with improved XML parser
   const handleStartParsing = useCallback(
     async (file?: File) => {
-      const targetFile = file || fileUpload.selectedFile;
-      if (!targetFile) return;
+      // Determine content source
+      let content: string;
+      if (inputMode === "text") {
+        if (!textInput.trim()) {
+          toast.error("请输入XML内容", {
+            description: "文本输入区域不能为空",
+          });
+          return;
+        }
+        content = textInput;
+      } else {
+        const targetFile = file || fileUpload.selectedFile;
+        if (!targetFile) {
+          toast.error("请选择文件", {
+            description: "需要先上传XML文件",
+          });
+          return;
+        }
+        // Read file content
+        content = fileUpload.originalContent || (await targetFile.text());
+      }
 
       try {
-        await parser.parseFile(
-          targetFile,
-          parseOptions,
-          (state) => setParserState(state),
-          (parsedElements) => {
-            setElements(parsedElements);
-          },
-          (error) => {
-            setParserState((prev) => ({
-              ...prev,
-              status: "error",
-              errors: [...prev.errors, error],
-            }));
-          }
-        );
+        setParserState((prev) => ({
+          ...prev,
+          status: "parsing",
+          progress: 0,
+          currentSection:
+            inputMode === "text" ? "Reading text input..." : "Reading file...",
+        }));
+
+        setParserState((prev) => ({
+          ...prev,
+          progress: 30,
+          currentSection: "Parsing XML structure...",
+        }));
+
+        // Parse with fast-xml-parser
+        const treeNodes = xmlParser.parseXMLToTree(content);
+
+        setParserState((prev) => ({
+          ...prev,
+          progress: 70,
+          currentSection: "Converting to elements...",
+        }));
+
+        // Convert to XMLElement format for compatibility
+        const parsedElements = xmlParser.convertToXMLElements(treeNodes);
+
+        setParserState((prev) => ({
+          ...prev,
+          progress: 100,
+          currentSection: "Complete",
+          status: "complete",
+        }));
+
+        setElements(parsedElements);
+        toast.success("XML parsed successfully!", {
+          description: `Found ${parsedElements.length} elements in the XML structure`,
+        });
       } catch (error) {
-        console.error("Failed to start parsing:", error);
+        console.error("Failed to parse XML:", error);
+        setParserState((prev) => ({
+          ...prev,
+          status: "error",
+          errors: [
+            ...prev.errors,
+            {
+              id: Date.now().toString(),
+              type: "syntax",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Unknown parsing error",
+              severity: "error",
+            },
+          ],
+        }));
+
+        toast.error("Failed to parse XML", {
+          description:
+            error instanceof Error ? error.message : "Unknown parsing error",
+        });
       }
     },
-    [fileUpload.selectedFile, parseOptions, parser]
+    [fileUpload.selectedFile, fileUpload.originalContent, inputMode, textInput]
   );
 
-  const handleClearData = useCallback(() => {
-    parser.clearData();
-    setElements([]);
-    setSelectedElement(null);
-    setExpandedNodes(new Set());
-    setSearchQuery("");
-    setBreadcrumb([]);
-    setFileUpload({
-      isDragOver: false,
-      selectedFile: null,
-      fileInfo: null,
-      content: "",
-      originalContent: "",
-    });
-  }, [parser]);
+  // Note: Individual clear functions are now handled inline in the smart clear button
 
   // Search
   const handleSearch = useCallback(
@@ -328,7 +426,41 @@ export default function XMLParser() {
   }, []);
 
   const getCompressedXML = useCallback((content: string): string => {
-    return content.replace(/>\s+</g, "><").replace(/\s+/g, " ").trim();
+    // Improved compression with optional word wrapping
+    const compressed = content
+      .replace(/>\s+</g, "><")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // Add word wrapping for better readability in compressed mode
+    const maxLineLength = 120;
+    const lines: string[] = [];
+    let currentLine = "";
+
+    // Split by tags to preserve XML structure
+    const parts = compressed.split(/(<[^>]*>)/);
+
+    for (const part of parts) {
+      if (!part) continue;
+
+      if (currentLine.length + part.length > maxLineLength) {
+        if (currentLine) {
+          lines.push(currentLine);
+          currentLine = part;
+        } else {
+          // If single part is too long, add it anyway
+          lines.push(part);
+        }
+      } else {
+        currentLine += part;
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines.join("\n");
   }, []);
 
   const convertToJSON = useCallback((content: string): string => {
@@ -407,66 +539,60 @@ export default function XMLParser() {
       return (
         <div key={element.id}>
           <div
-            className={`flex items-center gap-1 py-1 px-2 rounded cursor-pointer hover:bg-muted/50 transition-colors ${
-              isSelected ? "bg-primary/10 border border-primary/20" : ""
+            className={`flex items-center gap-2 py-1 px-2 text-sm cursor-pointer hover:bg-muted/50 transition-colors ${
+              isSelected ? "bg-primary/10 border-l-2 border-primary" : ""
             }`}
-            style={{ paddingLeft: `${depth * 20 + 8}px` }}
+            style={{ paddingLeft: `${depth * 16 + 8}px` }}
             onClick={() => handleElementSelect(element)}
           >
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-4 h-4 p-0 hover:bg-transparent"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (hasChildren) {
-                  handleNodeToggle(element.id);
-                }
-              }}
-            >
-              {hasChildren ? (
-                isExpanded ? (
-                  <ChevronDown className="w-3 h-3" />
-                ) : (
-                  <ChevronRight className="w-3 h-3" />
-                )
-              ) : (
-                <div className="w-3 h-3" />
-              )}
-            </Button>
-
+            {/* Tree expansion indicator */}
             <div className="w-4 h-4 flex items-center justify-center">
-              {element.type === "ELEMENT" ? (
-                hasChildren && isExpanded ? (
-                  <FolderOpen className="w-3 h-3 text-blue-500" />
-                ) : (
-                  <Folder className="w-3 h-3 text-blue-500" />
-                )
-              ) : element.type === "TEXT" ? (
-                <FileText className="w-3 h-3 text-green-500" />
-              ) : element.type === "COMMENT" ? (
-                <Hash className="w-3 h-3 text-gray-500" />
+              {hasChildren ? (
+                <button
+                  className="w-3 h-3 flex items-center justify-center hover:bg-muted rounded-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNodeToggle(element.id);
+                  }}
+                >
+                  {isExpanded ? "−" : "+"}
+                </button>
               ) : (
-                <Code className="w-3 h-3 text-muted-foreground" />
+                <span className="w-3 h-3 flex items-center justify-center text-muted-foreground">
+                  •
+                </span>
               )}
             </div>
 
+            {/* Element name */}
             <div className="flex-1 min-w-0 flex items-center gap-2">
-              <span className="text-sm font-medium truncate">
+              <span
+                className={`truncate ${
+                  element.type === "ELEMENT"
+                    ? "font-medium text-blue-600"
+                    : "text-muted-foreground"
+                }`}
+              >
                 {element.name}
               </span>
-              <Badge variant="outline" className="text-xs h-4 px-1 ml-auto">
-                {element.type}
-              </Badge>
+
+              {/* Children count for expanded nodes */}
+              {hasChildren && (
+                <span className="text-xs text-muted-foreground shrink-0">
+                  ({element.children?.length})
+                </span>
+              )}
             </div>
 
-            {hasChildren && (
-              <span className="text-xs text-muted-foreground ml-2">
-                ({element.children?.length})
+            {/* Element type indicator */}
+            {element.type !== "ELEMENT" && (
+              <span className="text-xs text-muted-foreground uppercase px-1 py-0.5 bg-muted/50 rounded">
+                {element.type}
               </span>
             )}
           </div>
 
+          {/* Children */}
           {hasChildren && isExpanded && element.children && (
             <div>
               {element.children.map((child) =>
@@ -486,13 +612,15 @@ export default function XMLParser() {
       return (
         <div className="font-mono text-sm">
           {lines.map((line, index) => (
-            <div key={index} className="flex hover:bg-muted/30">
+            <div key={index} className="flex hover:bg-muted/30 min-h-[1.2rem]">
               {showLineNumbers && (
                 <span className="text-muted-foreground text-xs w-12 flex-shrink-0 text-right pr-4 select-none border-r mr-4">
                   {index + 1}
                 </span>
               )}
-              <span className="flex-1 whitespace-pre">{line || " "}</span>
+              <span className="flex-1 whitespace-pre-wrap break-all">
+                {line || " "}
+              </span>
             </div>
           ))}
         </div>
@@ -508,18 +636,38 @@ export default function XMLParser() {
 
     switch (displayMode) {
       case "beautified":
-        return renderSourceCode(getBeautifiedXML(sourceContent));
+        return (
+          <ScrollArea className="h-full w-full">
+            <div className="p-4">
+              {renderSourceCode(getBeautifiedXML(sourceContent))}
+            </div>
+          </ScrollArea>
+        );
       case "compressed":
-        return renderSourceCode(getCompressedXML(sourceContent));
+        return (
+          <ScrollArea className="h-full w-full">
+            <div className="p-4">
+              {renderSourceCode(getCompressedXML(sourceContent))}
+            </div>
+          </ScrollArea>
+        );
       case "json":
-        return renderSourceCode(convertToJSON(sourceContent));
+        return (
+          <ScrollArea className="h-full w-full">
+            <div className="p-4">
+              {renderSourceCode(convertToJSON(sourceContent))}
+            </div>
+          </ScrollArea>
+        );
       case "tree":
         return elements.length > 0 ? (
-          <div className="space-y-0">
-            {elements
-              .slice(0, 100)
-              .map((element) => renderTreeNode(element, 0))}
-          </div>
+          <ScrollArea className="h-full w-full">
+            <div className="p-4 space-y-0">
+              {elements
+                .slice(0, 100)
+                .map((element) => renderTreeNode(element, 0))}
+            </div>
+          </ScrollArea>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
             {parserState.status === "parsing" ? (
@@ -551,28 +699,68 @@ export default function XMLParser() {
     parserState.status,
   ]);
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = useCallback(async () => {
+    if (!fileUpload.content && !fileUpload.originalContent) {
+      toast.error("No content to copy", {
+        description: "Please upload a file first",
+      });
+      return;
+    }
+
     let content: string;
     const sourceContent = fileUpload.originalContent || fileUpload.content;
 
-    switch (displayMode) {
-      case "beautified":
-        content = getBeautifiedXML(sourceContent);
-        break;
-      case "compressed":
-        content = getCompressedXML(sourceContent);
-        break;
-      case "json":
-        content = convertToJSON(sourceContent);
-        break;
-      case "tree":
-        content = JSON.stringify(elements, null, 2);
-        break;
-      default:
-        content = sourceContent;
-    }
+    try {
+      switch (displayMode) {
+        case "beautified":
+          content = getBeautifiedXML(sourceContent);
+          break;
+        case "compressed":
+          content = getCompressedXML(sourceContent);
+          break;
+        case "json":
+          content = convertToJSON(sourceContent);
+          break;
+        case "tree":
+          content = JSON.stringify(elements, null, 2);
+          break;
+        default:
+          content = sourceContent;
+      }
 
-    navigator.clipboard.writeText(content);
+      // Use both modern and fallback clipboard methods
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(content);
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = content;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+
+        if (!successful) {
+          throw new Error("Fallback copy failed");
+        }
+      }
+
+      toast.success("Content copied to clipboard!", {
+        description: `${
+          displayMode.charAt(0).toUpperCase() + displayMode.slice(1)
+        } format copied successfully`,
+      });
+    } catch (error) {
+      console.error("Copy failed:", error);
+      toast.error("Failed to copy content", {
+        description: "Please try again or check your browser permissions",
+      });
+    }
   }, [
     fileUpload,
     displayMode,
@@ -615,15 +803,25 @@ export default function XMLParser() {
         return;
     }
 
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("File downloaded successfully!", {
+        description: `${filename} has been saved to your downloads`,
+      });
+    } catch {
+      toast.error("Failed to download file", {
+        description: "Please try again",
+      });
+    }
   }, [
     fileUpload,
     displayMode,
@@ -647,7 +845,7 @@ export default function XMLParser() {
         <ResizablePanelGroup direction="horizontal" className="flex-1">
           {/* Left Panel - Source XML */}
           <ResizablePanel defaultSize={50} minSize={30}>
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full overflow-hidden">
               {/* Left Panel Status Bar - File info and status display only */}
               <div
                 id="left-status-bar"
@@ -719,7 +917,11 @@ export default function XMLParser() {
                             pressed={showLineNumbers}
                             onPressedChange={setShowLineNumbers}
                             size="sm"
-                            className="h-7 w-7 p-0"
+                            className={`h-7 w-7 p-0 ${
+                              showLineNumbers
+                                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                : ""
+                            }`}
                           >
                             <LineNumbers className="w-3 h-3" />
                           </Toggle>
@@ -737,7 +939,11 @@ export default function XMLParser() {
                             pressed={autoParseEnabled}
                             onPressedChange={setAutoParseEnabled}
                             size="sm"
-                            className="h-7 w-7 p-0"
+                            className={`h-7 w-7 p-0 ${
+                              autoParseEnabled
+                                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                : ""
+                            }`}
                           >
                             <Zap className="w-3 h-3" />
                           </Toggle>
@@ -748,29 +954,35 @@ export default function XMLParser() {
                       </Tooltip>
                     </TooltipProvider>
 
-                    {!autoParseEnabled && fileUpload.selectedFile && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              onClick={() => handleStartParsing()}
-                              size="sm"
-                              className="h-7 px-2"
-                              disabled={parserState.status === "parsing"}
-                            >
-                              {parserState.status === "parsing" ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <Play className="w-3 h-3" />
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Parse XML file</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                    {!autoParseEnabled &&
+                      (inputMode === "file"
+                        ? fileUpload.selectedFile
+                        : textInput.trim()) && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                onClick={() => handleStartParsing()}
+                                size="sm"
+                                className="h-7 px-2"
+                                disabled={parserState.status === "parsing"}
+                              >
+                                {parserState.status === "parsing" ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Play className="w-3 h-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>
+                                Parse XML{" "}
+                                {inputMode === "file" ? "file" : "text"}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
 
                     <Separator orientation="vertical" className="h-6" />
 
@@ -782,7 +994,11 @@ export default function XMLParser() {
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0"
-                            disabled={!fileUpload.originalContent}
+                            disabled={
+                              inputMode === "file"
+                                ? !fileUpload.originalContent
+                                : !textInput.trim()
+                            }
                           >
                             <Copy className="w-3 h-3" />
                           </Button>
@@ -801,7 +1017,11 @@ export default function XMLParser() {
                             variant="ghost"
                             size="sm"
                             className="h-7 w-7 p-0"
-                            disabled={!fileUpload.originalContent}
+                            disabled={
+                              inputMode === "file"
+                                ? !fileUpload.originalContent
+                                : !textInput.trim()
+                            }
                           >
                             <Download className="w-3 h-3" />
                           </Button>
@@ -812,14 +1032,44 @@ export default function XMLParser() {
                       </Tooltip>
                     </TooltipProvider>
 
-                    {fileUpload.fileInfo && (
+                    {/* Smart Clear Button - shows when there's content to clear */}
+                    {(inputMode === "file"
+                      ? fileUpload.fileInfo
+                      : textInput.trim()) && (
                       <>
                         <Separator orientation="vertical" className="h-6" />
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
-                                onClick={handleClearData}
+                                onClick={() => {
+                                  if (inputMode === "file") {
+                                    // Clear file
+                                    setFileUpload({
+                                      isDragOver: false,
+                                      selectedFile: null,
+                                      fileInfo: null,
+                                      content: "",
+                                      originalContent: "",
+                                    });
+                                    toast.success("File cleared!", {
+                                      description: "File has been removed",
+                                    });
+                                  } else {
+                                    // Clear text
+                                    setTextInput("");
+                                    toast.success("Text cleared!", {
+                                      description:
+                                        "Text input has been cleared",
+                                    });
+                                  }
+                                  // Also clear parsed data
+                                  setElements([]);
+                                  setSelectedElement(null);
+                                  setExpandedNodes(new Set());
+                                  setSearchQuery("");
+                                  setBreadcrumb([]);
+                                }}
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 w-7 p-0 hover:bg-red-100 dark:hover:bg-red-900/20"
@@ -828,7 +1078,9 @@ export default function XMLParser() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Clear file</p>
+                              <p>
+                                Clear {inputMode === "file" ? "file" : "text"}
+                              </p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -839,63 +1091,137 @@ export default function XMLParser() {
               </div>
 
               {/* Left Panel Visualization Area - Source content display */}
-              <div id="left-visualization-area" className="flex-1 relative">
-                <div
-                  className={`absolute inset-0 ${
-                    fileUpload.isDragOver
-                      ? "bg-blue-50 dark:bg-blue-950/20"
-                      : ""
-                  }`}
-                  onDrop={handleFileDrop}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setFileUpload((prev) => ({ ...prev, isDragOver: true }));
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    setFileUpload((prev) => ({ ...prev, isDragOver: false }));
-                  }}
-                >
-                  {fileUpload.originalContent ? (
-                    <ScrollArea className="h-full">
-                      <div className="p-4">
-                        {/* Source code */}
-                        {renderSourceCode(fileUpload.originalContent)}
-                      </div>
-                    </ScrollArea>
-                  ) : (
-                    <div
-                      className={`absolute inset-0 flex items-center justify-center cursor-pointer transition-colors ${
-                        fileUpload.isDragOver
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
-                          : "hover:bg-muted/20"
-                      }`}
-                      onClick={() =>
-                        document.getElementById("file-input")?.click()
-                      }
-                    >
-                      <div className="text-center max-w-md mx-auto p-12">
-                        <Upload className="w-20 h-20 mx-auto mb-6 text-gray-400" />
-                        <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-3">
-                          Upload XML File
-                        </h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-4">
-                          Drop your XML file here or click anywhere to browse
-                        </p>
-                        <p className="text-sm text-gray-400 dark:text-gray-500">
-                          Supports .xml, .arxml, .xsd, .svg files
-                        </p>
-                        <input
-                          type="file"
-                          accept=".xml,.arxml,.xsd,.svg,.rss,.atom"
-                          onChange={handleFileInputChange}
-                          className="hidden"
-                          id="file-input"
-                        />
-                      </div>
+              <div
+                id="left-visualization-area"
+                className="flex-1 relative overflow-hidden"
+              >
+                {fileUpload.originalContent || textInput.trim() ? (
+                  <ScrollArea className="h-full w-full">
+                    <div className="p-4">
+                      {/* Source code */}
+                      {renderSourceCode(
+                        inputMode === "text"
+                          ? textInput
+                          : fileUpload.originalContent
+                      )}
                     </div>
-                  )}
-                </div>
+                  </ScrollArea>
+                ) : (
+                  /* Input Tabs - File Upload or Text Input */
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-full max-w-2xl mx-auto p-8">
+                      <Tabs
+                        value={inputMode}
+                        onValueChange={(value) =>
+                          setInputMode(value as "file" | "text")
+                        }
+                        className="w-full"
+                      >
+                        <TabsList className="grid w-full grid-cols-2 mb-6">
+                          <TabsTrigger
+                            value="file"
+                            className="flex items-center gap-2"
+                          >
+                            <Upload className="w-4 h-4" />
+                            File Upload
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="text"
+                            className="flex items-center gap-2"
+                          >
+                            <FileCode className="w-4 h-4" />
+                            Text Input
+                          </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="file" className="mt-0">
+                          <div
+                            className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer ${
+                              fileUpload.isDragOver
+                                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                                : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-muted/20"
+                            }`}
+                            onDrop={handleFileDrop}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setFileUpload((prev) => ({
+                                ...prev,
+                                isDragOver: true,
+                              }));
+                            }}
+                            onDragLeave={(e) => {
+                              e.preventDefault();
+                              setFileUpload((prev) => ({
+                                ...prev,
+                                isDragOver: false,
+                              }));
+                            }}
+                            onClick={() =>
+                              document.getElementById("file-input")?.click()
+                            }
+                          >
+                            <Upload className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                              Upload XML File
+                            </h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-3">
+                              Drop your XML file here or click to browse
+                            </p>
+                            <p className="text-sm text-gray-400 dark:text-gray-500">
+                              Supports .xml, .arxml, .xsd, .svg files
+                            </p>
+                            <input
+                              type="file"
+                              accept=".xml,.arxml,.xsd,.svg,.rss,.atom"
+                              onChange={handleFileInputChange}
+                              className="hidden"
+                              id="file-input"
+                            />
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="text" className="mt-0">
+                          <div className="space-y-4">
+                            <div className="text-center mb-4">
+                              <FileCode className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Paste XML Content
+                              </h3>
+                              <p className="text-gray-500 dark:text-gray-400">
+                                Paste your XML content directly into the text
+                                area below
+                              </p>
+                            </div>
+                            <ScrollArea className="h-[400px] w-full border rounded-md">
+                              <Textarea
+                                placeholder="Paste your XML content here..."
+                                value={textInput}
+                                onChange={(e) => setTextInput(e.target.value)}
+                                className="min-h-[400px] font-mono text-sm border-none resize-none focus-visible:ring-0"
+                              />
+                            </ScrollArea>
+                            {textInput.trim() && (
+                              <div className="flex justify-end">
+                                <Button
+                                  onClick={() => handleStartParsing()}
+                                  className="flex items-center gap-2"
+                                  disabled={parserState.status === "parsing"}
+                                >
+                                  {parserState.status === "parsing" ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Play className="w-4 h-4" />
+                                  )}
+                                  Parse XML
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </ResizablePanel>
@@ -904,7 +1230,7 @@ export default function XMLParser() {
 
           {/* Right Panel - Processed View */}
           <ResizablePanel defaultSize={50} minSize={30}>
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full overflow-hidden">
               {/* Right Panel Status Bar - Display mode and content info */}
               <div
                 id="right-status-bar"
@@ -946,7 +1272,11 @@ export default function XMLParser() {
                             pressed={displayMode === "beautified"}
                             onPressedChange={() => setDisplayMode("beautified")}
                             size="sm"
-                            className="h-6 w-6 p-0"
+                            className={`h-6 w-6 p-0 ${
+                              displayMode === "beautified"
+                                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                : ""
+                            }`}
                           >
                             <Brackets className="w-3 h-3" />
                           </Toggle>
@@ -964,7 +1294,11 @@ export default function XMLParser() {
                             pressed={displayMode === "tree"}
                             onPressedChange={() => setDisplayMode("tree")}
                             size="sm"
-                            className="h-6 w-6 p-0"
+                            className={`h-6 w-6 p-0 ${
+                              displayMode === "tree"
+                                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                : ""
+                            }`}
                           >
                             <TreePine className="w-3 h-3" />
                           </Toggle>
@@ -982,13 +1316,17 @@ export default function XMLParser() {
                             pressed={displayMode === "compressed"}
                             onPressedChange={() => setDisplayMode("compressed")}
                             size="sm"
-                            className="h-6 w-6 p-0"
+                            className={`h-6 w-6 p-0 ${
+                              displayMode === "compressed"
+                                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                : ""
+                            }`}
                           >
                             <Minimize2 className="w-3 h-3" />
                           </Toggle>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Compressed XML</p>
+                          <p>Compressed XML (with wrapping)</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -1000,7 +1338,11 @@ export default function XMLParser() {
                             pressed={displayMode === "json"}
                             onPressedChange={() => setDisplayMode("json")}
                             size="sm"
-                            className="h-6 w-6 p-0"
+                            className={`h-6 w-6 p-0 ${
+                              displayMode === "json"
+                                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                : ""
+                            }`}
                           >
                             <FileJson className="w-3 h-3" />
                           </Toggle>
@@ -1113,28 +1455,41 @@ export default function XMLParser() {
                     </TooltipProvider>
                   </div>
                 </div>
+              </div>
 
-                {/* Breadcrumb for selected element */}
-                {displayMode === "tree" && breadcrumb.length > 0 && (
-                  <div className="mt-2">
+              {/* Breadcrumb Navigation Bar - Independent status bar for element path */}
+              {displayMode === "tree" && breadcrumb.length > 0 && (
+                <div
+                  id="breadcrumb-status-bar"
+                  className="border-b bg-accent/20 px-4 py-3 h-14 flex-shrink-0"
+                >
+                  {/* Breadcrumb Status Bar - Element path navigation */}
+                  <div className="flex items-center gap-3 h-full">
+                    <span className="text-sm text-muted-foreground font-medium shrink-0">
+                      Path:
+                    </span>
                     <Breadcrumb>
                       <BreadcrumbList>
                         <BreadcrumbItem>
-                          <BreadcrumbLink onClick={() => setBreadcrumb([])}>
-                            <Home className="w-3 h-3" />
+                          <BreadcrumbLink
+                            onClick={() => setBreadcrumb([])}
+                            className="flex items-center gap-1 text-sm hover:text-primary cursor-pointer"
+                          >
+                            <Home className="w-4 h-4" />
+                            <span>Root</span>
                           </BreadcrumbLink>
                         </BreadcrumbItem>
                         {breadcrumb.map((crumb, index) => (
                           <div key={index} className="flex items-center">
-                            <BreadcrumbSeparator />
+                            <BreadcrumbSeparator className="text-muted-foreground/60 mx-2" />
                             <BreadcrumbItem>
                               {index === breadcrumb.length - 1 ? (
-                                <BreadcrumbPage className="text-xs">
+                                <BreadcrumbPage className="text-sm font-medium text-primary">
                                   {crumb}
                                 </BreadcrumbPage>
                               ) : (
                                 <BreadcrumbLink
-                                  className="text-xs"
+                                  className="text-sm hover:text-primary cursor-pointer"
                                   onClick={() =>
                                     setBreadcrumb(
                                       breadcrumb.slice(0, index + 1)
@@ -1150,14 +1505,15 @@ export default function XMLParser() {
                       </BreadcrumbList>
                     </Breadcrumb>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Right Panel Visualization Area - Processed content display */}
-              <div id="right-visualization-area" className="flex-1">
-                <ScrollArea className="h-full">
-                  <div className="p-4">{getRightPanelContent()}</div>
-                </ScrollArea>
+              <div
+                id="right-visualization-area"
+                className="flex-1 overflow-hidden"
+              >
+                {getRightPanelContent()}
               </div>
             </div>
           </ResizablePanel>
