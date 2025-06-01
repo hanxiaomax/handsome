@@ -500,15 +500,43 @@ After completing any development task, you **MUST** either update existing repor
    - **Documentation Reports**: For documentation updates or additions
 
 3. **Report Standards**:
-   - Use descriptive filenames with UPPER_CASE format (e.g., `DOCUMENTATION_MIGRATION_REPORT.md`)
+   - Use descriptive filenames with kebab-case format (e.g., `documentation-migration-report.md`)
    - Include comprehensive details with before/after comparisons
    - Provide statistics and metrics where applicable
    - Document any challenges encountered and solutions applied
    - Include verification steps and validation results
 
-4. **Report Location**: Place reports in the root directory for easy discovery and reference
+4. **Report Location**: Place all reports in the `.tasks/` directory for organized task tracking and discovery
 
 5. **Update Existing Reports**: When tasks are related to previous work, update existing reports rather than creating duplicate documentation
+
+## Document Organization
+
+### Documentation Storage Structure
+The project follows a clear separation between different types of documentation:
+
+1. **Task Reports** (`.tasks/` directory):
+   - All development task reports and completion documentation
+   - Migration reports, feature reports, bug fix reports, refactoring reports
+   - Task-specific analysis and verification documentation
+   - Progress tracking and project history records
+
+2. **General Documentation** (`documents/` directory):
+   - Project-wide documentation not tied to specific tools
+   - Design specifications, architecture documents, project plans
+   - README files, changelogs, and project overview materials
+   - General guides, standards, and reference materials
+
+3. **Tool-Specific Documentation** (within each tool's `docs/` folder):
+   - Tool specifications, user guides, and API references
+   - Tool-specific implementation details and usage examples
+   - Component documentation and technical specifications
+
+### Documentation Guidelines
+- **Clear Separation**: Maintain distinct boundaries between task reports, general docs, and tool-specific docs
+- **Consistent Naming**: Use descriptive, standardized naming conventions for all documentation
+- **Easy Discovery**: Organize files for quick location and reference by team members
+- **Version Control**: All documentation should be tracked in version control for history and collaboration
 
 ## When Implementing New Tools
 
