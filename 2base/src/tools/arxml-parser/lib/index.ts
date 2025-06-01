@@ -1,10 +1,10 @@
 // Export main engine
-export { ARXMLStreamParser } from "./engine";
+export { XMLStreamParser } from "./engine";
 
 // Export all types
 export type {
-  ARXMLElement,
-  ARXMLElementType,
+  XMLElement,
+  XMLElementType,
   ParseOptions,
   ParserState,
   ParseError,

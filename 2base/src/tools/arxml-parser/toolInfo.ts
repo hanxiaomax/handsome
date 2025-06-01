@@ -2,26 +2,27 @@ import type { ToolInfo } from "@/types/tool";
 import { FileText } from "lucide-react";
 
 export const toolInfo: ToolInfo = {
-  id: "arxml-parser",
-  name: "ARXML Parser & Hierarchy Visualizer",
+  id: "xml-parser",
+  name: "XML Parser & Tree Visualizer",
   description:
-    "High-performance ARXML file parser and hierarchy visualizer for AUTOSAR architecture files with streaming parse and selective loading",
+    "High-performance XML file parser and hierarchy visualizer with streaming parse, selective loading, and interactive tree navigation for any XML structure",
   category: "development",
   tags: [
-    "arxml",
-    "autosar",
     "xml",
     "parser",
     "hierarchy",
     "visualization",
-    "automotive",
-    "architecture",
+    "tree",
+    "structure",
+    "dom",
+    "element",
     "stream-parsing",
+    "universal",
   ],
   requiresBackend: false,
   icon: FileText,
   path: "/tools/arxml-parser",
-  version: "1.0.0",
-  releaseDate: "2024-01-20",
+  version: "1.1.0",
+  releaseDate: "2024-01-21",
   pricing: "free",
 };

@@ -1,5 +1,5 @@
-import ARXMLParser from "@/tools/arxml-parser/ui";
+import XMLParser from "@/tools/arxml-parser/ui";
 
-export default function ARXMLParserPage() {
-  return <ARXMLParser />;
+export default function XMLParserPage() {
+  return <XMLParser />;
 }

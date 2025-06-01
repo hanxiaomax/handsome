@@ -1,6 +1,6 @@
 import type {
-  ARXMLElement,
-  ARXMLElementType,
+  XMLElement,
+  XMLElementType,
   ParseOptions,
   ParserState,
   ParseError,
@@ -16,13 +16,13 @@ import type {
 } from "./types";
 
 /**
- * High-performance ARXML Stream Parser Engine
+ * High-performance XML Stream Parser Engine
  * Handles large files with memory-efficient streaming and selective loading
  */
-export class ARXMLStreamParser {
+export class XMLStreamParser {
   private state: ParserState;
   private worker: Worker | null = null;
-  private elements = new Map<string, ARXMLElement>();
+  private elements = new Map<string, XMLElement>();
   private searchIndex: SearchIndex | null = null;
   private metrics: PerformanceMetrics = {
     parseTime: 0,
@@ -45,13 +45,13 @@ export class ARXMLStreamParser {
   }
 
   /**
-   * Parse ARXML file with streaming support
+   * Parse XML file with streaming support
    */
   async parseFile(
     file: File,
     options: ParseOptions,
     onProgress?: (state: ParserState) => void,
-    onComplete?: (elements: ARXMLElement[]) => void,
+    onComplete?: (elements: XMLElement[]) => void,
     onError?: (error: ParseError) => void
   ): Promise<void> {
     const startTime = performance.now();
@@ -116,11 +116,11 @@ export class ARXMLStreamParser {
     file: File,
     options: ParseOptions,
     onProgress?: (state: ParserState) => void,
-    onComplete?: (elements: ARXMLElement[]) => void,
+    onComplete?: (elements: XMLElement[]) => void,
     onError?: (error: ParseError) => void
   ): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Create inline worker for ARXML parsing
+      // Create inline worker for XML parsing
       const workerCode = this.createWorkerCode();
       const blob = new Blob([workerCode], { type: "application/javascript" });
       this.worker = new Worker(URL.createObjectURL(blob));
@@ -196,7 +196,7 @@ export class ARXMLStreamParser {
     file: File,
     options: ParseOptions,
     onProgress?: (state: ParserState) => void,
-    onComplete?: (elements: ARXMLElement[]) => void,
+    onComplete?: (elements: XMLElement[]) => void,
     onError?: (error: ParseError) => void
   ): Promise<void> {
     try {
@@ -245,16 +245,16 @@ export class ARXMLStreamParser {
     text: string,
     options: ParseOptions,
     onProgress?: (state: ParserState) => void
-  ): ARXMLElement[] {
+  ): XMLElement[] {
     console.log("parseXMLText: Starting with options:", options);
-    const elements: ARXMLElement[] = [];
+    const elements: XMLElement[] = [];
 
     // Parse XML with improved DOM-like approach
     const lines = text.split("\n");
     const totalLines = lines.length;
     console.log("parseXMLText: Total lines to process:", totalLines);
 
-    const elementStack: ARXMLElement[] = [];
+    const elementStack: XMLElement[] = [];
     let lineNumber = 0;
     let targetElementsFound = 0;
     let totalTagsFound = 0;
@@ -319,12 +319,13 @@ export class ARXMLStreamParser {
               `parseXMLText: Creating element for "${tagName}" (${targetElementsFound}) at line ${lineNumber}`
             );
 
-            const element: ARXMLElement = {
+            const element: XMLElement = {
               id: `${elementType}_${lineNumber}_${Date.now()}_${Math.random()
                 .toString(36)
                 .substr(2, 9)}`,
               name: currentShortName || tagName,
               type: elementType,
+              tagName: tagName,
               path: this.buildElementPath(elementStack, tagName),
               attributes: attributes,
               children: [],
@@ -335,9 +336,10 @@ export class ARXMLStreamParser {
                 byteOffset: 0,
                 size: trimmedLine.length,
                 namespace: this.extractNamespace(trimmedLine),
-                schema: "autosar",
+                schema: "xml",
                 description: this.extractDescription(tagName),
                 tags: this.extractTags(tagName, attributes),
+                depth: elementStack.length,
               },
             };
 
@@ -370,10 +372,11 @@ export class ARXMLStreamParser {
             currentShortName = "";
           } else if (!isClosing) {
             // For non-target elements, create a minimal structure holder
-            const structuralElement: ARXMLElement = {
+            const structuralElement: XMLElement = {
               id: `struct_${lineNumber}_${Date.now()}`,
               name: tagName,
-              type: "UNKNOWN",
+              type: "ELEMENT",
+              tagName: tagName,
               path: this.buildElementPath(elementStack, tagName),
               attributes: {},
               children: [],
@@ -383,8 +386,9 @@ export class ARXMLStreamParser {
                 lineNumber,
                 byteOffset: 0,
                 size: trimmedLine.length,
-                namespace: "autosar",
-                schema: "autosar",
+                namespace: "xml",
+                schema: "xml",
+                depth: elementStack.length,
               },
             };
 
@@ -492,54 +496,42 @@ export class ARXMLStreamParser {
   }
 
   /**
-   * Check if element is important for structure even if not a target
+   * Check if element is important for structure
    */
   private isStructuralElement(tagName: string): boolean {
-    const structuralElements = [
-      "AUTOSAR",
-      "AR-PACKAGES",
-      "ELEMENTS",
-      "INTERFACES",
-      "SERVICE-INTERFACES",
-      "DATA-TYPES",
-      "COMPONENTS",
-      "SW-COMPONENT-PROTOTYPES",
-      "COMPOSITIONS",
-      "SERVICE-INTERFACE",
-      "SOMEIP-SERVICE-INTERFACE",
-      "SOMEIP-METHOD-DEPLOYMENTS",
-      "SOMEIP-EVENT-DEPLOYMENTS",
-      "SOMEIP-FIELD-DEPLOYMENTS",
-      "SOMEIP-EVENT-GROUP-DEPLOYMENTS",
-    ];
-
-    return structuralElements.includes(tagName);
+    // For general XML, we consider most elements as structural
+    // Skip only text content, comments, and processing instructions
+    return !tagName.match(/^(#text|#comment|#cdata-section|\?xml|!--)/);
   }
 
   /**
    * Extract description from element type and attributes
    */
   private extractDescription(tagName: string): string {
-    const descriptions: Record<string, string> = {
-      "AR-PACKAGE": "AUTOSAR Package containing other elements",
-      "APPLICATION-SW-COMPONENT-TYPE": "Application Software Component",
-      "SERVICE-SW-COMPONENT-TYPE": "Service Software Component",
-      "COMPOSITION-SW-COMPONENT-TYPE": "Composition Software Component",
-      "SENDER-RECEIVER-INTERFACE":
-        "Sender-Receiver Interface for data exchange",
-      "CLIENT-SERVER-INTERFACE": "Client-Server Interface for service calls",
-      "SOMEIP-SERVICE-INTERFACE": "SOME/IP Service Interface",
-      "SOMEIP-METHOD-DEPLOYMENT": "SOME/IP Method Deployment Configuration",
-      "SOMEIP-EVENT-DEPLOYMENT": "SOME/IP Event Deployment Configuration",
-      "SOMEIP-FIELD-DEPLOYMENT": "SOME/IP Field Deployment Configuration",
-      "IMPLEMENTATION-DATA-TYPE": "Implementation Data Type Definition",
-      "APPLICATION-PRIMITIVE-DATA-TYPE": "Application Primitive Data Type",
-      SYSTEM: "System Configuration",
-      "P-PORT-PROTOTYPE": "Provided Port Prototype",
-      "R-PORT-PROTOTYPE": "Required Port Prototype",
-    };
+    // For general XML, provide basic description based on common patterns
+    if (tagName.toLowerCase().includes("config")) {
+      return "Configuration element";
+    }
+    if (tagName.toLowerCase().includes("data")) {
+      return "Data element";
+    }
+    if (
+      tagName.toLowerCase().includes("item") ||
+      tagName.toLowerCase().includes("entry")
+    ) {
+      return "Item or entry element";
+    }
+    if (tagName.toLowerCase().includes("list") || tagName.includes("array")) {
+      return "List or array container";
+    }
+    if (
+      tagName.toLowerCase().includes("info") ||
+      tagName.toLowerCase().includes("meta")
+    ) {
+      return "Information or metadata element";
+    }
 
-    return descriptions[tagName] || `AUTOSAR ${tagName} element`;
+    return `XML element: ${tagName}`;
   }
 
   /**
@@ -551,165 +543,68 @@ export class ARXMLStreamParser {
   ): string[] {
     const tags: string[] = [];
 
-    // Add category tags
-    if (tagName.includes("SOMEIP")) {
-      tags.push("someip", "service", "communication");
-    }
-    if (tagName.includes("INTERFACE")) {
-      tags.push("interface");
-    }
-    if (tagName.includes("COMPONENT")) {
-      tags.push("component", "software");
-    }
-    if (tagName.includes("DATA-TYPE")) {
-      tags.push("datatype");
-    }
-    if (tagName.includes("PORT")) {
-      tags.push("port", "connection");
-    }
-    if (tagName.includes("DEPLOYMENT")) {
-      tags.push("deployment", "configuration");
-    }
-    if (tagName === "AR-PACKAGE") {
-      tags.push("package", "container");
-    }
+    // Add category tags based on tag name patterns
+    const lowerTagName = tagName.toLowerCase();
 
-    // Add attribute-based tags
+    if (lowerTagName.includes("config")) tags.push("configuration");
+    if (lowerTagName.includes("data")) tags.push("data");
+    if (lowerTagName.includes("meta")) tags.push("metadata");
+    if (lowerTagName.includes("info")) tags.push("information");
+    if (lowerTagName.includes("list") || lowerTagName.includes("array"))
+      tags.push("container", "list");
+    if (lowerTagName.includes("item") || lowerTagName.includes("entry"))
+      tags.push("item");
+    if (lowerTagName.includes("root")) tags.push("root");
+    if (lowerTagName.includes("header")) tags.push("header");
+    if (lowerTagName.includes("body")) tags.push("content");
+
+    // Add tags based on attributes
     Object.entries(attributes).forEach(([key, value]) => {
-      if (key.toLowerCase().includes("type")) {
-        tags.push(value.toLowerCase());
-      }
-      if (value.toLowerCase().includes("someip")) {
-        tags.push("someip");
-      }
+      const lowerKey = key.toLowerCase();
+      const lowerValue = value.toLowerCase();
+
+      if (lowerKey.includes("type")) tags.push("typed");
+      if (lowerKey.includes("id") || lowerKey.includes("name"))
+        tags.push("identified");
+      if (lowerKey.includes("class")) tags.push("classified");
+      if (lowerValue.includes("true") || lowerValue.includes("false"))
+        tags.push("boolean");
+      if (/^\d+$/.test(value)) tags.push("numeric");
     });
 
     return [...new Set(tags)]; // Remove duplicates
   }
 
   /**
-   * Update element names with SHORT-NAME content
-   */
-  private updateElementNames(): void {
-    // This could be enhanced to parse content and extract SHORT-NAME
-    // For now, we rely on the parsing logic above
-  }
-
-  /**
-   * Check if tag name represents a target AUTOSAR element
+   * Check if tag name represents a target XML element
    */
   private isTargetElement(tagName: string): boolean {
-    const targetElements = [
-      "AR-PACKAGE",
-      "APPLICATION-SW-COMPONENT-TYPE",
-      "SERVICE-SW-COMPONENT-TYPE",
-      "COMPOSITION-SW-COMPONENT-TYPE",
-      "SWC-INTERNAL-BEHAVIOR",
-      "SWC-IMPLEMENTATION",
-      "SENDER-RECEIVER-INTERFACE",
-      "CLIENT-SERVER-INTERFACE",
-      "IMPLEMENTATION-DATA-TYPE",
-      "APPLICATION-PRIMITIVE-DATA-TYPE",
-      "VARIABLE-DATA-PROTOTYPE",
-      "OPERATION-PROTOTYPE",
-      "RUNNABLE-ENTITY",
-      "TIMING-EVENT",
-      "OPERATION-INVOKED-EVENT",
-      "DATA-TYPE-MAPPING-SET",
-      "COMPU-METHOD",
-      "P-PORT-PROTOTYPE",
-      "R-PORT-PROTOTYPE",
-      "SYSTEM",
-      "ROOT-SW-COMPOSITION-PROTOTYPE",
-      "SW-COMPONENT-PROTOTYPE",
-      "ASSEMBLY-SW-CONNECTOR",
-      "DELEGATION-SW-CONNECTOR",
-      "SYSTEM-MAPPING",
-      "SWC-TO-IMPL-MAPPING",
-      "I-SIGNAL",
-      "I-SIGNAL-I-PDU",
-      "SYSTEM-SIGNAL",
-    ];
-
-    return targetElements.includes(tagName);
+    // For general XML parsing, we want to capture most elements
+    // Exclude only XML declarations, comments, and processing instructions
+    return !tagName.match(/^(\?xml|!--|!\[CDATA\[|!DOCTYPE)/);
   }
 
   /**
-   * Map XML tag name to ARXML element type
+   * Map XML tag name to XML element type
    */
-  private mapTagToElementType(tagName: string): ARXMLElementType {
-    const typeMapping: Record<string, ARXMLElementType> = {
-      "AR-PACKAGE": "AR-PACKAGE",
-      "SW-COMPONENT-TYPE": "SW-COMPONENT-TYPE",
-      "APPLICATION-SW-COMPONENT-TYPE": "APPLICATION-SW-COMPONENT-TYPE",
-      "COMPLEX-DEVICE-DRIVER-SW-COMPONENT-TYPE":
-        "COMPLEX-DEVICE-DRIVER-SW-COMPONENT-TYPE",
-      "ECU-ABSTRACTION-SW-COMPONENT-TYPE": "ECU-ABSTRACTION-SW-COMPONENT-TYPE",
-      "SERVICE-SW-COMPONENT-TYPE": "SERVICE-SW-COMPONENT-TYPE",
-      "SENSOR-ACTUATOR-SW-COMPONENT-TYPE": "SENSOR-ACTUATOR-SW-COMPONENT-TYPE",
-      "COMPOSITION-SW-COMPONENT-TYPE": "COMPOSITION-SW-COMPONENT-TYPE",
-      "SENDER-RECEIVER-INTERFACE": "SENDER-RECEIVER-INTERFACE",
-      "CLIENT-SERVER-INTERFACE": "CLIENT-SERVER-INTERFACE",
-      "MODE-SWITCH-INTERFACE": "MODE-SWITCH-INTERFACE",
-      "NV-DATA-INTERFACE": "NV-DATA-INTERFACE",
-      "PARAMETER-INTERFACE": "PARAMETER-INTERFACE",
-      "TRIGGER-INTERFACE": "TRIGGER-INTERFACE",
-      "IMPLEMENTATION-DATA-TYPE": "IMPLEMENTATION-DATA-TYPE",
-      "APPLICATION-PRIMITIVE-DATA-TYPE": "APPLICATION-PRIMITIVE-DATA-TYPE",
-      "APPLICATION-ARRAY-DATA-TYPE": "APPLICATION-ARRAY-DATA-TYPE",
-      "APPLICATION-RECORD-DATA-TYPE": "APPLICATION-RECORD-DATA-TYPE",
-      "PRIMITIVE-DATA-TYPE": "PRIMITIVE-DATA-TYPE",
-      "ARRAY-DATA-TYPE": "ARRAY-DATA-TYPE",
-      "RECORD-DATA-TYPE": "RECORD-DATA-TYPE",
-      "POINTER-DATA-TYPE": "POINTER-DATA-TYPE",
-      "FUNCTION-POINTER-DATA-TYPE": "FUNCTION-POINTER-DATA-TYPE",
-      "CONSTANT-SPECIFICATION": "CONSTANT-SPECIFICATION",
-      "VARIABLE-DATA-PROTOTYPE": "VARIABLE-DATA-PROTOTYPE",
-      "OPERATION-PROTOTYPE": "OPERATION-PROTOTYPE",
-      "ARGUMENT-DATA-PROTOTYPE": "ARGUMENT-DATA-PROTOTYPE",
-      "FIELD-PROTOTYPE": "FIELD-PROTOTYPE",
-      "MODE-DECLARATION-GROUP": "MODE-DECLARATION-GROUP",
-      "MODE-DECLARATION": "MODE-DECLARATION",
-      "TRIGGER-PROTOTYPE": "TRIGGER-PROTOTYPE",
-      "SWC-INTERNAL-BEHAVIOR": "SWC-INTERNAL-BEHAVIOR",
-      "SWC-IMPLEMENTATION": "SWC-IMPLEMENTATION",
-      "BSW-MODULE-DESCRIPTION": "BSW-MODULE-DESCRIPTION",
-      "BSW-MODULE-ENTRY": "BSW-MODULE-ENTRY",
-      "CAN-CLUSTER": "CAN-CLUSTER",
-      "ETHERNET-CLUSTER": "ETHERNET-CLUSTER",
-      "FLEXRAY-CLUSTER": "FLEXRAY-CLUSTER",
-      "LIN-CLUSTER": "LIN-CLUSTER",
-      "TTCAN-CLUSTER": "TTCAN-CLUSTER",
-      "NETWORK-ENDPOINT": "NETWORK-ENDPOINT",
-      "APPLICATION-ENDPOINT": "APPLICATION-ENDPOINT",
-      "PROVIDED-SERVICE-INSTANCE": "PROVIDED-SERVICE-INSTANCE",
-      "REQUIRED-SERVICE-INSTANCE": "REQUIRED-SERVICE-INSTANCE",
-      "EVENT-GROUP": "EVENT-GROUP",
-      "SOMEIP-SERVICE-INTERFACE-DEPLOYMENT":
-        "SOMEIP-SERVICE-INTERFACE-DEPLOYMENT",
-      "SOMEIP-METHOD-DEPLOYMENT": "SOMEIP-METHOD-DEPLOYMENT",
-      "SOMEIP-EVENT-DEPLOYMENT": "SOMEIP-EVENT-DEPLOYMENT",
-      "SOMEIP-FIELD-DEPLOYMENT": "SOMEIP-FIELD-DEPLOYMENT",
-      "SOMEIP-EVENT-GROUP-DEPLOYMENT": "SOMEIP-EVENT-GROUP-DEPLOYMENT",
-      SYSTEM: "SYSTEM",
-      "ROOT-SW-COMPOSITION-PROTOTYPE": "ROOT-SW-COMPOSITION-PROTOTYPE",
-      "SW-COMPOSITION-PROTOTYPE": "SW-COMPOSITION-PROTOTYPE",
-      "COMPONENT-PROTOTYPE": "COMPONENT-PROTOTYPE",
-      "CONNECTOR-PROTOTYPE": "CONNECTOR-PROTOTYPE",
-      "ASSEMBLY-SW-CONNECTOR": "ASSEMBLY-SW-CONNECTOR",
-      "DELEGATION-SW-CONNECTOR": "DELEGATION-SW-CONNECTOR",
-      "PASS-THROUGH-SW-CONNECTOR": "PASS-THROUGH-SW-CONNECTOR",
-    };
+  private mapTagToElementType(tagName: string): XMLElementType {
+    // For general XML parsing, most elements are simply "ELEMENT"
+    // Special cases for XML document structure
+    if (tagName.startsWith("?xml") || tagName.startsWith("<?")) {
+      return "PROCESSING_INSTRUCTION";
+    }
+    if (tagName.startsWith("!--")) {
+      return "COMMENT";
+    }
+    if (tagName.startsWith("![CDATA[")) {
+      return "CDATA";
+    }
+    if (tagName.startsWith("!DOCTYPE")) {
+      return "DOCTYPE";
+    }
 
-    return typeMapping[tagName] || "UNKNOWN";
-  }
-
-  /**
-   * Extract element name from XML tag
-   */
-  private extractElementName(line: string): string | null {
-    const nameMatch = line.match(/SHORT-NAME[^>]*>([^<]+)</);
-    return nameMatch ? nameMatch[1] : null;
+    // Default to ELEMENT for regular XML tags
+    return "ELEMENT";
   }
 
   /**
@@ -738,7 +633,7 @@ export class ARXMLStreamParser {
   /**
    * Build element path
    */
-  private buildElementPath(stack: ARXMLElement[], tagName: string): string {
+  private buildElementPath(stack: XMLElement[], tagName: string): string {
     const path = stack.map((el) => el.name || el.type).join("/");
     return path ? `${path}/${tagName}` : tagName;
   }
@@ -746,12 +641,12 @@ export class ARXMLStreamParser {
   /**
    * Build search index for fast searching
    */
-  private buildSearchIndex(elements: ARXMLElement[]): void {
+  private buildSearchIndex(elements: XMLElement[]): void {
     const nameIndex = new Map<string, string[]>();
-    const typeIndex = new Map<ARXMLElementType, string[]>();
+    const typeIndex = new Map<XMLElementType, string[]>();
     const pathIndex = new Map<string, string>();
     const attributeIndex = new Map<string, Map<string, string[]>>();
-    const elementMap = new Map<string, ARXMLElement>();
+    const elementMap = new Map<string, XMLElement>();
 
     elements.forEach((element) => {
       elementMap.set(element.id, element);
@@ -849,7 +744,7 @@ export class ARXMLStreamParser {
   /**
    * Calculate search score
    */
-  private calculateSearchScore(element: ARXMLElement, query: string): number {
+  private calculateSearchScore(element: XMLElement, query: string): number {
     let score = 0;
     const lowerQuery = query.toLowerCase();
 
@@ -874,10 +769,7 @@ export class ARXMLStreamParser {
   /**
    * Filter elements by criteria
    */
-  filterElements(
-    elements: ARXMLElement[],
-    filters: TreeFilter[]
-  ): ARXMLElement[] {
+  filterElements(elements: XMLElement[], filters: TreeFilter[]): XMLElement[] {
     if (filters.length === 0) return elements;
 
     return elements.filter((element) => {
@@ -909,7 +801,7 @@ export class ARXMLStreamParser {
   ): Promise<Blob> {
     const elements = elementIds
       .map((id) => this.elements.get(id))
-      .filter(Boolean) as ARXMLElement[];
+      .filter(Boolean) as XMLElement[];
 
     switch (options.format) {
       case "json":
@@ -926,7 +818,7 @@ export class ARXMLStreamParser {
   /**
    * Export to JSON format
    */
-  private exportToJSON(elements: ARXMLElement[], options: ExportOptions): Blob {
+  private exportToJSON(elements: XMLElement[], options: ExportOptions): Blob {
     const data = elements.map((element) => ({
       id: element.id,
       name: element.name,
@@ -947,7 +839,7 @@ export class ARXMLStreamParser {
   /**
    * Export to CSV format
    */
-  private exportToCSV(elements: ARXMLElement[], options: ExportOptions): Blob {
+  private exportToCSV(elements: XMLElement[], options: ExportOptions): Blob {
     const headers = ["ID", "Name", "Type", "Path"];
     if (options.includeMetadata) {
       headers.push("Line Number", "Namespace", "Schema");
@@ -975,7 +867,7 @@ export class ARXMLStreamParser {
   /**
    * Export to XML format
    */
-  private exportToXML(elements: ARXMLElement[], options: ExportOptions): Blob {
+  private exportToXML(elements: XMLElement[], options: ExportOptions): Blob {
     let xmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n';
     xmlContent += "<AUTOSAR>\n";
 
@@ -992,7 +884,7 @@ export class ARXMLStreamParser {
    * Convert element to XML
    */
   private elementToXML(
-    element: ARXMLElement,
+    element: XMLElement,
     indent: number,
     options: ExportOptions
   ): string {
@@ -1029,7 +921,7 @@ export class ARXMLStreamParser {
    * Process worker results
    */
   private processWorkerResults(
-    elements: ARXMLElement[],
+    elements: XMLElement[],
     searchIndex: SearchIndex
   ): void {
     this.elements.clear();
@@ -1065,7 +957,7 @@ export class ARXMLStreamParser {
    */
   private createWorkerCode(): string {
     return `
-      // Worker code for ARXML parsing
+      // Worker code for XML parsing
       self.onmessage = function(event) {
         const { type, payload } = event.data;
         
@@ -1079,7 +971,7 @@ export class ARXMLStreamParser {
                 type: 'progress',
                 payload: {
                   progress: Math.min(progress, 90),
-                  currentSection: 'Processing ARXML elements...',
+                  currentSection: 'Processing XML elements...',
                   elementsProcessed: Math.floor(progress * 10),
                   memoryUsage: Math.floor(progress * 1024 * 1024)
                 }
@@ -1186,7 +1078,7 @@ export class ARXMLStreamParser {
   /**
    * Get all elements
    */
-  getElements(): ARXMLElement[] {
+  getElements(): XMLElement[] {
     return Array.from(this.elements.values());
   }
 }
