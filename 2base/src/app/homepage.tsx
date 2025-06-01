@@ -10,6 +10,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ToolDetail } from "@/components/tools/tool-detail";
 import { WelcomePage } from "@/components/navigation/welcome-page";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
+import { GlobalSearch } from "@/components/navigation/global-search";
 import { tools } from "@/data/tools";
 
 function HomepageContent() {
@@ -86,6 +87,10 @@ function HomepageContent() {
                   ? "Tool Details"
                   : "Select a tool from the sidebar to view details"}
               </p>
+            </div>
+            {/* Global Search - 全局搜索框 */}
+            <div className="hidden sm:block">
+              <GlobalSearch />
             </div>
             <ThemeToggle />
           </div>

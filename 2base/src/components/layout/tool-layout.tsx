@@ -2,6 +2,7 @@ import { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
+import { GlobalSearch } from "@/components/navigation/global-search";
 import { useNavigate } from "react-router-dom";
 
 interface ToolLayoutProps {
@@ -133,6 +134,10 @@ export function ToolLayout({
                     {toolDescription}
                   </p>
                 )}
+              </div>
+              {/* Global Search - 全局搜索框 */}
+              <div className="hidden sm:block">
+                <GlobalSearch />
               </div>
               <ThemeToggle />
             </div>
