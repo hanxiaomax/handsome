@@ -1,4 +1,4 @@
-import type { EmojiData, EmojiCategory } from "./types";
+import type { EmojiData, EmojiCategory } from "../types";
 
 export const EMOJI_CATEGORIES: EmojiCategory[] = [
   { id: "all", name: "All", icon: "🔍", order: 0 },

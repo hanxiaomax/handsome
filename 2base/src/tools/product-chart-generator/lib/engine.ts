@@ -13,7 +13,7 @@ import type {
   CreateChartOptions,
   ValidationResult,
   ImportData,
-} from "./types";
+} from "../types";
 
 // Default themes
 const defaultThemes: Record<string, ChartTheme> = {

@@ -6,7 +6,7 @@ export type {
   SearchFilters,
   EmojiLibraryState,
   EmojiCategoryId,
-} from "./types";
+} from "../types";
 export {
   EMOJI_DATA,
   EMOJI_CATEGORIES,

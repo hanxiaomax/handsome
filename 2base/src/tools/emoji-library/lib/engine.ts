@@ -1,4 +1,4 @@
-import type { EmojiData, UserPreferences, SearchFilters } from "./types";
+import type { EmojiData, UserPreferences, SearchFilters } from "../types";
 import {
   EMOJI_DATA,
   EMOJI_CATEGORIES,

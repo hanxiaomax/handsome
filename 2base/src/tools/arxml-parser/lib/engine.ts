@@ -13,7 +13,7 @@ import type {
   WorkerParseMessage,
   WorkerProgressMessage,
   WorkerCompleteMessage,
-} from "./types";
+} from "../types";
 
 /**
  * High-performance XML Stream Parser Engine

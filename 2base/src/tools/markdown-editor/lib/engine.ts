@@ -10,7 +10,7 @@ import type {
   FileImportResult,
   ExportOptions,
   ValidationResult,
-} from "./types";
+} from "../types";
 
 export class MarkdownEngine {
   private readonly readingWordsPerMinute = 200;

@@ -62,7 +62,7 @@ import type {
   ToolbarAction,
   EditorStats,
   MarkdownParseResult,
-} from "./lib/types";
+} from "./types";
 
 const initialConfig: EditorConfig = {
   theme: "auto",

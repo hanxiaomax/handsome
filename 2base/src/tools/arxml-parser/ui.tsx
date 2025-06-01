@@ -65,7 +65,7 @@ import { ToolLayout } from "@/components/layout/tool-layout";
 import { toolInfo } from "./toolInfo";
 import { XMLStreamParser } from "./lib";
 import { xmlParser } from "./lib/xmlParser";
-import type { XMLElement, ParserState } from "./lib/types";
+import type { XMLElement, ParserState } from "./types";
 
 interface FileUploadState {
   isDragOver: boolean;

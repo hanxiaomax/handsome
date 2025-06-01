@@ -1,4 +1,4 @@
-import type { ColorValue, ColorPalette } from "./types";
+import type { ColorValue, ColorPalette } from "../types";
 import { createColorValue } from "./conversions";
 
 // Generate tints (lighter variations) from a base color

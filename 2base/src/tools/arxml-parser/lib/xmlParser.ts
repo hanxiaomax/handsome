@@ -1,5 +1,5 @@
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
-import type { XMLElement } from "./types";
+import type { XMLElement } from "../types";
 
 // Fast XML Parser configuration
 const parserOptions = {

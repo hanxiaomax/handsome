@@ -18,4 +18,4 @@ export type {
   VirtualTreeItem,
   FileProcessingOptions,
   ParserActions,
-} from "./types";
+} from "../types";

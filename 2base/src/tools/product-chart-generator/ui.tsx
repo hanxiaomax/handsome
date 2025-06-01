@@ -46,7 +46,7 @@ import type {
   KanoModelConfig,
   PriorityItem,
   KanoFeature,
-} from "./lib/types";
+} from "./types";
 import { ChartCanvas } from "./ChartCanvas";
 
 export default function ProductChartGenerator() {

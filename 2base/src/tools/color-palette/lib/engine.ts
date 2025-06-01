@@ -4,7 +4,7 @@ import type {
   ContrastResult,
   ColorHistory,
   UserPreferences,
-} from "./types";
+} from "../types";
 import {
   createColorValue,
   calculateContrastRatio,

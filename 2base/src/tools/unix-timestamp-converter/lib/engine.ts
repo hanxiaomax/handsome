@@ -5,7 +5,7 @@ import type {
   ConversionResult,
   CodeExample,
   TimestampInputFormat,
-} from "./types";
+} from "../types";
 
 export class UnixTimestampEngine {
   private timezones: TimezoneInfo[] = [

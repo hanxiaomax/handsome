@@ -4,7 +4,7 @@ import type {
   SWOTConfig,
   PriorityMatrixConfig,
   KanoModelConfig,
-} from "./lib/types";
+} from "./types";
 
 interface ChartCanvasProps {
   chart: ChartConfig | null;

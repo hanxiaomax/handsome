@@ -4,7 +4,7 @@ import type {
   HSVColor,
   CMYKColor,
   ColorValue,
-} from "./types";
+} from "../types";
 
 // Utility functions for clamping values
 const clamp = (value: number, min: number, max: number): number => {

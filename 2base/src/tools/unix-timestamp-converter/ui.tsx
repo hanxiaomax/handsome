@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToolLayout } from "@/components/layout/tool-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { useMinimizedTools } from "@/contexts/minimized-tools-context";
 import { toolInfo } from "./toolInfo";
 import { UnixTimestampEngine } from "./lib";
-import type { ConverterState, ConversionResult } from "./lib/types";
+import type { ConverterState, ConversionResult } from "./types";
 
 const initialState: ConverterState = {
   currentTimestamp: Math.floor(Date.now() / 1000),

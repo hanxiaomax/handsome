@@ -16,7 +16,7 @@ export type {
   ColorAction,
   ColorFormat,
   SearchFilters,
-} from "./types";
+} from "../types";
 
 // Conversion utility exports
 export {
