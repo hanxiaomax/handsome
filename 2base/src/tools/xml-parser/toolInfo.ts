@@ -5,7 +5,7 @@ export const toolInfo: ToolInfo = {
   id: "xml-parser",
   name: "XML Parser & Tree Visualizer",
   description:
-    "High-performance XML file parser and hierarchy visualizer with streaming parse, selective loading, and interactive tree navigation for any XML structure",
+    "Universal XML file parser and hierarchy visualizer with high-performance parsing, interactive tree navigation, and multi-format output for any XML structure",
   category: "development",
   tags: [
     "xml",
@@ -18,10 +18,13 @@ export const toolInfo: ToolInfo = {
     "element",
     "stream-parsing",
     "universal",
+    "autosar",
+    "svg",
+    "rss",
   ],
   requiresBackend: false,
   icon: FileText,
-  path: "/tools/arxml-parser",
+  path: "/tools/xml-parser",
   version: "1.1.0",
   releaseDate: "2024-01-21",
   pricing: "free",

@@ -1,8 +1,8 @@
-# ARXML Parser - API Reference
+# XML Parser - API Reference
 
 ## Overview
 
-本文档提供ARXML Parser工具的详细API参考，包括所有公共接口、类型定义和使用示例。
+本文档提供XML Parser工具的详细API参考，包括所有公共接口、类型定义和使用示例。该工具支持解析任何格式的XML文件，包括AUTOSAR、SVG、RSS、配置文件等。
 
 ## Core Classes
 

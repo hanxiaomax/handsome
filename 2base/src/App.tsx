@@ -9,7 +9,7 @@ import MarkdownEditor from "@/tools/markdown-editor/ui";
 import EmojiLibrary from "@/tools/emoji-library/ui";
 import ColorPalette from "@/tools/color-palette/ui";
 import ProductChartGenerator from "@/tools/product-chart-generator/ui";
-import ARXMLParser from "@/tools/arxml-parser/ui";
+import XMLParser from "@/tools/xml-parser/ui";
 import LayoutDemo from "@/tools/layout-demo/ui";
 import FavoritesPage from "@/app/favorites/page";
 import { FavoritesProvider } from "@/contexts/favorites-context";
@@ -43,7 +43,7 @@ function App() {
               path="/tools/product-chart-generator"
               element={<ProductChartGenerator />}
             />
-            <Route path="/tools/arxml-parser" element={<ARXMLParser />} />
+            <Route path="/tools/xml-parser" element={<XMLParser />} />
             <Route path="/tools/layout-demo" element={<LayoutDemo />} />
           </Routes>
           <MinimizedToolsIndicator />

@@ -1,8 +1,8 @@
-# ARXML Parser - Design Specification
+# XML Parser - Design Specification
 
 ## Overview
 
-ARXML Parser是一个专业的AUTOSAR XML文件解析和可视化工具，支持大型XML文件的高效处理、树状结构导航和多种格式输出。该工具遵循现代Web应用设计原则，提供直观的用户界面和强大的解析能力。
+XML Parser是一个通用的XML文件解析和可视化工具，支持任何XML格式的高效处理、树状结构导航和多种格式输出。该工具遵循现代Web应用设计原则，提供直观的用户界面和强大的解析能力，特别适用于AUTOSAR XML、SVG、RSS、配置文件等各种XML格式。
 
 ### 主要特性
 - **双输入模式**: 支持文件上传和直接文本输入
@@ -11,6 +11,7 @@ ARXML Parser是一个专业的AUTOSAR XML文件解析和可视化工具，支持
 - **多格式输出**: 支持美化XML、压缩XML、JSON格式和树状结构视图
 - **实时搜索**: 在树状结构中快速定位元素
 - **智能复制清除**: 基于当前状态的上下文感知操作
+- **通用兼容**: 支持AUTOSAR、SVG、RSS、配置文件等各种XML格式
 
 ## User Interface Design
 
@@ -20,8 +21,8 @@ ARXML Parser是一个专业的AUTOSAR XML文件解析和可视化工具，支持
 
 ```typescript
 <ToolLayout
-  toolName="ARXML Parser"
-  toolDescription="Parse and visualize AUTOSAR XML files"
+  toolName="XML Parser"
+  toolDescription="Parse and visualize any XML files with interactive tree navigation"
   onClose={() => navigate('/')}
   onMinimize={() => {}}
   onFullscreen={() => {}}
@@ -35,7 +36,7 @@ ARXML Parser是一个专业的AUTOSAR XML文件解析和可视化工具，支持
 
 #### 主容器结构
 ```
-ARXML Parser
+XML Parser
 ├── ResizablePanelGroup (horizontal)
 │   ├── Left Panel (Source XML)
 │   │   ├── Status Bar (文件信息和状态)

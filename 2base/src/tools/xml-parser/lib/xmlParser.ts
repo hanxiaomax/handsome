@@ -246,7 +246,7 @@ export class FastXMLParser {
         if (!Array.isArray(result[node.tagName])) {
           result[node.tagName] = [result[node.tagName]];
         }
-        result[node.tagName].push(nodeObj);
+        (result[node.tagName] as Array<Record<string, unknown>>).push(nodeObj);
       } else {
         result[node.tagName] = nodeObj;
       }

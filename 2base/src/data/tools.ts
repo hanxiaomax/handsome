@@ -9,7 +9,7 @@ import { toolInfo as markdownEditorInfo } from "@/tools/markdown-editor/toolInfo
 import { toolInfo as emojiLibraryInfo } from "@/tools/emoji-library/toolInfo";
 import { toolInfo as colorPaletteInfo } from "@/tools/color-palette/toolInfo";
 import { toolInfo as productChartGeneratorInfo } from "@/tools/product-chart-generator/toolInfo";
-import { toolInfo as arxmlParserInfo } from "@/tools/arxml-parser/toolInfo";
+import { toolInfo as xmlParserInfo } from "@/tools/xml-parser/toolInfo";
 import { toolInfo as layoutDemoInfo } from "@/tools/layout-demo/toolInfo";
 
 // Import other tool info when they are created
@@ -29,7 +29,7 @@ export const tools: ToolInfo[] = [
   emojiLibraryInfo,
   colorPaletteInfo,
   productChartGeneratorInfo,
-  arxmlParserInfo,
+  xmlParserInfo,
 
   // Temporary definitions for tools that don't have toolInfo.ts yet
   {
