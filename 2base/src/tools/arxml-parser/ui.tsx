@@ -648,8 +648,11 @@ export default function XMLParser() {
           {/* Left Panel - Source XML */}
           <ResizablePanel defaultSize={50} minSize={30}>
             <div className="flex flex-col h-full">
-              {/* Left Panel Toolbar - All controls in one place */}
-              <div className="border-b bg-background p-3 h-14 flex-shrink-0">
+              {/* Left Panel Status Bar - File info and status display only */}
+              <div
+                id="left-status-bar"
+                className="border-b bg-background p-3 h-14 flex-shrink-0"
+              >
                 <div className="flex items-center justify-between h-full">
                   <div className="flex items-center gap-2">
                     <FileCode className="w-4 h-4 text-blue-600" />
@@ -661,6 +664,53 @@ export default function XMLParser() {
                     )}
                   </div>
 
+                  {/* Status information only */}
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    {fileUpload.fileInfo ? (
+                      <span className="text-sm">
+                        {(fileUpload.fileInfo.size / 1024).toFixed(1)} KB
+                      </span>
+                    ) : (
+                      <span className="text-sm">No file loaded</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Left Panel Toolbar - Control buttons and operations */}
+              <div
+                id="left-toolbar"
+                className="border-b bg-muted/20 p-3 h-12 flex-shrink-0"
+              >
+                <div className="flex items-center justify-between h-full">
+                  <div className="flex items-center gap-2">
+                    {fileUpload.fileInfo ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-medium">
+                            {fileUpload.fileInfo.name}
+                          </span>
+                        </div>
+
+                        {parserState.status === "parsing" && (
+                          <div className="flex items-center gap-2 ml-4">
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                            <span className="text-sm text-muted-foreground">
+                              Parsing... {Math.round(parserState.progress)}%
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Upload className="w-4 h-4" />
+                        <span className="text-sm">No file selected</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Control buttons moved from status bar */}
                   <div className="flex items-center gap-1">
                     <TooltipProvider>
                       <Tooltip>
@@ -788,43 +838,8 @@ export default function XMLParser() {
                 </div>
               </div>
 
-              {/* File Info and Display Options Section */}
-              <div className="border-b bg-muted/20 p-3 h-12 flex-shrink-0">
-                <div className="flex items-center gap-2 h-full">
-                  {fileUpload.fileInfo ? (
-                    <>
-                      <div className="flex items-center gap-2 flex-1">
-                        <FileText className="w-4 h-4 text-green-600" />
-                        <div className="text-sm">
-                          <span className="font-medium">
-                            {fileUpload.fileInfo.name}
-                          </span>
-                          <span className="text-muted-foreground ml-2">
-                            ({(fileUpload.fileInfo.size / 1024).toFixed(1)} KB)
-                          </span>
-                        </div>
-                      </div>
-
-                      {parserState.status === "parsing" && (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                          <span className="text-sm text-muted-foreground">
-                            Parsing... {Math.round(parserState.progress)}%
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Upload className="w-4 h-4" />
-                      <span className="text-sm">No file selected</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Source Content with Integrated Upload */}
-              <div className="flex-1 relative">
+              {/* Left Panel Visualization Area - Source content display */}
+              <div id="left-visualization-area" className="flex-1 relative">
                 <div
                   className={`absolute inset-0 ${
                     fileUpload.isDragOver
@@ -890,8 +905,11 @@ export default function XMLParser() {
           {/* Right Panel - Processed View */}
           <ResizablePanel defaultSize={50} minSize={30}>
             <div className="flex flex-col h-full">
-              {/* Right Panel Toolbar - Same height as left */}
-              <div className="border-b bg-background p-3 h-14 flex-shrink-0">
+              {/* Right Panel Status Bar - Display mode and content info */}
+              <div
+                id="right-status-bar"
+                className="border-b bg-background p-3 h-14 flex-shrink-0"
+              >
                 <div className="flex items-center justify-between h-full">
                   <div className="flex items-center gap-2">
                     {displayMode === "tree" ? (
@@ -914,8 +932,11 @@ export default function XMLParser() {
                 </div>
               </div>
 
-              {/* Mode Selection and Controls Section */}
-              <div className="border-b bg-muted/20 p-3 h-12 flex-shrink-0">
+              {/* Right Panel Toolbar - Mode selection and action controls */}
+              <div
+                id="right-toolbar"
+                className="border-b bg-muted/20 p-3 h-12 flex-shrink-0"
+              >
                 <div className="flex items-center gap-2 h-full">
                   <div className="flex items-center border rounded-md p-1">
                     <TooltipProvider>
@@ -1132,10 +1153,12 @@ export default function XMLParser() {
                 )}
               </div>
 
-              {/* Processed Content */}
-              <ScrollArea className="flex-1">
-                <div className="p-4">{getRightPanelContent()}</div>
-              </ScrollArea>
+              {/* Right Panel Visualization Area - Processed content display */}
+              <div id="right-visualization-area" className="flex-1">
+                <ScrollArea className="h-full">
+                  <div className="p-4">{getRightPanelContent()}</div>
+                </ScrollArea>
+              </div>
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
