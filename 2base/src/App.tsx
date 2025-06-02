@@ -18,10 +18,13 @@ import { MinimizedToolsIndicator } from "@/components/layout/minimized-tools-ind
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
+  // Get base path from environment
+  const basename = import.meta.env.PROD ? "/handsome" : "";
+
   return (
     <FavoritesProvider>
       <MinimizedToolsProvider>
-        <Router>
+        <Router basename={basename}>
           <Routes>
             <Route path="/" element={<Homepage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
