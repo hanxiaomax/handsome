@@ -829,13 +829,18 @@ export default function XMLParser() {
   ]);
 
   return (
-    <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
-      onClose={() => navigate("/")}
-      onMinimize={() => {}}
-      onFullscreen={() => {}}
-      isFullscreen={false}
+    <ToolWrapper
+      toolInfo={toolInfo}
+      state={{
+        parserState,
+        fileUpload,
+        elements,
+        selectedElement,
+        displayMode,
+        inputMode,
+        showLineNumbers,
+        autoParseEnabled,
+      }}
     >
       <div className="flex flex-col h-full mt-12">
         {/* Resizable Panel Group */}
@@ -1528,6 +1533,6 @@ export default function XMLParser() {
           </div>
         )}
       </div>
-    </ToolLayout>
+    </ToolWrapper>
   );
 }
