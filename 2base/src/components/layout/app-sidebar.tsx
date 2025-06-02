@@ -57,8 +57,10 @@ export function AppSidebar({ selectedTool, onNavigateHome }: AppSidebarProps) {
             <Wrench className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-bold text-lg">Tools2Go</h1>
-            <p className="text-xs text-muted-foreground">Developer Tools</p>
+            <h1 className="font-bold text-lg">Vibe Tools</h1>
+            <p className="text-xs text-muted-foreground">
+              Vibe once runs anytime
+            </p>
           </div>
         </div>
       </SidebarHeader>

@@ -61,8 +61,13 @@ function HomepageContent() {
             <SidebarTrigger />
             <div className="flex-1">
               <h2 className="text-lg font-semibold">
-                {selectedToolData ? selectedToolData.name : "Tools2Go"}
+                {selectedToolData ? selectedToolData.name : "Vibe Tools"}
               </h2>
+              {!selectedToolData && (
+                <p className="text-sm text-muted-foreground">
+                  Vibe once runs anytime
+                </p>
+              )}
             </div>
             {/* Global Search - 全局搜索框 */}
             <div className="hidden sm:block">

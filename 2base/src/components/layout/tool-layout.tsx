@@ -20,6 +20,8 @@ interface WindowControlsProps {
   onNavigateHome?: () => void;
   onToggleFavorite?: () => void;
   isFavorite?: boolean;
+  toolName: string;
+  toolDescription?: string;
 }
 
 function WindowControls({
@@ -27,11 +29,41 @@ function WindowControls({
   onNavigateHome,
   onToggleFavorite,
   isFavorite = false,
+  toolName,
+  toolDescription,
 }: WindowControlsProps) {
+  // Function to truncate description to 30 words max
+  const truncateDescription = (desc: string): string => {
+    const words = desc.split(" ");
+    if (words.length <= 30) return desc;
+    return words.slice(0, 30).join(" ") + "...";
+  };
+
   return (
-    <div className="w-full flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur">
-      <div className="flex items-center gap-2"></div>
-      <div className="flex items-center gap-2">
+    <div className="w-full flex items-center justify-between px-4 py-2 bg-background/95 backdrop-blur">
+      {/* Left spacer for balanced layout */}
+      <div className="flex-1"></div>
+
+      {/* Center - Tool Name */}
+      <div className="flex-1 text-center relative group">
+        <h3
+          className="text-lg font-semibold text-foreground cursor-default"
+          title={
+            toolDescription ? truncateDescription(toolDescription) : undefined
+          }
+        >
+          {toolName}
+        </h3>
+        {/* Hover tooltip for description */}
+        {toolDescription && (
+          <div className="absolute left-1/2 transform -translate-x-1/2 top-full mt-2 px-3 py-2 bg-popover border border-border rounded-md shadow-md text-sm text-popover-foreground opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 max-w-md">
+            {truncateDescription(toolDescription)}
+          </div>
+        )}
+      </div>
+
+      {/* Right - Controls */}
+      <div className="flex-1 flex items-center gap-2 justify-end">
         {/* Home Button */}
         {onNavigateHome && (
           <Button
@@ -111,17 +143,15 @@ export function ToolLayout({
         <AppSidebar selectedTool={null} onNavigateHome={handleNavigateHome} />
 
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Header Area - Tool Information */}
+          {/* Header Area - Website Title */}
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-14 items-center px-4 gap-4">
               <SidebarTrigger />
               <div className="flex-1">
-                <h2 className="text-lg font-semibold">{toolName}</h2>
-                {toolDescription && (
-                  <p className="text-sm text-muted-foreground">
-                    {toolDescription}
-                  </p>
-                )}
+                <h2 className="text-lg font-semibold">Vibe Tools</h2>
+                <p className="text-sm text-muted-foreground">
+                  Vibe once runs anytime
+                </p>
               </div>
               {/* Global Search - 全局搜索框 */}
               <div className="hidden sm:block">
@@ -133,15 +163,17 @@ export function ToolLayout({
 
           {/* Main Content Area - Tool Implementation */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Window Controls Bar - Full Width */}
+            {/* Window Controls Bar with Tool Name */}
             <WindowControls
               onMinimize={onMinimize}
               onNavigateHome={handleNavigateHome}
               onToggleFavorite={onToggleFavorite}
               isFavorite={isFavorite}
+              toolName={toolName}
+              toolDescription={toolDescription}
             />
 
-            {/* Tool Content - Below Controls */}
+            {/* Tool Content - Below Tool Info */}
             <div className="flex-1 overflow-auto bg-muted/30">{children}</div>
           </div>
         </main>
