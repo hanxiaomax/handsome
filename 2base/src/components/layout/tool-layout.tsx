@@ -46,12 +46,7 @@ function WindowControls({
 
       {/* Center - Tool Name */}
       <div className="flex-1 text-center relative group">
-        <h3
-          className="text-lg font-semibold text-foreground cursor-default"
-          title={
-            toolDescription ? truncateDescription(toolDescription) : undefined
-          }
-        >
+        <h3 className="text-lg font-semibold text-foreground cursor-default">
           {toolName}
         </h3>
         {/* Hover tooltip for description */}
