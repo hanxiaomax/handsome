@@ -174,6 +174,15 @@ After deployment, verify:
 - `2base/package.json` - Added deployment script
 - `2base/index.html` - Added SPA routing script
 - `.gitignore` - Enhanced with comprehensive ignore patterns
+- `2base/src/App.tsx` - Added basename configuration for React Router
+
+### Deleted Files
+- `2base/src/components/ui/calendar.tsx` - Removed unused component causing TypeScript errors
+
+### Issue Fixes Applied
+- **GitHub Actions Cache Fix**: Updated workflow to use pnpm instead of npm
+- **Router Configuration Fix**: Added basename prop to React Router for GitHub Pages subpath
+- **TypeScript Errors Fix**: Removed unused Calendar component causing build failures
 
 ## Conclusion
 
