@@ -2,18 +2,7 @@ import { Upload, FileCode } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUploadArea } from "./FileUploadArea";
 import { TextInputArea } from "./TextInputArea";
-
-interface FileUploadState {
-  isDragOver: boolean;
-  selectedFile: File | null;
-  fileInfo: {
-    name: string;
-    size: number;
-    type: string;
-  } | null;
-  content: string;
-  originalContent: string;
-}
+import type { FileUploadState } from "../lib";
 
 interface InputModeSelectorProps {
   inputMode: "file" | "text";

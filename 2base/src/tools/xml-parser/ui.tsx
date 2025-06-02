@@ -18,11 +18,24 @@ import { FileCode, AlertCircle, TreePine, Brackets } from "lucide-react";
 // Layout
 import { ToolWrapper } from "@/components/common/tool-wrapper";
 
-// Tool components
+// Tool utilities and components
 import { toolInfo } from "./toolInfo";
-import { XMLStreamParser } from "./lib";
-import { xmlParser } from "./lib/xmlParser";
-import type { XMLElement, ParserState } from "./types";
+import {
+  useXMLParser,
+  beautifyXML,
+  compressXML,
+  convertXMLToJSON,
+  readFileContent,
+  extractFileInfo,
+  shouldAutoParseFile,
+  getXMLFilesFromDragEvent,
+  copyToClipboard,
+  downloadAsFile,
+  generateFilename,
+  getMimeType,
+  prepareContentForExport,
+} from "./lib";
+import type { XMLElement, FileUploadState, ContentFormat } from "./lib";
 
 // Local components
 import {
@@ -34,33 +47,12 @@ import {
   InputModeSelector,
 } from "./components";
 
-interface FileUploadState {
-  isDragOver: boolean;
-  selectedFile: File | null;
-  fileInfo: {
-    name: string;
-    size: number;
-    type: string;
-  } | null;
-  content: string;
-  originalContent: string;
-}
-
 type DisplayMode = "beautified" | "tree" | "compressed" | "json";
 
 export default function XMLParser() {
-  // Core state
-  const [parser] = useState(() => new XMLStreamParser());
-  const [elements, setElements] = useState<XMLElement[]>([]);
-  const [parserState, setParserState] = useState<ParserState>({
-    status: "idle",
-    progress: 0,
-    currentSection: "",
-    elementsProcessed: 0,
-    memoryUsage: 0,
-    errors: [],
-    warnings: [],
-  });
+  // XML Parser Hook
+  const { elements, parserState, parseXMLContent, searchElements } =
+    useXMLParser();
 
   // UI state
   const [fileUpload, setFileUpload] = useState<FileUploadState>({
@@ -82,207 +74,29 @@ export default function XMLParser() {
   const [inputMode, setInputMode] = useState<"file" | "text">("file");
   const [textInput, setTextInput] = useState("");
 
-  // XML processing functions
-  const getBeautifiedXML = useCallback((content: string): string => {
-    try {
-      const normalized = content
-        .replace(/\r\n/g, "\n")
-        .replace(/\r/g, "\n")
-        .replace(/\n\s*\n/g, "\n")
-        .trim();
-      return formatXMLManually(normalized);
-    } catch (error) {
-      console.warn("XML beautification error:", error);
-      return content.replace(/></g, ">\n<");
-    }
-  }, []);
-
-  const formatXMLManually = (content: string): string => {
-    let formatted = content.replace(/></g, ">\n<").replace(/^\s+|\s+$/g, "");
-    formatted = formatted.replace(/>\s*([^<>\s][^<]*?)\s*</g, ">$1<");
-
-    const lines = formatted.split("\n");
-    let indentLevel = 0;
-    const indentSize = 2;
-    const result: string[] = [];
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmed = line.trim();
-
-      if (!trimmed) continue;
-
-      const isClosingTag = trimmed.startsWith("</");
-      const isSelfClosingTag = trimmed.match(/^<[^>]+\/>$/);
-      const isProcessingInstruction = trimmed.startsWith("<?");
-      const isComment = trimmed.startsWith("<!--");
-      const isDTD =
-        trimmed.startsWith("<!DOCTYPE") ||
-        trimmed.startsWith("<!ELEMENT") ||
-        trimmed.startsWith("<!ATTLIST");
-      const isOpeningTag =
-        trimmed.startsWith("<") &&
-        !isClosingTag &&
-        !isSelfClosingTag &&
-        !isProcessingInstruction &&
-        !isComment &&
-        !isDTD;
-
-      const mixedContentMatch = trimmed.match(/^(<[^>]+>)([^<]+)(<\/[^>]+>)$/);
-      if (mixedContentMatch) {
-        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
-        continue;
-      }
-
-      if (isClosingTag) {
-        indentLevel = Math.max(0, indentLevel - 1);
-        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
-        continue;
-      }
-
-      if (isSelfClosingTag || isProcessingInstruction || isComment || isDTD) {
-        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
-        continue;
-      }
-
-      if (isOpeningTag) {
-        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
-        indentLevel++;
-        continue;
-      }
-
-      if (trimmed.length > 0) {
-        result.push(" ".repeat(indentLevel * indentSize) + trimmed);
-      }
-    }
-
-    return result.join("\n");
-  };
-
-  const getCompressedXML = useCallback((content: string): string => {
-    const compressed = content
-      .replace(/>\s+</g, "><")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    const maxLineLength = 120;
-    const lines: string[] = [];
-    let currentLine = "";
-
-    const parts = compressed.split(/(<[^>]*>)/);
-
-    for (const part of parts) {
-      if (!part) continue;
-
-      if (currentLine.length + part.length > maxLineLength) {
-        if (currentLine) {
-          lines.push(currentLine);
-          currentLine = part;
-        } else {
-          lines.push(part);
-        }
-      } else {
-        currentLine += part;
-      }
-    }
-
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-
-    return lines.join("\n");
-  }, []);
-
-  const convertToJSON = useCallback((content: string): string => {
-    try {
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(content, "text/xml");
-
-      const xmlToJson = (node: Node): Record<string, unknown> => {
-        const result: Record<string, unknown> = {};
-
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const element = node as Element;
-          if (element.attributes && element.attributes.length > 0) {
-            const attrs: Record<string, string> = {};
-            for (let i = 0; i < element.attributes.length; i++) {
-              const attr = element.attributes[i];
-              attrs[`@${attr.name}`] = attr.value;
-            }
-            result.attributes = attrs;
-          }
-        }
-
-        const children: Record<string, unknown> = {};
-
-        for (let i = 0; i < node.childNodes.length; i++) {
-          const child = node.childNodes[i];
-
-          if (child.nodeType === Node.TEXT_NODE) {
-            const text = child.textContent?.trim();
-            if (text) {
-              result.text = text;
-            }
-          } else if (child.nodeType === Node.ELEMENT_NODE) {
-            const childName = child.nodeName;
-            const childValue = xmlToJson(child);
-
-            if (children[childName]) {
-              if (!Array.isArray(children[childName])) {
-                children[childName] = [children[childName]];
-              }
-              (children[childName] as unknown[]).push(childValue);
-            } else {
-              children[childName] = childValue;
-            }
-          }
-        }
-
-        if (Object.keys(children).length > 0) {
-          result.children = children;
-        }
-
-        return result;
-      };
-
-      const json = xmlToJson(xmlDoc.documentElement);
-      return JSON.stringify(json, null, 2);
-    } catch {
-      return JSON.stringify(
-        { error: "Failed to convert XML to JSON" },
-        null,
-        2
-      );
-    }
-  }, []);
-
   // File handling
   const handleFileSelect = useCallback(
     async (file: File) => {
       try {
-        const content = await file.text();
-        const fileInfo = {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-        };
+        const content = await readFileContent(file);
+        const fileInfo = extractFileInfo(file);
 
         setFileUpload({
           isDragOver: false,
           selectedFile: file,
           fileInfo,
-          content: getBeautifiedXML(content),
+          content: beautifyXML(content),
           originalContent: content,
         });
 
         setInputMode("file");
 
-        if (autoParseEnabled && file.size < 10 * 1024 * 1024) {
+        if (shouldAutoParseFile(file, autoParseEnabled)) {
           toast.info("Starting auto-parse...", {
             description: "File loaded successfully, parsing XML content",
           });
           setTimeout(() => {
-            handleStartParsing(file);
+            parseXMLContent(content, "file");
           }, 100);
         } else if (!autoParseEnabled) {
           toast.success("File loaded successfully!", {
@@ -291,9 +105,12 @@ export default function XMLParser() {
         }
       } catch (error) {
         console.error("Failed to read file:", error);
+        toast.error("Failed to read file", {
+          description: error instanceof Error ? error.message : "Unknown error",
+        });
       }
     },
-    [autoParseEnabled, getBeautifiedXML]
+    [autoParseEnabled, parseXMLContent]
   );
 
   const handleFileInputChange = useCallback(
@@ -309,17 +126,15 @@ export default function XMLParser() {
   const handleFileDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
-      const files = Array.from(e.dataTransfer.files);
-      const xmlFile = files.find(
-        (file) =>
-          file.name.toLowerCase().endsWith(".arxml") ||
-          file.name.toLowerCase().endsWith(".xml") ||
-          file.name.toLowerCase().endsWith(".xsd") ||
-          file.name.toLowerCase().endsWith(".svg")
-      );
+      const xmlFiles = getXMLFilesFromDragEvent(e);
 
-      if (xmlFile) {
-        handleFileSelect(xmlFile);
+      if (xmlFiles.length > 0) {
+        handleFileSelect(xmlFiles[0]);
+      } else {
+        toast.error("Invalid file type", {
+          description:
+            "Please drop a valid XML file (.xml, .arxml, .xsd, .svg)",
+        });
       }
 
       setFileUpload((prev) => ({ ...prev, isDragOver: false }));
@@ -328,101 +143,40 @@ export default function XMLParser() {
   );
 
   // Parsing
-  const handleStartParsing = useCallback(
-    async (file?: File) => {
-      let content: string;
-      if (inputMode === "text") {
-        if (!textInput.trim()) {
-          toast.error("请输入XML内容", {
-            description: "文本输入区域不能为空",
-          });
-          return;
-        }
-        content = textInput;
-      } else {
-        const targetFile = file || fileUpload.selectedFile;
-        if (!targetFile) {
-          toast.error("请选择文件", {
-            description: "需要先上传XML文件",
-          });
-          return;
-        }
-        content = fileUpload.originalContent || (await targetFile.text());
-      }
-
-      try {
-        setParserState((prev) => ({
-          ...prev,
-          status: "parsing",
-          progress: 0,
-          currentSection:
-            inputMode === "text" ? "Reading text input..." : "Reading file...",
-        }));
-
-        setParserState((prev) => ({
-          ...prev,
-          progress: 30,
-          currentSection: "Parsing XML structure...",
-        }));
-
-        const treeNodes = xmlParser.parseXMLToTree(content);
-
-        setParserState((prev) => ({
-          ...prev,
-          progress: 70,
-          currentSection: "Converting to elements...",
-        }));
-
-        const parsedElements = xmlParser.convertToXMLElements(treeNodes);
-
-        setParserState((prev) => ({
-          ...prev,
-          progress: 100,
-          currentSection: "Complete",
-          status: "complete",
-        }));
-
-        setElements(parsedElements);
-        toast.success("XML parsed successfully!", {
-          description: `Found ${parsedElements.length} elements in the XML structure`,
+  const handleStartParsing = useCallback(async () => {
+    if (inputMode === "text") {
+      if (!textInput.trim()) {
+        toast.error("请输入XML内容", {
+          description: "文本输入区域不能为空",
         });
-      } catch (error) {
-        console.error("Failed to parse XML:", error);
-        setParserState((prev) => ({
-          ...prev,
-          status: "error",
-          errors: [
-            ...prev.errors,
-            {
-              id: Date.now().toString(),
-              type: "syntax",
-              message:
-                error instanceof Error
-                  ? error.message
-                  : "Unknown parsing error",
-              severity: "error",
-            },
-          ],
-        }));
-
-        toast.error("Failed to parse XML", {
-          description:
-            error instanceof Error ? error.message : "Unknown parsing error",
-        });
+        return;
       }
-    },
-    [fileUpload.selectedFile, fileUpload.originalContent, inputMode, textInput]
-  );
+      await parseXMLContent(textInput, "text");
+    } else {
+      if (!fileUpload.selectedFile) {
+        toast.error("请选择文件", {
+          description: "需要先上传XML文件",
+        });
+        return;
+      }
+      const content = fileUpload.originalContent;
+      await parseXMLContent(content, "file");
+    }
+  }, [
+    inputMode,
+    textInput,
+    fileUpload.selectedFile,
+    fileUpload.originalContent,
+    parseXMLContent,
+  ]);
 
   // Search
   const handleSearch = useCallback(
     (query: string) => {
       setSearchQuery(query);
-      if (query.trim()) {
-        parser.searchElements(query);
-      }
+      searchElements(query);
     },
-    [parser]
+    [searchElements]
   );
 
   // Tree navigation
@@ -460,21 +214,21 @@ export default function XMLParser() {
       case "beautified":
         return (
           <SourceCodeDisplay
-            content={getBeautifiedXML(sourceContent)}
+            content={beautifyXML(sourceContent)}
             showLineNumbers={showLineNumbers}
           />
         );
       case "compressed":
         return (
           <SourceCodeDisplay
-            content={getCompressedXML(sourceContent)}
+            content={compressXML(sourceContent)}
             showLineNumbers={showLineNumbers}
           />
         );
       case "json":
         return (
           <SourceCodeDisplay
-            content={convertToJSON(sourceContent)}
+            content={convertXMLToJSON(sourceContent)}
             showLineNumbers={showLineNumbers}
           />
         );
@@ -502,9 +256,6 @@ export default function XMLParser() {
     selectedElement,
     parserState.status,
     showLineNumbers,
-    getBeautifiedXML,
-    getCompressedXML,
-    convertToJSON,
     handleElementSelect,
     handleNodeToggle,
   ]);
@@ -522,130 +273,85 @@ export default function XMLParser() {
       return;
     }
 
-    let content: string;
-    const sourceContent = fileUpload.originalContent || textInput;
-
     try {
-      switch (displayMode) {
-        case "beautified":
-          content = getBeautifiedXML(sourceContent);
-          break;
-        case "compressed":
-          content = getCompressedXML(sourceContent);
-          break;
-        case "json":
-          content = convertToJSON(sourceContent);
-          break;
-        case "tree":
-          content = JSON.stringify(elements, null, 2);
-          break;
-        default:
-          content = sourceContent;
-      }
-
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(content);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = content;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-999999px";
-        textArea.style.top = "-999999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        const successful = document.execCommand("copy");
-        document.body.removeChild(textArea);
-
-        if (!successful) {
-          throw new Error("Fallback copy failed");
+      const sourceContent = fileUpload.originalContent || textInput;
+      const content = prepareContentForExport(
+        displayMode as ContentFormat,
+        sourceContent,
+        elements,
+        {
+          beautify: beautifyXML,
+          compress: compressXML,
+          convertToJSON: convertXMLToJSON,
         }
-      }
+      );
 
-      toast.success("Content copied to clipboard!", {
-        description: `${
-          displayMode.charAt(0).toUpperCase() + displayMode.slice(1)
-        } format copied successfully`,
-      });
+      await copyToClipboard(content, displayMode);
     } catch (error) {
-      console.error("Copy failed:", error);
-      toast.error("Failed to copy content", {
-        description: "Please try again or check your browser permissions",
-      });
+      // Error handling is done in copyToClipboard function
+      console.error("Copy operation failed:", error);
     }
-  }, [
-    fileUpload,
-    textInput,
-    displayMode,
-    elements,
-    getBeautifiedXML,
-    getCompressedXML,
-    convertToJSON,
-  ]);
+  }, [fileUpload, textInput, displayMode, elements]);
 
   const handleDownload = useCallback(() => {
-    if (!fileUpload.content && !fileUpload.originalContent && !textInput.trim())
+    if (
+      !fileUpload.content &&
+      !fileUpload.originalContent &&
+      !textInput.trim()
+    ) {
       return;
-
-    let content: string;
-    let filename: string;
-    let mimeType: string;
-    const sourceContent = fileUpload.originalContent || textInput;
-
-    switch (displayMode) {
-      case "beautified":
-        content = getBeautifiedXML(sourceContent);
-        filename = `${fileUpload.fileInfo?.name || "file"}_beautified.xml`;
-        mimeType = "text/xml";
-        break;
-      case "compressed":
-        content = getCompressedXML(sourceContent);
-        filename = `${fileUpload.fileInfo?.name || "file"}_compressed.xml`;
-        mimeType = "text/xml";
-        break;
-      case "json":
-        content = convertToJSON(sourceContent);
-        filename = `${fileUpload.fileInfo?.name || "file"}.json`;
-        mimeType = "application/json";
-        break;
-      case "tree":
-        content = JSON.stringify(elements, null, 2);
-        filename = `${fileUpload.fileInfo?.name || "file"}_tree.json`;
-        mimeType = "application/json";
-        break;
-      default:
-        return;
     }
 
     try {
-      const blob = new Blob([content], { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const sourceContent = fileUpload.originalContent || textInput;
+      const content = prepareContentForExport(
+        displayMode as ContentFormat,
+        sourceContent,
+        elements,
+        {
+          beautify: beautifyXML,
+          compress: compressXML,
+          convertToJSON: convertXMLToJSON,
+        }
+      );
 
-      toast.success("File downloaded successfully!", {
-        description: `${filename} has been saved to your downloads`,
+      const filename = generateFilename(
+        fileUpload.fileInfo?.name,
+        displayMode as ContentFormat
+      );
+      const mimeType = getMimeType(displayMode as ContentFormat);
+
+      downloadAsFile(content, filename, mimeType);
+    } catch (error) {
+      // Error handling is done in downloadAsFile function
+      console.error("Download operation failed:", error);
+    }
+  }, [fileUpload, textInput, displayMode, elements]);
+
+  // Clear functionality
+  const handleClear = useCallback(() => {
+    if (inputMode === "file") {
+      setFileUpload({
+        isDragOver: false,
+        selectedFile: null,
+        fileInfo: null,
+        content: "",
+        originalContent: "",
       });
-    } catch {
-      toast.error("Failed to download file", {
-        description: "Please try again",
+      toast.success("File cleared!", {
+        description: "File has been removed",
+      });
+    } else {
+      setTextInput("");
+      toast.success("Text cleared!", {
+        description: "Text input has been cleared",
       });
     }
-  }, [
-    fileUpload,
-    textInput,
-    displayMode,
-    elements,
-    getBeautifiedXML,
-    getCompressedXML,
-    convertToJSON,
-  ]);
+    setSelectedElement(null);
+    setExpandedNodes(new Set());
+    setSearchQuery("");
+    setBreadcrumb([]);
+  }, [inputMode]);
 
   return (
     <ToolWrapper
@@ -713,7 +419,7 @@ export default function XMLParser() {
                       ? !!fileUpload.selectedFile
                       : !!textInput.trim())
                   }
-                  onParse={() => handleStartParsing()}
+                  onParse={handleStartParsing}
                   onCopy={handleCopy}
                   onDownload={handleDownload}
                   canClear={
@@ -721,30 +427,7 @@ export default function XMLParser() {
                       ? !!fileUpload.fileInfo
                       : !!textInput.trim()
                   }
-                  onClear={() => {
-                    if (inputMode === "file") {
-                      setFileUpload({
-                        isDragOver: false,
-                        selectedFile: null,
-                        fileInfo: null,
-                        content: "",
-                        originalContent: "",
-                      });
-                      toast.success("File cleared!", {
-                        description: "File has been removed",
-                      });
-                    } else {
-                      setTextInput("");
-                      toast.success("Text cleared!", {
-                        description: "Text input has been cleared",
-                      });
-                    }
-                    setElements([]);
-                    setSelectedElement(null);
-                    setExpandedNodes(new Set());
-                    setSearchQuery("");
-                    setBreadcrumb([]);
-                  }}
+                  onClear={handleClear}
                   hasContent={
                     inputMode === "file"
                       ? !!fileUpload.originalContent
@@ -786,7 +469,7 @@ export default function XMLParser() {
                       e.preventDefault();
                       setFileUpload((prev) => ({ ...prev, isDragOver: false }));
                     }}
-                    onParse={() => handleStartParsing()}
+                    onParse={handleStartParsing}
                     autoParseEnabled={autoParseEnabled}
                     isLoading={parserState.status === "parsing"}
                   />
