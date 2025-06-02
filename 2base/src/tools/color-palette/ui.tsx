@@ -38,7 +38,7 @@ export default function ColorPalette() {
   const [colorHistory, setColorHistory] = useState<ColorValue[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+
 
   // Color picker state
   const [hueValue, setHueValue] = useState([currentColor.hsl.h]);
@@ -61,7 +61,7 @@ export default function ColorPalette() {
       const newColor = engine.createColor({ h, s, l });
       setCurrentColor(newColor);
       setError(null);
-    } catch (_err) {
+    } catch {
       setError('Invalid color values');
     }
   }, []);
@@ -101,7 +101,7 @@ export default function ColorPalette() {
       });
       setGeneratedPalette(palette);
       setColorHistory(engine.getColorHistory());
-    } catch (_err) {
+    } catch {
       setError('Failed to generate palette');
     } finally {
       setIsLoading(false);

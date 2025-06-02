@@ -41,7 +41,7 @@ const initialState: ConverterState = {
 
 export default function UnitConverter() {
   const [state, setState] = useState<ConverterState>(initialState);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const [customDialogOpen, setCustomDialogOpen] = useState(false);
   const [customConversions, setCustomConversions] = useState<CustomConversion[]>([]);
   const converter = useRef(new UnitConverterEngine(unitCategories));
@@ -62,25 +62,7 @@ export default function UnitConverter() {
 
 
 
-  const handleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  }, []);
-
-  // Listen for fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+  // Removed fullscreen handlers - now handled by ToolWrapper
 
   // Real-time conversion with debouncing
   const debouncedConvert = useMemo(

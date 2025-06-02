@@ -35,14 +35,9 @@ const initialState: ConverterState = {
 };
 
 export default function UnixTimestampConverter() {
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [state, setState] = useState<ConverterState>(initialState);
   const [result, setResult] = useState<ConversionResult | null>(null);
   const engine = useRef(new UnixTimestampEngine());
-
-  const handleFullscreen = useCallback(() => {
-    setIsFullscreen((prev) => !prev);
-  }, []);
 
   // Update current timestamp every second
   useEffect(() => {

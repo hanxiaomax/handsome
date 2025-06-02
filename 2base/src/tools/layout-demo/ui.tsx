@@ -1,36 +1,20 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ToolLayout } from "@/components/layout/tool-layout";
+import { ToolWrapper } from "@/components/common/tool-wrapper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Monitor, Square, Circle, Image, User, BarChart3 } from "lucide-react";
+import { toolInfo } from "./toolInfo";
 
 export default function LayoutDemo() {
-  const navigate = useNavigate();
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  const handleClose = () => {
-    navigate("/");
-  };
-
-  const handleMinimize = () => {
-    console.log("Minimize to drawer");
-  };
-
-  const handleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
+  const [demoState] = useState({
+    activeDemo: "basic",
+    showAnimation: true,
+  });
 
   return (
-    <ToolLayout
-      toolName="Skeleton Components Demo"
-      toolDescription="Demonstration of skeleton loading states and placeholder components"
-      onClose={handleClose}
-      onMinimize={handleMinimize}
-      onFullscreen={handleFullscreen}
-      isFullscreen={isFullscreen}
-    >
+    <ToolWrapper toolInfo={toolInfo} state={{ demoState }}>
+      {/* Main Content Container */}
       {/* Main Content Container */}
       <div className="w-full p-6 space-y-6 mt-5">
         {/* Header Section */}
@@ -250,6 +234,6 @@ export default function LayoutDemo() {
           </CardContent>
         </Card>
       </div>
-    </ToolLayout>
+    </ToolWrapper>
   );
 }

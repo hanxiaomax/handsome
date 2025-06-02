@@ -22,7 +22,7 @@ function UUIDGeneratorTool() {
   const [state, setState] = useState<UUIDGeneratorState>(initialState)
   const [copiedUUID, setCopiedUUID] = useState<string | null>(null)
   const [copiedAll, setCopiedAll] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
+
   const generator = useRef(new UUIDGenerator())
   
   const handleGenerate = useCallback(() => {
@@ -84,23 +84,7 @@ function UUIDGeneratorTool() {
 
 
 
-  const handleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen()
-    } else {
-      document.exitFullscreen()
-    }
-  }, [])
-
-  // Monitor fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [])
+  // Removed fullscreen handlers - now handled by ToolWrapper
   
   // Keyboard shortcuts
   useEffect(() => {

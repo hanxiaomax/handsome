@@ -39,29 +39,13 @@ export default function WorldClock() {
   const [timeDisplays, setTimeDisplays] = useState<TimeDisplay[]>([])
   const [searchResults, setSearchResults] = useState(POPULAR_TIMEZONES)
   const [isSearching, setIsSearching] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
+
 
   const engine = useRef(new WorldClockEngine())
 
 
 
-  const handleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen()
-    } else {
-      document.exitFullscreen()
-    }
-  }, [])
-
-  // Monitor fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [])
+  // Removed fullscreen handlers - now handled by ToolWrapper
 
   // Initialize with existing timezones, add local timezone if none exist
   useEffect(() => {

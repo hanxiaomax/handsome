@@ -34,7 +34,7 @@ import {
   Settings,
 } from "lucide-react";
 
-import { ToolLayout } from "@/components/layout/tool-layout";
+import { ToolWrapper } from "@/components/common/tool-wrapper";
 import { ProductChartEngine } from "./lib";
 import { toolInfo } from "./toolInfo";
 import type {
@@ -56,7 +56,6 @@ export default function ProductChartGenerator() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Chart type configurations
   const chartTypes = [
@@ -204,28 +203,12 @@ export default function ProductChartGenerator() {
     }
   }, [engine, selectedType]);
 
-  const handleClose = useCallback(() => {
-    window.location.href = "/";
-  }, []);
-
-  const handleMinimize = useCallback(() => {
-    // Implement minimize functionality if needed
-    console.log("Minimize not implemented");
-  }, []);
-
-  const handleFullscreen = useCallback(() => {
-    setIsFullscreen(!isFullscreen);
-  }, [isFullscreen]);
-
   return (
-    <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
-      onClose={handleClose}
-      onMinimize={handleMinimize}
-      onFullscreen={handleFullscreen}
-      isFullscreen={isFullscreen}
+    <ToolWrapper
+      toolInfo={toolInfo}
+      state={{ currentChart, selectedType, error }}
     >
+      {/* Main Content Container */}
       <div className="w-full p-6 space-y-6 mt-5">
         {error && (
           <Alert variant="destructive">
@@ -493,7 +476,7 @@ export default function ProductChartGenerator() {
           </CardContent>
         </Card>
       </div>
-    </ToolLayout>
+    </ToolWrapper>
   );
 }
 

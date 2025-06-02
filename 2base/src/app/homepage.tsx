@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ToolDetail } from "@/components/tools/tool-detail";
-import { WelcomePage } from "@/components/navigation/welcome-page";
+import { ToolsGallery } from "@/components/navigation/tools-gallery";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { GlobalSearch } from "@/components/navigation/global-search";
 import { tools } from "@/data/tools";
@@ -77,7 +77,7 @@ function HomepageContent() {
           {selectedToolData ? (
             <ToolDetail tool={selectedToolData} onUseTool={handleUseTool} />
           ) : (
-            <WelcomePage
+            <ToolsGallery
               onUseTool={handleUseTool}
               selectedTool={selectedTool}
               showToolsGrid={true}

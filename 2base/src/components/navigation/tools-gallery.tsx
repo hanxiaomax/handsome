@@ -5,17 +5,17 @@ import { Calculator, FileText, Image, Lock, Code, Zap } from "lucide-react";
 import { DashboardCharts } from "@/components/tools/dashboard-charts";
 import { ToolsGrid } from "@/components/tools/tools-grid";
 
-interface WelcomePageProps {
+interface ToolsGalleryProps {
   onUseTool?: (toolId: string) => void;
   selectedTool?: string | null;
   showToolsGrid?: boolean;
 }
 
-export function WelcomePage({
+export function ToolsGallery({
   onUseTool,
   selectedTool,
   showToolsGrid = false,
-}: WelcomePageProps = {}) {
+}: ToolsGalleryProps = {}) {
   const categoryIcons = {
     development: Code,
     text: FileText,
@@ -36,7 +36,7 @@ export function WelcomePage({
 
   return (
     <div className="p-6 space-y-6">
-      {/* Welcome Header */}
+      {/* Tools Gallery Header */}
       <div className="text-center space-y-4">
         <div className="flex justify-center">
           <div className="p-4 bg-primary/10 rounded-full">
@@ -44,7 +44,7 @@ export function WelcomePage({
           </div>
         </div>
         <div>
-          <h1 className="text-3xl font-bold mb-2">Welcome to Tools2Go</h1>
+          <h1 className="text-3xl font-bold mb-2">Tools Gallery</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             A comprehensive collection of developer tools designed to boost your
             productivity. All tools run locally in your browser for maximum
