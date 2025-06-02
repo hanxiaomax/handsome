@@ -4,9 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Copy, RotateCcw, Plus, Check } from 'lucide-react'
-import { ToolLayout } from '@/components/layout/tool-layout'
-import { useMinimizedTools } from '@/contexts/minimized-tools-context'
-import { useNavigate } from 'react-router-dom'
+import { ToolWrapper } from '@/components/common/tool-wrapper'
 import { UUIDGenerator, type UUIDGeneratorState, type UUIDFormat } from './lib'
 import { toolInfo } from './toolInfo'
 
@@ -21,8 +19,6 @@ const initialState: UUIDGeneratorState = {
 }
 
 function UUIDGeneratorTool() {
-  const navigate = useNavigate()
-  const { minimizeTool } = useMinimizedTools()
   const [state, setState] = useState<UUIDGeneratorState>(initialState)
   const [copiedUUID, setCopiedUUID] = useState<string | null>(null)
   const [copiedAll, setCopiedAll] = useState(false)
@@ -86,14 +82,7 @@ function UUIDGeneratorTool() {
     }))
   }, [])
 
-  const handleClose = useCallback(() => {
-    navigate('/')
-  }, [navigate])
 
-  const handleMinimize = useCallback(() => {
-    minimizeTool(toolInfo, { uuidState: state })
-    navigate('/')
-  }, [minimizeTool, state, navigate])
 
   const handleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -153,14 +142,8 @@ function UUIDGeneratorTool() {
   }
 
   return (
-    <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
-      onClose={handleClose}
-      onMinimize={handleMinimize}
-      onFullscreen={handleFullscreen}
-      isFullscreen={isFullscreen}
-    >
+    <ToolWrapper toolInfo={toolInfo} state={{ uuidState: state }}>
+    
       <div className="w-full p-6 space-y-6 mt-5">
         {/* Main tool interface - NO Card wrapper */}
         <div className="space-y-6">
@@ -298,7 +281,7 @@ function UUIDGeneratorTool() {
           </CardContent>
         </Card>
       </div>
-    </ToolLayout>
+    </ToolWrapper>
   )
 }
 

@@ -1,74 +1,83 @@
 import { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { GlobalSearch } from "@/components/navigation/global-search";
 import { useNavigate } from "react-router-dom";
+import { Minus, Home, Heart } from "lucide-react";
 
 interface ToolLayoutProps {
   toolName: string;
   toolDescription?: string;
   children: React.ReactNode;
-  onClose?: () => void;
   onMinimize?: () => void;
-  onFullscreen?: () => void;
-  isFullscreen?: boolean;
+  onToggleFavorite?: () => void;
+  isFavorite?: boolean;
 }
 
 interface WindowControlsProps {
-  onClose?: () => void;
   onMinimize?: () => void;
-  onFullscreen?: () => void;
-  isFullscreen?: boolean;
+  onNavigateHome?: () => void;
+  onToggleFavorite?: () => void;
+  isFavorite?: boolean;
 }
 
 function WindowControls({
-  onClose,
   onMinimize,
-  onFullscreen,
-  isFullscreen = false,
+  onNavigateHome,
+  onToggleFavorite,
+  isFavorite = false,
 }: WindowControlsProps) {
   return (
-    <div className="w-full flex items-center justify-between px-4 py-3">
+    <div className="w-full flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur">
       <div className="flex items-center gap-2"></div>
       <div className="flex items-center gap-2">
-        {/* Close Button */}
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="w-5 h-5 rounded-full bg-red-500 hover:bg-red-600 transition-colors group shadow-sm"
-            title="Back to Home"
+        {/* Home Button */}
+        {onNavigateHome && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onNavigateHome}
+            className="h-8 px-3 gap-2"
+            title="Go to Home"
           >
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
-              ×
-            </span>
-          </button>
+            <Home className="h-4 w-4" />
+            <span className="text-xs">Home</span>
+          </Button>
         )}
+
+        {/* Favorite Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onToggleFavorite}
+          className="h-8 px-3 gap-2"
+          title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+          disabled={!onToggleFavorite}
+        >
+          <Heart
+            className={`h-4 w-4 ${
+              isFavorite ? "fill-red-500 text-red-500" : ""
+            }`}
+          />
+          <span className="text-xs">
+            {isFavorite ? "Favorited" : "Favorite"}
+          </span>
+        </Button>
 
         {/* Minimize Button */}
         {onMinimize && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onMinimize}
-            className="w-5 h-5 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors group shadow-sm"
+            className="h-8 px-3 gap-2"
             title="Minimize to Drawer"
           >
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
-              −
-            </span>
-          </button>
-        )}
-
-        {/* Fullscreen Button */}
-        {onFullscreen && (
-          <button
-            onClick={onFullscreen}
-            className="w-5 h-5 rounded-full bg-green-500 hover:bg-green-600 transition-colors group shadow-sm"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-          >
-            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-white font-bold leading-none flex items-center justify-center w-full h-full">
-              {isFullscreen ? "⌄" : "⌃"}
-            </span>
-          </button>
+            <Minus className="h-4 w-4" />
+            <span className="text-xs">Minimize</span>
+          </Button>
         )}
       </div>
     </div>
@@ -79,13 +88,11 @@ export function ToolLayout({
   toolName,
   toolDescription,
   children,
-  onClose,
   onMinimize,
-  onFullscreen,
-  isFullscreen = false,
+  onToggleFavorite,
+  isFavorite = false,
 }: ToolLayoutProps) {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
 
   const handleToolSelect = (toolId: string) => {
@@ -96,10 +103,6 @@ export function ToolLayout({
 
   const handleNavigateHome = () => {
     navigate("/");
-  };
-
-  const handleNavigateToFavorites = () => {
-    navigate("/favorites");
   };
 
   return (
@@ -114,12 +117,9 @@ export function ToolLayout({
       >
         {/* Sidebar Area - App Navigation */}
         <AppSidebar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
           selectedTool={selectedTool}
           onToolSelect={handleToolSelect}
           onNavigateHome={handleNavigateHome}
-          onNavigateToFavorites={handleNavigateToFavorites}
         />
 
         <main className="flex-1 flex flex-col overflow-hidden">
@@ -147,10 +147,10 @@ export function ToolLayout({
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Window Controls Bar - Full Width */}
             <WindowControls
-              onClose={onClose}
               onMinimize={onMinimize}
-              onFullscreen={onFullscreen}
-              isFullscreen={isFullscreen}
+              onNavigateHome={handleNavigateHome}
+              onToggleFavorite={onToggleFavorite}
+              isFavorite={isFavorite}
             />
 
             {/* Tool Content - Below Controls */}

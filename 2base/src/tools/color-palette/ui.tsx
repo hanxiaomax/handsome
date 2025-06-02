@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ToolLayout } from '@/components/layout/tool-layout';
+import { ToolWrapper } from '@/components/common/tool-wrapper';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,7 +28,6 @@ import { ColorPaletteEngine, type ColorValue, type ColorPalette } from './lib';
 const engine = new ColorPaletteEngine();
 
 export default function ColorPalette() {
-  const navigate = useNavigate();
 
   // Main state
   const [currentColor, setCurrentColor] = useState<ColorValue>(() => 
@@ -190,21 +188,12 @@ export default function ColorPalette() {
     };
   }, [currentColor]);
 
-  // Window controls
-  const handleClose = useCallback(() => navigate('/'), [navigate]);
-  const handleMinimize = useCallback(() => navigate('/'), [navigate]);
-  const handleFullscreen = useCallback(() => setIsFullscreen(!isFullscreen), [isFullscreen]);
+
 
   return (
     <TooltipProvider>
-      <ToolLayout
-        toolName={toolInfo.name}
-        toolDescription={toolInfo.description}
-        onClose={handleClose}
-        onMinimize={handleMinimize}
-        onFullscreen={handleFullscreen}
-        isFullscreen={isFullscreen}
-      >
+      <ToolWrapper toolInfo={toolInfo} state={{ currentColor, generatedPalette, colorHistory }}>
+      
         <div className="w-full p-6 space-y-6 mt-5">
           {error && (
             <Alert variant="destructive">
@@ -523,7 +512,7 @@ export default function ColorPalette() {
             </CardContent>
           </Card>
         </div>
-      </ToolLayout>
+      </ToolWrapper>
     </TooltipProvider>
   );
 } 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -59,7 +58,7 @@ import {
 } from "lucide-react";
 
 // Layout
-import { ToolLayout } from "@/components/layout/tool-layout";
+import { ToolWrapper } from "@/components/common/tool-wrapper";
 
 // Tool components
 import { toolInfo } from "./toolInfo";
@@ -82,8 +81,6 @@ interface FileUploadState {
 type DisplayMode = "beautified" | "tree" | "compressed" | "json";
 
 export default function XMLParser() {
-  const navigate = useNavigate();
-
   // Core state
   const [parser] = useState(() => new XMLStreamParser());
   const [elements, setElements] = useState<XMLElement[]>([]);

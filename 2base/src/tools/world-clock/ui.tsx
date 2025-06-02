@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -7,8 +6,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 
 import { MapPin, Clock } from 'lucide-react'
-import { ToolLayout } from '@/components/layout/tool-layout'
-import { useMinimizedTools } from '@/contexts/minimized-tools-context'
+import { ToolWrapper } from '@/components/common/tool-wrapper'
 import { CompactTimeZoneCard } from './components/compact-timezone-card'
 import { TimeZoneSearch } from './components/timezone-search'
 import { TimelineVisualization } from './components/timeline-visualization'
@@ -37,8 +35,6 @@ const initialState: WorldClockState = {
 }
 
 export default function WorldClock() {
-  const navigate = useNavigate()
-  const { minimizeTool } = useMinimizedTools()
   const [state, setState] = useState<WorldClockState>(initialState)
   const [timeDisplays, setTimeDisplays] = useState<TimeDisplay[]>([])
   const [searchResults, setSearchResults] = useState(POPULAR_TIMEZONES)
@@ -47,15 +43,7 @@ export default function WorldClock() {
 
   const engine = useRef(new WorldClockEngine())
 
-  // Window control handlers
-  const handleClose = useCallback(() => {
-    navigate('/')
-  }, [navigate])
 
-  const handleMinimize = useCallback(() => {
-    minimizeTool(toolInfo, { worldClockState: state })
-    navigate('/')
-  }, [minimizeTool, state, navigate])
 
   const handleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -196,14 +184,8 @@ export default function WorldClock() {
 
 
   return (
-    <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
-      onClose={handleClose}
-      onMinimize={handleMinimize}
-      onFullscreen={handleFullscreen}
-      isFullscreen={isFullscreen}
-    >
+    <ToolWrapper toolInfo={toolInfo} state={{ worldClockState: state }}>
+    
       <div className="w-full p-6 space-y-6 mt-5">
         {/* Main interface - NO Card wrapper */}
         <div className="space-y-6">
@@ -378,8 +360,6 @@ export default function WorldClock() {
           </CardContent>
         </Card>
       </div>
-
-
-    </ToolLayout>
+    </ToolWrapper>
   )
 } 

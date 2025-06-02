@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { ToolLayout } from "@/components/layout/tool-layout";
+import { ToolWrapper } from "@/components/common/tool-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +33,6 @@ import type { EmojiData, SearchFilters } from "./lib";
 const engine = new EmojiLibraryEngine();
 
 export default function EmojiLibrary() {
-  const navigate = useNavigate();
-
   // State management
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -44,7 +41,6 @@ export default function EmojiLibrary() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showRecentOnly, setShowRecentOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
 
   // Initialize data
@@ -153,14 +149,6 @@ export default function EmojiLibrary() {
     setShowRecentOnly(false);
   }, []);
 
-  // Window controls
-  const handleClose = useCallback(() => navigate("/"), [navigate]);
-  const handleMinimize = useCallback(() => navigate("/"), [navigate]);
-  const handleFullscreen = useCallback(
-    () => setIsFullscreen(!isFullscreen),
-    [isFullscreen]
-  );
-
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -204,13 +192,9 @@ export default function EmojiLibrary() {
 
   if (isLoading) {
     return (
-      <ToolLayout
-        toolName={toolInfo.name}
-        toolDescription={toolInfo.description}
-        onClose={handleClose}
-        onMinimize={handleMinimize}
-        onFullscreen={handleFullscreen}
-        isFullscreen={isFullscreen}
+      <ToolWrapper
+        toolInfo={toolInfo}
+        state={{ searchQuery, favorites, recentlyUsed }}
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -218,7 +202,7 @@ export default function EmojiLibrary() {
             <p className="text-muted-foreground">Loading emojis...</p>
           </div>
         </div>
-      </ToolLayout>
+      </ToolWrapper>
     );
   }
 
@@ -233,13 +217,9 @@ export default function EmojiLibrary() {
 
   return (
     <TooltipProvider>
-      <ToolLayout
-        toolName={toolInfo.name}
-        toolDescription={toolInfo.description}
-        onClose={handleClose}
-        onMinimize={handleMinimize}
-        onFullscreen={handleFullscreen}
-        isFullscreen={isFullscreen}
+      <ToolWrapper
+        toolInfo={toolInfo}
+        state={{ searchQuery, favorites, recentlyUsed }}
       >
         <div className="w-full p-4 space-y-4">
           {/* Compact Search and Filter Bar */}
@@ -516,7 +496,7 @@ export default function EmojiLibrary() {
             </div>
           </div>
         </div>
-      </ToolLayout>
+      </ToolWrapper>
     </TooltipProvider>
   );
 }

@@ -1,12 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ToolLayout } from "@/components/layout/tool-layout";
+import { ToolWrapper } from "@/components/common/tool-wrapper";
 import { Display } from "./components/display";
 import { BitGrid } from "./components/bit-grid";
 import { ButtonGrid } from "./components/button-grid";
 import { SettingsPanel } from "./components/settings-panel";
-import { useMinimizedTools } from "@/contexts/minimized-tools-context";
 import { toolInfo } from "./toolInfo";
 import type {
   CalculatorState,
@@ -40,10 +38,7 @@ const initialState: CalculatorState = {
 };
 
 export default function ProgrammerCalculator() {
-  const navigate = useNavigate();
-  const { minimizeTool } = useMinimizedTools();
   const [state, setState] = useState<CalculatorState>(initialState);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleButtonClick = useCallback(
     (value: string, type: ButtonConfig["type"]) => {
@@ -219,34 +214,6 @@ export default function ProgrammerCalculator() {
     }));
   }, []);
 
-  const handleClose = useCallback(() => {
-    navigate("/");
-  }, [navigate]);
-
-  const handleMinimize = useCallback(() => {
-    minimizeTool(toolInfo, { calculatorState: state });
-    navigate("/");
-  }, [minimizeTool, state, navigate]);
-
-  const handleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
-  }, []);
-
-  // Handle fullscreen state changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () =>
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
-
   // Handle keyboard input
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -315,14 +282,7 @@ export default function ProgrammerCalculator() {
   }, [state.base, handleBaseChange, handleButtonClick]);
 
   return (
-    <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
-      onClose={handleClose}
-      onMinimize={handleMinimize}
-      onFullscreen={handleFullscreen}
-      isFullscreen={isFullscreen}
-    >
+    <ToolWrapper toolInfo={toolInfo} state={{ calculatorState: state }}>
       <div className="w-full p-6 space-y-6 mt-5">
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Left Column: Display and Settings */}
@@ -429,6 +389,6 @@ export default function ProgrammerCalculator() {
           </CardContent>
         </Card>
       </div>
-    </ToolLayout>
+    </ToolWrapper>
   );
 }

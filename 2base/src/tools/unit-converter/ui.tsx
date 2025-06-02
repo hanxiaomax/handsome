@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ToolLayout } from "@/components/layout/tool-layout";
+import { ToolWrapper } from "@/components/common/tool-wrapper";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Copy, ChevronDown, ChevronUp, ArrowRightLeft, Focus } from "lucide-react";
 import { toast } from "sonner";
-import { useMinimizedTools } from "@/contexts/minimized-tools-context";
 import {
   UnitConverter as UnitConverterEngine,
   unitCategories,
@@ -42,8 +40,6 @@ const initialState: ConverterState = {
 };
 
 export default function UnitConverter() {
-  const navigate = useNavigate();
-  const { minimizeTool } = useMinimizedTools();
   const [state, setState] = useState<ConverterState>(initialState);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [customDialogOpen, setCustomDialogOpen] = useState(false);
@@ -64,15 +60,7 @@ export default function UnitConverter() {
     }));
   }, []);
 
-  // Window control handlers
-  const handleClose = useCallback(() => {
-    navigate('/');
-  }, [navigate]);
 
-  const handleMinimize = useCallback(() => {
-    minimizeTool(toolInfo);
-    navigate('/');
-  }, [minimizeTool, navigate]);
 
   const handleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -223,14 +211,8 @@ export default function UnitConverter() {
   }));
 
   return (
-    <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
-      onClose={handleClose}
-      onMinimize={handleMinimize}
-      onFullscreen={handleFullscreen}
-      isFullscreen={isFullscreen}
-    >
+    <ToolWrapper toolInfo={toolInfo} state={{ converterState: state }}>
+    
       <div className="w-full p-6 space-y-6 mt-5">
         {/* Input Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -355,7 +337,7 @@ export default function UnitConverter() {
         onOpenChange={setCustomDialogOpen}
         onSave={handleSaveCustomConversion}
       />
-    </ToolLayout>
+    </ToolWrapper>
   );
 }
 

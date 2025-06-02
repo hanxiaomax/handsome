@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { ToolLayout } from "@/components/layout/tool-layout";
+import { ToolWrapper } from "@/components/common/tool-wrapper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Copy, RefreshCw, ArrowLeftRight, Code } from "lucide-react";
 import { toast } from "sonner";
-import { useMinimizedTools } from "@/contexts/minimized-tools-context";
 import { toolInfo } from "./toolInfo";
 import { UnixTimestampEngine } from "./lib";
 import type { ConverterState, ConversionResult } from "./types";
@@ -37,19 +35,10 @@ const initialState: ConverterState = {
 };
 
 export default function UnixTimestampConverter() {
-  const navigate = useNavigate();
-  const { minimizeTool } = useMinimizedTools();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [state, setState] = useState<ConverterState>(initialState);
   const [result, setResult] = useState<ConversionResult | null>(null);
   const engine = useRef(new UnixTimestampEngine());
-
-  // Window control handlers
-  const handleClose = useCallback(() => navigate("/"), [navigate]);
-  const handleMinimize = useCallback(() => {
-    minimizeTool(toolInfo);
-    navigate("/");
-  }, [minimizeTool, navigate]);
 
   const handleFullscreen = useCallback(() => {
     setIsFullscreen((prev) => !prev);
@@ -199,14 +188,7 @@ export default function UnixTimestampConverter() {
     : [];
 
   return (
-    <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
-      onClose={handleClose}
-      onMinimize={handleMinimize}
-      onFullscreen={handleFullscreen}
-      isFullscreen={isFullscreen}
-    >
+    <ToolWrapper toolInfo={toolInfo} state={{ converterState: state }}>
       <div className="w-full p-6 space-y-8 mt-5">
         {/* Artistic Current Timestamp Display */}
         <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-blue-950 dark:via-gray-900 dark:to-purple-950 border-2">
@@ -706,6 +688,6 @@ export default function UnixTimestampConverter() {
           </CardContent>
         </Card>
       </div>
-    </ToolLayout>
+    </ToolWrapper>
   );
 }
