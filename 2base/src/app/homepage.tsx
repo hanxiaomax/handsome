@@ -38,12 +38,6 @@ function HomepageContent() {
     }
   };
 
-  const handleToolSelect = (toolId: string) => {
-    setSelectedTool(toolId);
-    // Update URL parameters
-    setSearchParams({ tool: toolId });
-  };
-
   const handleNavigateHome = () => {
     setSelectedTool(null);
     // Clear URL parameters
@@ -58,7 +52,6 @@ function HomepageContent() {
     <>
       <AppSidebar
         selectedTool={selectedTool}
-        onToolSelect={handleToolSelect}
         onNavigateHome={handleNavigateHome}
       />
       <SidebarInset>
@@ -70,11 +63,6 @@ function HomepageContent() {
               <h2 className="text-lg font-semibold">
                 {selectedToolData ? selectedToolData.name : "Tools2Go"}
               </h2>
-              <p className="text-sm text-muted-foreground">
-                {selectedToolData
-                  ? "Tool Details"
-                  : "Select a tool from the sidebar to view details"}
-              </p>
             </div>
             {/* Global Search - 全局搜索框 */}
             <div className="hidden sm:block">
@@ -90,7 +78,6 @@ function HomepageContent() {
             <ToolDetail tool={selectedToolData} onUseTool={handleUseTool} />
           ) : (
             <WelcomePage
-              onToolSelect={handleToolSelect}
               onUseTool={handleUseTool}
               selectedTool={selectedTool}
               showToolsGrid={true}

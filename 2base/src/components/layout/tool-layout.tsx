@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -93,13 +92,6 @@ export function ToolLayout({
   isFavorite = false,
 }: ToolLayoutProps) {
   const navigate = useNavigate();
-  const [selectedTool, setSelectedTool] = useState<string | null>(null);
-
-  const handleToolSelect = (toolId: string) => {
-    setSelectedTool(toolId);
-    // Navigate to homepage with tool selected (not directly to tool)
-    navigate(`/?tool=${toolId}`);
-  };
 
   const handleNavigateHome = () => {
     navigate("/");
@@ -116,11 +108,7 @@ export function ToolLayout({
         }
       >
         {/* Sidebar Area - App Navigation */}
-        <AppSidebar
-          selectedTool={selectedTool}
-          onToolSelect={handleToolSelect}
-          onNavigateHome={handleNavigateHome}
-        />
+        <AppSidebar selectedTool={null} onNavigateHome={handleNavigateHome} />
 
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header Area - Tool Information */}

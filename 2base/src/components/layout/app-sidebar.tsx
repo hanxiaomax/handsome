@@ -1,4 +1,5 @@
 import { Heart, Home, Wrench } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -20,15 +21,11 @@ import { useFavorites } from "@/contexts/favorites-context";
 
 interface AppSidebarProps {
   selectedTool: string | null;
-  onToolSelect: (toolId: string) => void;
   onNavigateHome: () => void;
 }
 
-export function AppSidebar({
-  selectedTool,
-  onToolSelect,
-  onNavigateHome,
-}: AppSidebarProps) {
+export function AppSidebar({ selectedTool, onNavigateHome }: AppSidebarProps) {
+  const navigate = useNavigate();
   const { isMobile, setOpenMobile } = useSidebar();
   const { favorites } = useFavorites();
 
@@ -38,7 +35,12 @@ export function AppSidebar({
   const handleToolClick = (toolId: string, event: React.MouseEvent) => {
     // Prevent event bubbling
     event.stopPropagation();
-    onToolSelect(toolId);
+
+    // Find the tool and navigate directly to its page
+    const tool = tools.find((t) => t.id === toolId);
+    if (tool) {
+      navigate(tool.path);
+    }
 
     // Close mobile sidebar when tool is selected
     if (isMobile) {

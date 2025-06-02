@@ -23,8 +23,6 @@ import { Link } from "react-router-dom";
 function FavoritesContent() {
   const navigate = useNavigate();
   const { isMobile, setOpenMobile } = useSidebar();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const { favorites } = useFavorites();
 
   const handleUseTool = (toolId: string) => {
@@ -38,37 +36,17 @@ function FavoritesContent() {
     }
   };
 
-  const handleToolSelect = (toolId: string) => {
-    setSelectedTool(toolId);
-    // Close mobile sidebar when tool is selected
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
-
   const handleNavigateHome = () => {
     navigate("/");
   };
 
-  const handleNavigateToFavorites = () => {
-    // Already on favorites page, clear selection to show favorites list
-    setSelectedTool(null);
-  };
-
   const favoriteTools = tools.filter((tool) => favorites.includes(tool.id));
-  const selectedToolData = selectedTool
-    ? tools.find((t) => t.id === selectedTool)
-    : null;
 
   return (
     <>
       <AppSidebar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
         selectedTool={selectedTool}
-        onToolSelect={handleToolSelect}
         onNavigateHome={handleNavigateHome}
-        onNavigateToFavorites={handleNavigateToFavorites}
       />
       <SidebarInset>
         {/* Header */}
@@ -125,7 +103,6 @@ function FavoritesContent() {
                     <ToolInfoCard
                       key={tool.id}
                       tool={tool}
-                      onSelect={handleToolSelect}
                       onUseTool={handleUseTool}
                       showFavoriteButton={true}
                       compact={false}

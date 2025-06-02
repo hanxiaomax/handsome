@@ -6,14 +6,12 @@ import { DashboardCharts } from "@/components/tools/dashboard-charts";
 import { ToolsGrid } from "@/components/tools/tools-grid";
 
 interface WelcomePageProps {
-  onToolSelect?: (toolId: string) => void;
   onUseTool?: (toolId: string) => void;
   selectedTool?: string | null;
   showToolsGrid?: boolean;
 }
 
 export function WelcomePage({
-  onToolSelect,
   onUseTool,
   selectedTool,
   showToolsGrid = false,
@@ -32,14 +30,8 @@ export function WelcomePage({
   );
 
   // If showToolsGrid is true, render the tools grid instead of welcome content
-  if (showToolsGrid && onToolSelect && onUseTool) {
-    return (
-      <ToolsGrid
-        onToolSelect={onToolSelect}
-        onUseTool={onUseTool}
-        selectedTool={selectedTool}
-      />
-    );
+  if (showToolsGrid && onUseTool) {
+    return <ToolsGrid onUseTool={onUseTool} selectedTool={selectedTool} />;
   }
 
   return (
