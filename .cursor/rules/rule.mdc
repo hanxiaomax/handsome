@@ -84,6 +84,57 @@ src/
 - Use forwardRef for components that need ref forwarding
 - Implement proper error boundaries
 - Use React.memo for performance optimization when needed
+- **Add meaningful comments and IDs to key components for better communication and maintenance**
+
+#### Component Documentation Standards
+All key UI components must include:
+
+1. **Component Comments**: Clear, descriptive comments for major sections
+   ```typescript
+   {/* Component Name - Brief functional description */}
+   ```
+
+2. **Unique IDs**: Use kebab-case IDs for important components
+   ```typescript
+   <div id="component-section-name" className="...">
+   ```
+
+3. **Required Documentation for**:
+   - Main container areas (toolbars, status bars, content areas)
+   - Input and output sections
+   - Control panels and button groups  
+   - Modal dialogs and overlays
+   - Complex interactive components
+   - Navigation elements
+   - Form sections and field groups
+
+#### Example Implementation:
+```typescript
+export default function MyTool() {
+  return (
+    <ToolLayout>
+      {/* Main Tool Container - Primary workspace */}
+      <div id="tool-main-container" className="w-full p-6 space-y-6">
+        
+        {/* Input Section - User data entry area */}
+        <div id="input-section" className="space-y-4">
+          {/* Input controls */}
+        </div>
+        
+        {/* Control Panel - Action buttons and settings */}
+        <div id="control-panel" className="flex items-center gap-2">
+          {/* Control buttons */}
+        </div>
+        
+        {/* Results Display - Output and visualization */}
+        <div id="results-section" className="space-y-4">
+          {/* Results content */}
+        </div>
+      </div>
+    </ToolLayout>
+  )
+}
+```
 
 ### File Naming
 - Use kebab-case for file and folder names
@@ -133,12 +184,31 @@ export default function ToolName() {
   }, [/* dependencies */])
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
+    {/* Tool Main Container - Primary workspace area */}
+    <Card id="tool-main-container" className="w-full max-w-4xl mx-auto">
+      {/* Tool Header - Title and basic info */}
+      <CardHeader id="tool-header">
         <CardTitle>Tool Name</CardTitle>
       </CardHeader>
-      <CardContent>
-        {/* Tool UI implementation */}
+      
+      {/* Tool Content Area - Main functionality */}
+      <CardContent id="tool-content">
+        {/* Tool UI implementation with proper comments and IDs */}
+        
+        {/* Input Section - User input area */}
+        <div id="input-section" className="space-y-4">
+          {/* Input controls */}
+        </div>
+        
+        {/* Control Panel - Action buttons */}
+        <div id="control-panel" className="flex items-center gap-2 mt-4">
+          {/* Control buttons */}
+        </div>
+        
+        {/* Results Section - Output display */}
+        <div id="results-section" className="mt-6">
+          {/* Results content */}
+        </div>
       </CardContent>
     </Card>
   )
@@ -203,10 +273,22 @@ import { CustomCalculatorGrid } from './components/calculator-grid'; // Tool-spe
 
 export default function MyTool() {
   return (
-    <Card>
-      <FileUpload onFileSelect={handleFile} />      {/* Common component */}
-      <CustomCalculatorGrid onCalculate={calc} />   {/* Tool-specific */}
-      <ResultDisplay result={result} />             {/* Common component */}
+    {/* Tool Main Container - Mixed component demonstration */}
+    <Card id="mixed-tool-container">
+      {/* File Input Section - Standard upload component */}
+      <div id="file-upload-section" className="mb-6">
+        <FileUpload onFileSelect={handleFile} />      {/* Common component */}
+      </div>
+      
+      {/* Calculator Section - Custom tool-specific component */}
+      <div id="calculator-section" className="mb-6">
+        <CustomCalculatorGrid onCalculate={calc} />   {/* Tool-specific */}
+      </div>
+      
+      {/* Results Section - Standard display component */}
+      <div id="results-display-section">
+        <ResultDisplay result={result} />             {/* Common component */}
+      </div>
     </Card>
   );
 }
