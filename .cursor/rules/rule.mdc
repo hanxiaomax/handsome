@@ -30,6 +30,13 @@ alwaysApply: true
 - Memory limit: < 500MB per tool
 - Browser support: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
 
+### Advanced Tool Capabilities
+- **Enterprise File Processing**: Support files up to 500MB for specialized tools
+- **Streaming Processing**: Use Web Workers for large file processing
+- **Multi-mode Interfaces**: Dual-mode or multi-mode UIs for different user needs
+- **Interactive Visualizations**: Tree views, resizable panels, complex data displays
+- **Real-time Processing**: Live preview and auto-processing capabilities
+
 ## Project Structure
 
 ```
@@ -44,7 +51,16 @@ src/
 │   │   ├── ui.tsx         # Tool UI component
 │   │   ├── toolInfo.ts    # Tool metadata
 │   │   ├── lib.ts         # Tool logic (optional)
-│   │   └── components/    # Tool-specific components (optional)
+│   │   ├── lib/           # Complex tool logic (when needed)
+│   │   │   ├── parser.ts  # Specialized parsers/processors
+│   │   │   ├── worker.ts  # Web Worker implementations
+│   │   │   └── utils.ts   # Tool-specific utilities
+│   │   ├── components/    # Tool-specific components (optional)
+│   │   ├── types.ts       # Tool-specific TypeScript types
+│   │   └── docs/          # Tool documentation (recommended)
+│   │       ├── specification.md
+│   │       ├── user-guide.md
+│   │       └── api-reference.md
 │   └── [tool-name]-specification.md  # Detailed tool design docs
 ├── lib/                   # Utility functions and shared logic
 ├── hooks/                 # Custom React hooks
@@ -68,6 +84,13 @@ src/
 - **Prettier**: Code formatting
 - **Vitest**: Unit testing framework
 - **Husky**: Git hooks for quality gates
+
+### Advanced Tool Components
+- **ResizablePanelGroup**: For complex multi-panel layouts
+- **ScrollArea**: For content that exceeds viewport
+- **Breadcrumb**: For navigation within hierarchical data
+- **Toggle**: For mode switching and preferences
+- **Tooltip & TooltipProvider**: For enhanced user guidance
 
 ## Code Standards
 
@@ -215,6 +238,94 @@ export default function ToolName() {
 }
 ```
 
+### Advanced Tool Layout Patterns
+
+#### Resizable Panel Layout (for complex tools)
+```typescript
+// For tools with complex multi-panel interfaces like xml-parser
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
+
+export default function AdvancedTool() {
+  return (
+    <ToolLayout toolName={toolInfo.name} toolDescription={toolInfo.description}>
+      <div className="flex flex-col h-full mt-12">
+        <ResizablePanelGroup direction="horizontal" className="flex-1">
+          {/* Left Panel - Input/Source */}
+          <ResizablePanel defaultSize={50} minSize={30}>
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* Left Panel Status Bar */}
+              <div id="left-status-bar" className="border-b bg-background p-3 h-14 flex-shrink-0">
+                {/* Status content */}
+              </div>
+              
+              {/* Left Panel Toolbar */}
+              <div id="left-toolbar" className="border-b bg-muted/20 p-3 h-12 flex-shrink-0">
+                {/* Toolbar controls */}
+              </div>
+              
+              {/* Left Panel Content */}
+              <div id="left-content" className="flex-1 overflow-hidden">
+                {/* Main content */}
+              </div>
+            </div>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right Panel - Output/Results */}
+          <ResizablePanel defaultSize={50} minSize={30}>
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* Right Panel Status Bar */}
+              <div id="right-status-bar" className="border-b bg-background p-3 h-14 flex-shrink-0">
+                {/* Status content */}
+              </div>
+              
+              {/* Right Panel Toolbar */}
+              <div id="right-toolbar" className="border-b bg-muted/20 p-3 h-12 flex-shrink-0">
+                {/* Toolbar controls */}
+              </div>
+              
+              {/* Right Panel Content */}
+              <div id="right-content" className="flex-1 overflow-hidden">
+                {/* Results content */}
+              </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
+    </ToolLayout>
+  )
+}
+```
+
+#### Multi-Mode Interface Pattern
+```typescript
+// For tools with different complexity levels or input modes
+export default function MultiModeTool() {
+  const [inputMode, setInputMode] = useState<'file' | 'text'>('file')
+  const [displayMode, setDisplayMode] = useState<'basic' | 'advanced' | 'tree'>('basic')
+
+  return (
+    <ToolLayout toolName={toolInfo.name} toolDescription={toolInfo.description}>
+      {/* Mode Selection */}
+      <div id="mode-selection" className="flex items-center gap-2 mb-4">
+        <Tabs value={inputMode} onValueChange={setInputMode}>
+          <TabsList>
+            <TabsTrigger value="file">File Upload</TabsTrigger>
+            <TabsTrigger value="text">Text Input</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Content based on mode */}
+      <div id="tool-content" className="space-y-6">
+        {inputMode === 'file' ? <FileUploadInterface /> : <TextInputInterface />}
+      </div>
+    </ToolLayout>
+  )
+}
+```
+
 ### Tool Metadata Structure
 ```typescript
 // tools/[tool-name]/toolInfo.ts
@@ -229,7 +340,10 @@ export const toolInfo: ToolInfo = {
   tags: ['tag1', 'tag2'],
   requiresBackend: false,
   icon: SomeIcon,
-  path: '/tools/tool-name'
+  path: '/tools/tool-name',
+  version: '1.0.0',
+  releaseDate: '2024-01-20',
+  pricing: 'free'
 }
 ```
 
@@ -238,6 +352,8 @@ export const toolInfo: ToolInfo = {
 - Tools can use any combination of the three main areas (Input, Controls, Output)
 - Some tools may require custom layouts that don't follow the standard three-column pattern
 - Tools should adapt their layout based on their specific functionality needs
+- Complex tools can use ResizablePanelGroup for advanced multi-panel layouts
+- Enterprise tools may require specialized status bars, toolbars, and navigation elements
 
 ## Common Component Usage
 
@@ -294,6 +410,86 @@ export default function MyTool() {
 }
 ```
 
+## Advanced Tool Development
+
+### Large File Processing
+For tools that need to handle large files (>50MB):
+
+```typescript
+// Use Web Workers for background processing
+const processLargeFile = useCallback(async (file: File) => {
+  if (file.size > 50 * 1024 * 1024) {
+    // Use Web Worker for large files
+    const worker = new Worker(new URL('./lib/worker.ts', import.meta.url))
+    worker.postMessage({ file, options })
+    
+    worker.onmessage = (event) => {
+      const { progress, result, error } = event.data
+      if (progress) setProgress(progress)
+      if (result) setResult(result)
+      if (error) setError(error)
+    }
+  } else {
+    // Process in main thread for smaller files
+    const result = await processFile(file)
+    setResult(result)
+  }
+}, [])
+```
+
+### Streaming Data Processing
+For real-time data processing:
+
+```typescript
+// Implement streaming processing with progress updates
+const processStreamingData = useCallback(async (data: string) => {
+  const chunks = data.split('\n')
+  const total = chunks.length
+  
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]
+    await processChunk(chunk)
+    
+    // Update progress
+    setProgress((i + 1) / total * 100)
+    
+    // Allow UI to update
+    await new Promise(resolve => setTimeout(resolve, 0))
+  }
+}, [])
+```
+
+### Tree Visualization for Hierarchical Data
+For tools that display hierarchical data:
+
+```typescript
+// Recursive tree component with expand/collapse
+const TreeNode = ({ node, depth = 0 }: { node: TreeItem, depth?: number }) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+  
+  return (
+    <div style={{ paddingLeft: `${depth * 16}px` }}>
+      <div className="flex items-center gap-2 py-1 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+        {node.children && (
+          <span className="w-4 h-4 flex items-center justify-center">
+            {isExpanded ? '−' : '+'}
+          </span>
+        )}
+        <span>{node.name}</span>
+      </div>
+      
+      {isExpanded && node.children && (
+        <div>
+          {node.children.map(child => (
+            <TreeNode key={child.id} node={child} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
 ## Styling Guidelines
 
 ### Design System Adherence
@@ -314,6 +510,23 @@ export default function MyTool() {
 - Keep component styles consistent with design system
 - Support dark mode with appropriate color variants
 - Ensure sufficient color contrast for accessibility (WCAG 2.1)
+
+### Advanced Layout Styling
+For complex tool layouts:
+
+```css
+/* Status bar heights - maintain consistency */
+.status-bar { height: 3.5rem; } /* 56px */
+.toolbar { height: 3rem; }      /* 48px */
+
+/* Panel constraints for resizable layouts */
+.panel-min-width { min-width: 20rem; }  /* 320px */
+.panel-max-width { max-width: 60rem; }  /* 960px */
+
+/* Content area spacing */
+.content-padding { padding: 1rem; }     /* 16px */
+.section-spacing { gap: 1.5rem; }       /* 24px */
+```
 
 ### Theme Integration
 ```css
@@ -346,6 +559,45 @@ export default function MyTool() {
 - Minimize third-party dependencies
 - Lazy load tool-specific libraries
 
+### Large Data Handling
+For tools processing large datasets:
+
+```typescript
+// Virtual scrolling for large lists
+const VirtualList = ({ items, itemHeight = 40 }: { items: any[], itemHeight?: number }) => {
+  const [scrollTop, setScrollTop] = useState(0)
+  const containerHeight = 400 // Fixed container height
+  
+  const startIndex = Math.floor(scrollTop / itemHeight)
+  const endIndex = Math.min(startIndex + Math.ceil(containerHeight / itemHeight) + 1, items.length)
+  const visibleItems = items.slice(startIndex, endIndex)
+  
+  return (
+    <div 
+      className="overflow-auto"
+      style={{ height: containerHeight }}
+      onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+    >
+      <div style={{ height: items.length * itemHeight, position: 'relative' }}>
+        {visibleItems.map((item, index) => (
+          <div
+            key={startIndex + index}
+            style={{
+              position: 'absolute',
+              top: (startIndex + index) * itemHeight,
+              height: itemHeight,
+              width: '100%'
+            }}
+          >
+            {/* Item content */}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
 ## State Management
 
 ### Application State Structure
@@ -375,6 +627,46 @@ interface ToolPageState {
 }
 ```
 
+### Advanced Tool State Management
+For complex tools with multiple modes and processing states:
+
+```typescript
+interface AdvancedToolState {
+  // Processing state
+  parserState: {
+    status: 'idle' | 'parsing' | 'complete' | 'error';
+    progress: number;
+    currentSection: string;
+    elementsProcessed: number;
+    memoryUsage: number;
+    errors: ParseError[];
+    warnings: ParseWarning[];
+  };
+  
+  // UI state
+  displayMode: 'beautified' | 'tree' | 'compressed' | 'json';
+  inputMode: 'file' | 'text';
+  showLineNumbers: boolean;
+  autoParseEnabled: boolean;
+  
+  // Data state
+  elements: XMLElement[];
+  selectedElement: XMLElement | null;
+  expandedNodes: Set<string>;
+  searchQuery: string;
+  breadcrumb: string[];
+  
+  // File state
+  fileUpload: {
+    isDragOver: boolean;
+    selectedFile: File | null;
+    fileInfo: FileInfo | null;
+    content: string;
+    originalContent: string;
+  };
+}
+```
+
 ## Testing Requirements
 
 ### Unit Tests
@@ -394,6 +686,40 @@ interface ToolPageState {
 - Test file upload and processing flows
 - Test cross-tool navigation
 - Test responsive layout behavior
+
+### Advanced Tool Testing
+For complex tools with multiple modes:
+
+```typescript
+// Test mode switching
+describe('Multi-mode tool', () => {
+  it('should switch between input modes', () => {
+    render(<AdvancedTool />)
+    
+    const fileTab = screen.getByText('File Upload')
+    const textTab = screen.getByText('Text Input')
+    
+    fireEvent.click(textTab)
+    expect(screen.getByPlaceholderText('Paste your content here')).toBeInTheDocument()
+    
+    fireEvent.click(fileTab)
+    expect(screen.getByText('Drop your file here')).toBeInTheDocument()
+  })
+  
+  it('should handle large file processing', async () => {
+    const largeFile = new File(['x'.repeat(100 * 1024 * 1024)], 'large.xml', { type: 'text/xml' })
+    
+    render(<AdvancedTool />)
+    
+    const fileInput = screen.getByTestId('file-input')
+    fireEvent.change(fileInput, { target: { files: [largeFile] } })
+    
+    await waitFor(() => {
+      expect(screen.getByText(/processing/i)).toBeInTheDocument()
+    })
+  })
+})
+```
 
 ## Accessibility Standards
 
@@ -421,6 +747,60 @@ interface ToolPageState {
 - Enter/Space for activation
 - Escape for dismissal and modal closure
 
+### Advanced Accessibility for Complex Tools
+For tools with tree views and complex interactions:
+
+```typescript
+// Keyboard navigation for tree views
+const TreeView = ({ nodes }: { nodes: TreeNode[] }) => {
+  const [focusedNode, setFocusedNode] = useState<string | null>(null)
+  
+  const handleKeyDown = useCallback((e: KeyboardEvent, nodeId: string) => {
+    switch (e.key) {
+      case 'ArrowRight':
+        // Expand node or move to first child
+        expandNode(nodeId)
+        break
+      case 'ArrowLeft':
+        // Collapse node or move to parent
+        collapseNode(nodeId)
+        break
+      case 'ArrowDown':
+        // Move to next visible node
+        moveToNextNode(nodeId)
+        break
+      case 'ArrowUp':
+        // Move to previous visible node
+        moveToPreviousNode(nodeId)
+        break
+      case 'Enter':
+      case ' ':
+        // Select/activate node
+        selectNode(nodeId)
+        break
+    }
+  }, [])
+  
+  return (
+    <div role="tree" aria-label="Data structure">
+      {nodes.map(node => (
+        <div
+          key={node.id}
+          role="treeitem"
+          tabIndex={focusedNode === node.id ? 0 : -1}
+          aria-expanded={node.expanded}
+          aria-selected={node.selected}
+          onKeyDown={(e) => handleKeyDown(e, node.id)}
+          onFocus={() => setFocusedNode(node.id)}
+        >
+          {node.name}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
 ## Security Guidelines
 
 ### Client-Side Security
@@ -434,6 +814,38 @@ interface ToolPageState {
 - Clear sensitive data after processing
 - Use secure communication protocols for any backend calls
 - Implement proper error handling without data leakage
+
+### Large File Security
+For tools processing large files:
+
+```typescript
+// File validation and security checks
+const validateFile = (file: File): { valid: boolean; error?: string } => {
+  // Size limits
+  if (file.size > 500 * 1024 * 1024) {
+    return { valid: false, error: 'File too large (max 500MB)' }
+  }
+  
+  // Type validation
+  const allowedTypes = ['.xml', '.arxml', '.xsd', '.svg']
+  const fileExtension = file.name.toLowerCase().split('.').pop()
+  if (!allowedTypes.includes(`.${fileExtension}`)) {
+    return { valid: false, error: 'Invalid file type' }
+  }
+  
+  // Content validation (basic)
+  return { valid: true }
+}
+
+// Sanitize file content
+const sanitizeContent = (content: string): string => {
+  // Remove potentially dangerous content
+  return content
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+}
+```
 
 ## Error Handling
 
@@ -453,6 +865,43 @@ interface ToolPageState {
 - Check text input formats and constraints
 - Handle edge cases gracefully
 - Provide clear, actionable validation messages
+
+### Advanced Error Handling
+For complex tools with multiple processing stages:
+
+```typescript
+interface ParseError {
+  id: string;
+  type: 'syntax' | 'semantic' | 'validation';
+  message: string;
+  line?: number;
+  column?: number;
+  severity: 'error' | 'warning' | 'info';
+}
+
+const ErrorDisplay = ({ errors }: { errors: ParseError[] }) => {
+  const errorsByType = groupBy(errors, 'type')
+  
+  return (
+    <div className="space-y-4">
+      {Object.entries(errorsByType).map(([type, typeErrors]) => (
+        <div key={type}>
+          <h3 className="font-medium capitalize">{type} Errors</h3>
+          {typeErrors.map(error => (
+            <Alert key={error.id} variant={error.severity === 'error' ? 'destructive' : 'default'}>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {error.message}
+                {error.line && ` (Line ${error.line})`}
+              </AlertDescription>
+            </Alert>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
 
 ## Documentation Standards
 
@@ -474,6 +923,46 @@ interface ToolPageState {
 - Document component architecture and data flow
 - Specify responsive design and accessibility requirements
 
+### Advanced Tool Documentation
+For complex tools, create comprehensive documentation:
+
+```markdown
+# Tool Name Specification
+
+## Overview
+Brief description of the tool's purpose and capabilities.
+
+## Architecture
+- **Main Component**: Primary UI component
+- **Processing Engine**: Core logic and algorithms
+- **Worker Implementation**: Background processing
+- **State Management**: Data flow and state handling
+
+## User Interface
+### Layout Structure
+- **Left Panel**: Input and source data
+- **Right Panel**: Output and visualization
+- **Status Bars**: Information and progress display
+- **Toolbars**: Action buttons and controls
+
+### Interaction Patterns
+- **File Upload**: Drag-drop and file selection
+- **Mode Switching**: Interface mode toggles
+- **Navigation**: Breadcrumb and tree navigation
+- **Actions**: Copy, download, and export functions
+
+## Performance Characteristics
+- **File Size Limits**: Maximum supported file sizes
+- **Memory Usage**: Expected memory consumption
+- **Processing Time**: Typical processing durations
+- **Browser Support**: Compatibility requirements
+
+## Error Handling
+- **Input Validation**: File type and size checks
+- **Processing Errors**: Parse and conversion failures
+- **User Feedback**: Error messages and recovery options
+```
+
 ## Git Workflow
 
 ### Commit Messages
@@ -487,6 +976,22 @@ interface ToolPageState {
 - Use fix/issue-description for bug fixes
 - Use refactor/component-name for refactoring
 - Use docs/section-name for documentation updates
+
+### Advanced Tool Development Workflow
+For complex tools with multiple components:
+
+```bash
+# Feature branch for new complex tool
+git checkout -b feature/advanced-xml-parser
+
+# Commits for different aspects
+git commit -m "feat(xml-parser): add core parsing engine"
+git commit -m "feat(xml-parser): implement tree visualization"
+git commit -m "feat(xml-parser): add resizable panel layout"
+git commit -m "feat(xml-parser): integrate web worker for large files"
+git commit -m "test(xml-parser): add comprehensive test suite"
+git commit -m "docs(xml-parser): create user guide and API reference"
+```
 
 ## Development Environment
 
@@ -505,6 +1010,94 @@ npm run lint         # Run ESLint
 npm run type-check   # Check TypeScript types
 ```
 
+### Tool Registration and Verification
+
+#### Required Installation Commands
+Before developing complex tools, ensure all necessary components are installed:
+
+```bash
+# Check existing shadcn/ui components
+ls src/components/ui/
+
+# Install required components for advanced tools
+npx shadcn@latest add resizable
+npx shadcn@latest add breadcrumb
+npx shadcn@latest add toggle
+npx shadcn@latest add tabs
+npx shadcn@latest add scroll-area
+npx shadcn@latest add separator
+```
+
+#### Tool Registration Checklist
+When adding a new tool to the system:
+
+- [ ] **Tool Implementation**
+  - [ ] Create tool directory structure
+  - [ ] Implement ui.tsx with proper ToolLayout
+  - [ ] Define toolInfo.ts with complete metadata
+  - [ ] Add tool-specific types if needed
+  - [ ] Create documentation files
+
+- [ ] **System Registration**
+  - [ ] Add import to `src/data/tools.ts`
+  - [ ] Add tool to tools array
+  - [ ] Add import to `src/App.tsx`
+  - [ ] Add route in App.tsx Routes
+
+- [ ] **Verification Tests**
+  - [ ] Build succeeds: `npm run build`
+  - [ ] No TypeScript errors: `npm run type-check`
+  - [ ] Tool appears in main page tool list
+  - [ ] Direct URL access works: `/tools/tool-name`
+  - [ ] Category filtering includes tool
+  - [ ] Global search finds tool
+  - [ ] All tool functionality works
+
+#### Common Registration Issues and Solutions
+
+**ToolLayout Import Error**:
+```typescript
+// ❌ Wrong import
+import { ToolWrapper } from "@/components/common/tool-wrapper";
+
+// ✅ Correct import
+import { ToolLayout } from "@/components/layout/tool-layout";
+```
+
+**ToolLayout Props Error**:
+```typescript
+// ❌ Wrong props (these don't exist)
+<ToolLayout
+  onClose={() => navigate("/")}
+  onFullscreen={() => {}}
+  isFullscreen={false}
+>
+
+// ✅ Correct props
+<ToolLayout 
+  toolName={toolInfo.name} 
+  toolDescription={toolInfo.description}
+>
+```
+
+**Missing Tool Metadata**:
+```typescript
+// ✅ Complete toolInfo structure
+export const toolInfo: ToolInfo = {
+  id: 'tool-name',
+  name: 'Tool Name',
+  description: 'Tool description',
+  category: 'development' | 'text' | 'file' | 'encode' | 'crypto' | 'image',
+  tags: ['tag1', 'tag2'],
+  requiresBackend: false,
+  icon: SomeIcon,
+  path: '/tools/tool-name',
+  version: '1.0.0',
+  releaseDate: '2024-01-20',
+  pricing: 'free'
+}
+```
+
 ## When Implementing New Tools
 
 ### Planning Phase
@@ -512,24 +1105,49 @@ npm run type-check   # Check TypeScript types
 2. Define tool requirements, input/output formats, and user workflows
 3. Plan error handling scenarios and edge cases
 4. Consider performance implications and optimization strategies
+5. Determine if tool needs advanced features (multi-panel layout, large file processing, etc.)
 
 ### Implementation Phase
 1. Create tool directory structure following conventions
 2. Implement core logic first, then UI components
 3. Use common components where possible for consistency
 4. Add comprehensive error handling and validation
+5. For complex tools, implement progressive enhancement (basic → advanced features)
+6. Add proper TypeScript types for all tool-specific data structures
 
 ### Testing Phase
 1. Write unit tests for tool logic and utility functions
 2. Test with various input types and edge cases
 3. Verify accessibility features and keyboard navigation
 4. Test responsive design on different devices
+5. For complex tools, test performance with large datasets
+6. Verify proper error handling and recovery
 
 ### Integration Phase
-1. Register tool in tool registry system
-2. Update navigation and routing if needed
-3. Add tool to documentation and README
+1. Register tool in tool registry system (`src/data/tools.ts`)
+2. Update navigation and routing (`src/App.tsx`)
+3. Verify build succeeds and no TypeScript errors
 4. Test complete user workflow from discovery to usage
+5. Create comprehensive documentation
+6. Add tool to relevant documentation and guides
+
+### Advanced Tool Implementation Considerations
+
+#### When to Use Advanced Patterns
+- **ResizablePanel Layout**: When tool needs multiple simultaneous views
+- **Multi-Mode Interface**: When serving different user skill levels
+- **Web Workers**: When processing large files (>50MB)
+- **Virtual Scrolling**: When displaying large datasets (>1000 items)
+- **Streaming Processing**: When real-time feedback is important
+
+#### Performance Optimization Checklist
+- [ ] Implement lazy loading for heavy components
+- [ ] Use React.memo for expensive render components
+- [ ] Implement proper cleanup in useEffect hooks
+- [ ] Use useCallback and useMemo appropriately
+- [ ] Consider virtualization for large lists
+- [ ] Implement cancellation for long-running operations
+- [ ] Monitor memory usage during development
 
 ## Code Review Checklist
 
@@ -546,3 +1164,93 @@ npm run type-check   # Check TypeScript types
 - [ ] No Chinese characters in any code or comments
 - [ ] Common components are used appropriately
 - [ ] Tool-specific components are justified and well-designed 
+
+### Advanced Tool Review Checklist
+For complex tools with advanced features:
+
+- [ ] **Layout and UI**
+  - [ ] Proper use of ToolLayout component
+  - [ ] Appropriate panel sizing and constraints
+  - [ ] Status bars provide meaningful information
+  - [ ] Toolbars are logically organized
+  - [ ] Responsive design works on all screen sizes
+
+- [ ] **Performance**
+  - [ ] Large file handling is properly implemented
+  - [ ] Memory usage is reasonable and monitored
+  - [ ] Processing provides progress feedback
+  - [ ] UI remains responsive during operations
+  - [ ] Proper cleanup prevents memory leaks
+
+- [ ] **User Experience**
+  - [ ] Multiple input modes work correctly
+  - [ ] Mode switching preserves appropriate state
+  - [ ] Error messages are clear and actionable
+  - [ ] Progress indicators are accurate
+  - [ ] All actions provide appropriate feedback
+
+- [ ] **Code Quality**
+  - [ ] State management is well-organized
+  - [ ] Complex logic is properly documented
+  - [ ] TypeScript types cover all data structures
+  - [ ] Error boundaries handle edge cases
+  - [ ] Tests cover critical functionality
+
+## Task Completion and Reporting
+
+### Mandatory Reporting Requirements
+After completing any development task, you **MUST** either update existing reports or create new reports:
+
+1. **Task Documentation**: Create detailed reports covering:
+   - **Task Overview**: Clear description of what was accomplished
+   - **Implementation Details**: Technical changes made, files modified, new features added
+   - **Impact Analysis**: How the changes affect the project, users, or development workflow
+   - **Testing Results**: Verification that changes work as expected
+   - **Next Steps**: Recommendations for follow-up work or improvements
+
+2. **Report Types**:
+   - **Migration Reports**: For file moves, restructuring, or organizational changes
+   - **Feature Reports**: For new tool implementations or enhancements
+   - **Bug Fix Reports**: For issue resolutions and problem fixes
+   - **Refactoring Reports**: For code improvements and optimizations
+   - **Documentation Reports**: For documentation updates or additions
+   - **Registration Reports**: For tool registration and system integration
+
+3. **Report Standards**:
+   - Use descriptive filenames with kebab-case format (e.g., `tool-registration-completion-report.md`)
+   - Include comprehensive details with before/after comparisons
+   - Provide statistics and metrics where applicable
+   - Document any challenges encountered and solutions applied
+   - Include verification steps and validation results
+
+4. **Report Location**: Place all reports in the `.tasks/` directory for organized task tracking and discovery
+
+5. **Update Existing Reports**: When tasks are related to previous work, update existing reports rather than creating duplicate documentation
+
+### Document Organization
+
+#### Documentation Storage Structure
+The project follows a clear separation between different types of documentation:
+
+1. **Task Reports** (`.tasks/` directory):
+   - All development task reports and completion documentation
+   - Migration reports, feature reports, bug fix reports, refactoring reports
+   - Task-specific analysis and verification documentation
+   - Progress tracking and project history records
+
+2. **General Documentation** (`documents/` directory):
+   - Project-wide documentation not tied to specific tools
+   - Design specifications, architecture documents, project plans
+   - README files, changelogs, and project overview materials
+   - General guides, standards, and reference materials
+
+3. **Tool-Specific Documentation** (within each tool's `docs/` folder):
+   - Tool specifications, user guides, and API references
+   - Tool-specific implementation details and usage examples
+   - Component documentation and technical specifications
+
+### Documentation Guidelines
+- **Clear Separation**: Maintain distinct boundaries between task reports, general docs, and tool-specific docs
+- **Consistent Naming**: Use descriptive, standardized naming conventions for all documentation
+- **Easy Discovery**: Organize files for quick location and reference by team members
+- **Version Control**: All documentation should be tracked in version control for history and collaboration 
