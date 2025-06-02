@@ -6,6 +6,8 @@ export { xmlParser } from "./xmlParser";
 
 // Export custom hooks
 export { useXMLParser } from "./useXMLParser";
+export { useXMLParserState } from "./hooks/useXMLParserState";
+export { useXMLParserLogic } from "./hooks/useXMLParserLogic";
 
 // Export formatting utilities
 export { beautifyXML, compressXML, convertXMLToJSON } from "./xmlFormatter";
