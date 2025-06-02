@@ -16,7 +16,6 @@ import { tools } from "@/data/tools";
 function HomepageContent() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const { isMobile, setOpenMobile } = useSidebar();
 
@@ -45,14 +44,6 @@ function HomepageContent() {
     setSearchParams({ tool: toolId });
   };
 
-  const handleNavigateToFavorites = () => {
-    // Close mobile sidebar when navigating to favorites
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-    navigate("/favorites");
-  };
-
   const handleNavigateHome = () => {
     setSelectedTool(null);
     // Clear URL parameters
@@ -66,12 +57,9 @@ function HomepageContent() {
   return (
     <>
       <AppSidebar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
         selectedTool={selectedTool}
         onToolSelect={handleToolSelect}
         onNavigateHome={handleNavigateHome}
-        onNavigateToFavorites={handleNavigateToFavorites}
       />
       <SidebarInset>
         {/* Header */}
@@ -101,7 +89,12 @@ function HomepageContent() {
           {selectedToolData ? (
             <ToolDetail tool={selectedToolData} onUseTool={handleUseTool} />
           ) : (
-            <WelcomePage />
+            <WelcomePage
+              onToolSelect={handleToolSelect}
+              onUseTool={handleUseTool}
+              selectedTool={selectedTool}
+              showToolsGrid={true}
+            />
           )}
         </div>
       </SidebarInset>
@@ -116,7 +109,7 @@ export function Homepage() {
         className="flex min-h-svh w-full"
         style={
           {
-            "--sidebar-width": "20rem",
+            "--sidebar-width": "16rem",
           } as React.CSSProperties
         }
       >

@@ -3,8 +3,21 @@ import { Badge } from "@/components/ui/badge";
 import { tools, categories } from "@/data/tools";
 import { Calculator, FileText, Image, Lock, Code, Zap } from "lucide-react";
 import { DashboardCharts } from "@/components/tools/dashboard-charts";
+import { ToolsGrid } from "@/components/tools/tools-grid";
 
-export function WelcomePage() {
+interface WelcomePageProps {
+  onToolSelect?: (toolId: string) => void;
+  onUseTool?: (toolId: string) => void;
+  selectedTool?: string | null;
+  showToolsGrid?: boolean;
+}
+
+export function WelcomePage({
+  onToolSelect,
+  onUseTool,
+  selectedTool,
+  showToolsGrid = false,
+}: WelcomePageProps = {}) {
   const categoryIcons = {
     development: Code,
     text: FileText,
@@ -17,6 +30,17 @@ export function WelcomePage() {
   const activeCategories = categories.filter(
     (cat) => cat.id !== "all" && cat.count > 0
   );
+
+  // If showToolsGrid is true, render the tools grid instead of welcome content
+  if (showToolsGrid && onToolSelect && onUseTool) {
+    return (
+      <ToolsGrid
+        onToolSelect={onToolSelect}
+        onUseTool={onUseTool}
+        selectedTool={selectedTool}
+      />
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
