@@ -1,289 +1,33 @@
-import { useState, useCallback, useEffect } from "react";
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToolWrapper } from "@/components/common/tool-wrapper";
+
+// Tool Configuration
+import { toolInfo } from "./toolInfo";
+
+// Business Logic (Hooks)
+import { useCalculatorState } from "./lib/hooks/useCalculatorState";
+import { useCalculatorLogic } from "./lib/hooks/useCalculatorLogic";
+
+// UI Components
 import { Display } from "./components/display";
 import { BitGrid } from "./components/bit-grid";
 import { ButtonGrid } from "./components/button-grid";
 import { SettingsPanel } from "./components/settings-panel";
-import { toolInfo } from "./toolInfo";
-import type {
-  CalculatorState,
-  ButtonConfig,
-  Base,
-  BitWidth,
-  CalculatorMode,
-  AngleUnit,
-  Operation,
-} from "./types";
-import {
-  performCalculation,
-  performScientificFunction,
-  formatResult,
-  validateInput,
-} from "./lib/calculator";
-import { parseValue } from "./lib/base-converter";
-
-const initialState: CalculatorState = {
-  currentValue: "0",
-  previousValue: "",
-  operation: null,
-  base: 10,
-  bitWidth: 32,
-  mode: "programmer",
-  angleUnit: "deg",
-  memory: 0,
-  history: [],
-  isNewNumber: true,
-  error: null,
-};
 
 export default function ProgrammerCalculator() {
-  const [state, setState] = useState<CalculatorState>(initialState);
+  // State Management Hook
+  const { state, actions } = useCalculatorState();
 
-  const handleButtonClick = useCallback(
-    (value: string, type: ButtonConfig["type"]) => {
-      setState((prevState) => {
-        try {
-          const newState = { ...prevState, error: null };
-
-          switch (type) {
-            case "number":
-              if (!validateInput(value, prevState.base)) {
-                return {
-                  ...prevState,
-                  error: "Invalid digit for current base",
-                };
-              }
-
-              if (prevState.isNewNumber) {
-                newState.currentValue = value === "0" ? "0" : value;
-                newState.isNewNumber = false;
-              } else {
-                newState.currentValue =
-                  prevState.currentValue === "0"
-                    ? value
-                    : prevState.currentValue + value;
-              }
-              break;
-
-            case "operation":
-              if (value === "=") {
-                if (prevState.operation && prevState.previousValue) {
-                  const result = performCalculation(
-                    prevState.previousValue,
-                    prevState.currentValue,
-                    prevState.operation,
-                    prevState.base,
-                    prevState.bitWidth
-                  );
-                  newState.currentValue = formatResult(result, prevState.base);
-                  newState.previousValue = "";
-                  newState.operation = null;
-                  newState.isNewNumber = true;
-                }
-              } else {
-                if (
-                  prevState.operation &&
-                  prevState.previousValue &&
-                  !prevState.isNewNumber
-                ) {
-                  const result = performCalculation(
-                    prevState.previousValue,
-                    prevState.currentValue,
-                    prevState.operation,
-                    prevState.base,
-                    prevState.bitWidth
-                  );
-                  newState.currentValue = formatResult(result, prevState.base);
-                }
-                newState.previousValue = newState.currentValue;
-                newState.operation = value as Operation;
-                newState.isNewNumber = true;
-              }
-              break;
-
-            case "function": {
-              const result = performScientificFunction(
-                prevState.currentValue,
-                value,
-                prevState.base,
-                prevState.angleUnit
-              );
-              newState.currentValue = formatResult(result, prevState.base);
-              newState.isNewNumber = true;
-              break;
-            }
-
-            case "special":
-              switch (value) {
-                case "clear":
-                  return initialState;
-                case "backspace":
-                  if (prevState.currentValue.length > 1) {
-                    newState.currentValue = prevState.currentValue.slice(0, -1);
-                  } else {
-                    newState.currentValue = "0";
-                    newState.isNewNumber = true;
-                  }
-                  break;
-                case "memory-add":
-                  newState.memory =
-                    prevState.memory +
-                    parseValue(prevState.currentValue, prevState.base);
-                  break;
-                case "memory-subtract":
-                  newState.memory =
-                    prevState.memory -
-                    parseValue(prevState.currentValue, prevState.base);
-                  break;
-                case "memory-recall":
-                  newState.currentValue = formatResult(
-                    prevState.memory,
-                    prevState.base
-                  );
-                  newState.isNewNumber = true;
-                  break;
-                case "memory-clear":
-                  newState.memory = 0;
-                  break;
-              }
-              break;
-          }
-
-          return newState;
-        } catch (error) {
-          return {
-            ...prevState,
-            error: error instanceof Error ? error.message : "Calculation error",
-          };
-        }
-      });
-    },
-    []
-  );
-
-  const handleBaseChange = useCallback((newBase: Base) => {
-    setState((prevState) => {
-      try {
-        const decimal = parseValue(prevState.currentValue, prevState.base);
-        const newValue = formatResult(decimal, newBase);
-        return {
-          ...prevState,
-          base: newBase,
-          currentValue: newValue,
-          error: null,
-        };
-      } catch {
-        return {
-          ...prevState,
-          base: newBase,
-          currentValue: "0",
-          error: "Base conversion error",
-        };
-      }
-    });
-  }, []);
-
-  const handleBitWidthChange = useCallback((newBitWidth: BitWidth) => {
-    setState((prevState) => ({
-      ...prevState,
-      bitWidth: newBitWidth,
-    }));
-  }, []);
-
-  const handleModeChange = useCallback((newMode: CalculatorMode) => {
-    setState((prevState) => ({
-      ...prevState,
-      mode: newMode,
-    }));
-  }, []);
-
-  const handleAngleUnitChange = useCallback((newUnit: AngleUnit) => {
-    setState((prevState) => ({
-      ...prevState,
-      angleUnit: newUnit,
-    }));
-  }, []);
-
-  const handleBitValueChange = useCallback((newValue: string) => {
-    setState((prevState) => ({
-      ...prevState,
-      currentValue: newValue,
-      isNewNumber: false,
-      error: null,
-    }));
-  }, []);
-
-  // Handle keyboard input
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const { key, ctrlKey } = event;
-
-      // Prevent default for calculator keys
-      if (
-        /[0-9A-Fa-f+\-*/%&|^~()=]/.test(key) ||
-        key === "Enter" ||
-        key === "Escape" ||
-        key === "Backspace"
-      ) {
-        event.preventDefault();
-      }
-
-      // Base switching shortcuts
-      if (ctrlKey) {
-        switch (key) {
-          case "1":
-            handleBaseChange(2);
-            return;
-          case "2":
-            handleBaseChange(8);
-            return;
-          case "3":
-            handleBaseChange(10);
-            return;
-          case "4":
-            handleBaseChange(16);
-            return;
-        }
-      }
-
-      // Handle key input
-      if (/[0-9A-Fa-f]/.test(key)) {
-        handleButtonClick(key.toUpperCase(), "number");
-      } else {
-        switch (key) {
-          case "+":
-          case "-":
-          case "*":
-          case "/":
-          case "%":
-          case "&":
-          case "|":
-          case "^":
-          case "~":
-            handleButtonClick(key, "operation");
-            break;
-          case "Enter":
-          case "=":
-            handleButtonClick("=", "operation");
-            break;
-          case "Escape":
-            handleButtonClick("clear", "special");
-            break;
-          case "Backspace":
-            handleButtonClick("backspace", "special");
-            break;
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [state.base, handleBaseChange, handleButtonClick]);
+  // Business Logic Hook
+  const { handlers } = useCalculatorLogic(state, actions);
 
   return (
     <ToolWrapper toolInfo={toolInfo} state={{ calculatorState: state }}>
+      {/* Tool Layout Structure */}
       <div className="w-full p-6 space-y-6 mt-5">
+        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Left Column: Display and Settings */}
           <div className="space-y-4 lg:col-span-1">
@@ -299,10 +43,10 @@ export default function ProgrammerCalculator() {
               mode={state.mode}
               angleUnit={state.angleUnit}
               memory={state.memory}
-              onBaseChange={handleBaseChange}
-              onBitWidthChange={handleBitWidthChange}
-              onModeChange={handleModeChange}
-              onAngleUnitChange={handleAngleUnitChange}
+              onBaseChange={handlers.onBaseChange}
+              onBitWidthChange={handlers.onBitWidthChange}
+              onModeChange={handlers.onModeChange}
+              onAngleUnitChange={handlers.onAngleUnitChange}
             />
           </div>
 
@@ -311,7 +55,7 @@ export default function ProgrammerCalculator() {
             <ButtonGrid
               base={state.base}
               mode={state.mode}
-              onButtonClick={handleButtonClick}
+              onButtonClick={handlers.onButtonClick}
             />
           </div>
 
@@ -321,7 +65,7 @@ export default function ProgrammerCalculator() {
               value={state.currentValue}
               base={state.base}
               bitWidth={state.bitWidth}
-              onValueChange={handleBitValueChange}
+              onValueChange={handlers.onBitValueChange}
             />
           </div>
         </div>
