@@ -448,33 +448,6 @@ export default function ProductChartGenerator() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Help & Tips */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <span>💡</span>
-                <span>
-                  Radar Charts: Use 5-7 dimensions for optimal readability
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>🎯</span>
-                <span>
-                  SWOT Analysis: Keep items concise, focus on actionable
-                  insights
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>⌨️</span>
-                <span>
-                  Shortcuts: Ctrl+E (Export), Ctrl+S (Save), Ctrl+Z (Undo)
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </ToolWrapper>
   );

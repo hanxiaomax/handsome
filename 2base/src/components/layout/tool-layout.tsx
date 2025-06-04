@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { GlobalSearch } from "@/components/navigation/global-search";
 import { useNavigate } from "react-router-dom";
-import { Minus, Home, Heart } from "lucide-react";
+import { Minus, Home, Bookmark, Info } from "lucide-react";
 
 interface ToolLayoutProps {
   toolName: string;
@@ -13,12 +13,14 @@ interface ToolLayoutProps {
   onMinimize?: () => void;
   onToggleFavorite?: () => void;
   isFavorite?: boolean;
+  onShowDocumentation?: () => void;
 }
 
 interface WindowControlsProps {
   onMinimize?: () => void;
   onNavigateHome?: () => void;
   onToggleFavorite?: () => void;
+  onShowDocumentation?: () => void;
   isFavorite?: boolean;
   toolName: string;
   toolDescription?: string;
@@ -28,6 +30,7 @@ function WindowControls({
   onMinimize,
   onNavigateHome,
   onToggleFavorite,
+  onShowDocumentation,
   isFavorite = false,
   toolName,
   toolDescription,
@@ -58,18 +61,29 @@ function WindowControls({
       </div>
 
       {/* Right - Controls */}
-      <div className="flex-1 flex items-center gap-2 justify-end">
+      <div className="flex-1 flex items-center gap-1 justify-end">
+        {/* Documentation Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onShowDocumentation}
+          className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
+          title="Show Documentation"
+          disabled={!onShowDocumentation}
+        >
+          <Info className="h-4 w-4 stroke-[1.5]" />
+        </Button>
+
         {/* Home Button */}
         {onNavigateHome && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onNavigateHome}
-            className="h-8 px-3 gap-2"
+            className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
             title="Go to Home"
           >
-            <Home className="h-4 w-4" />
-            <span className="text-xs">Home</span>
+            <Home className="h-4 w-4 stroke-[1.5]" />
           </Button>
         )}
 
@@ -78,18 +92,15 @@ function WindowControls({
           variant="ghost"
           size="sm"
           onClick={onToggleFavorite}
-          className="h-8 px-3 gap-2"
+          className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
           title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
           disabled={!onToggleFavorite}
         >
-          <Heart
-            className={`h-4 w-4 ${
-              isFavorite ? "fill-red-500 text-red-500" : ""
+          <Bookmark
+            className={`h-4 w-4 stroke-[1.5] ${
+              isFavorite ? "fill-primary text-primary" : ""
             }`}
           />
-          <span className="text-xs">
-            {isFavorite ? "Favorited" : "Favorite"}
-          </span>
         </Button>
 
         {/* Minimize Button */}
@@ -98,11 +109,10 @@ function WindowControls({
             variant="ghost"
             size="sm"
             onClick={onMinimize}
-            className="h-8 px-3 gap-2"
+            className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
             title="Minimize to Drawer"
           >
-            <Minus className="h-4 w-4" />
-            <span className="text-xs">Minimize</span>
+            <Minus className="h-4 w-4 stroke-[1.5]" />
           </Button>
         )}
       </div>
@@ -116,6 +126,7 @@ export function ToolLayout({
   children,
   onMinimize,
   onToggleFavorite,
+  onShowDocumentation,
   isFavorite = false,
 }: ToolLayoutProps) {
   const navigate = useNavigate();
@@ -163,6 +174,7 @@ export function ToolLayout({
               onMinimize={onMinimize}
               onNavigateHome={handleNavigateHome}
               onToggleFavorite={onToggleFavorite}
+              onShowDocumentation={onShowDocumentation}
               isFavorite={isFavorite}
               toolName={toolName}
               toolDescription={toolDescription}

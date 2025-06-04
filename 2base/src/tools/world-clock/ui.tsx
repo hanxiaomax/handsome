@@ -327,22 +327,6 @@ export default function WorldClock() {
             </Card>
           )}
         </div>
-
-        {/* Quick help - CAN use Card */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground">
-              <div className="flex items-center gap-6 flex-wrap">
-                <span>● Business hours</span>
-                <span>◯ Night time</span>
-                <span>◐ After hours</span>
-                <span>▢ Weekend</span>
-                <span>★ Click to favorite</span>
-                <span>✏ Click name to edit</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </ToolWrapper>
   )

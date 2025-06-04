@@ -491,26 +491,6 @@ export default function ColorPalette() {
               </CardContent>
             </Card>
           </div>
-
-          {/* Keyboard Shortcuts Help */}
-          <Card className="mt-4">
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="space-y-1">
-                  <Badge variant="outline">Space</Badge>
-                  <span className="ml-2">Generate random color</span>
-                </div>
-                <div className="space-y-1">
-                  <Badge variant="outline">R</Badge>
-                  <span className="ml-2">Refresh palette</span>
-                </div>
-                <div className="space-y-1">
-                  <Badge variant="outline">C</Badge>
-                  <span className="ml-2">Copy current HEX</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </ToolWrapper>
     </TooltipProvider>

@@ -163,37 +163,6 @@ export default function MarkdownEditor() {
             </Tabs>
           </CardContent>
         </Card>
-
-        {/* Quick Help */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Quick Reference</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-              <div>
-                <strong># Heading 1</strong>
-                <br />
-                <strong>## Heading 2</strong>
-              </div>
-              <div>
-                <strong>**Bold**</strong>
-                <br />
-                <strong>*Italic*</strong>
-              </div>
-              <div>
-                <strong>`Code`</strong>
-                <br />
-                <strong>```Code Block```</strong>
-              </div>
-              <div>
-                <strong>- List Item</strong>
-                <br />
-                <strong>&gt; Quote</strong>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </ToolWrapper>
   );

@@ -9,7 +9,6 @@ import { useUnitConverterState } from "./lib/hooks/useUnitConverterState";
 import { useUnitConverterLogic } from "./lib/hooks/useUnitConverterLogic";
 import { InputPanel } from "./components/InputPanel";
 import { OutputPanel } from "./components/OutputPanel";
-import { KeyboardShortcuts, QuickTips } from "./components/tips";
 import { CustomConversionDialog } from "./components/custom-conversion-dialog";
 
 export default function UnitConverter() {
@@ -70,12 +69,6 @@ export default function UnitConverter() {
           onToggleShowAll={handleToggleShowAll}
           onCreateCustom={handleCreateCustom}
         />
-
-        {/* Tips and Shortcuts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <QuickTips />
-          <KeyboardShortcuts />
-        </div>
 
         {/* Custom Conversion Dialog */}
         <CustomConversionDialog

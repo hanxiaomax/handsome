@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -249,21 +248,6 @@ function UUIDGeneratorTool() {
             </div>
           )}
         </div>
-        
-        {/* Keyboard shortcuts help - CAN use Card */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-xs text-muted-foreground">
-              <div className="font-medium mb-2">Keyboard Shortcuts</div>
-              <div className="flex flex-wrap gap-4">
-                <span>Spacebar: Generate</span>
-                <span>Ctrl+C: Copy All</span>
-                <span>Ctrl+Enter: Generate More</span>
-                <span>Escape: Clear</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </ToolWrapper>
   )
