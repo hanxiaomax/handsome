@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { BitWidth } from "../types";
 import { parseValue, toBinaryWithWidth } from "../lib/base-converter";
@@ -21,6 +20,9 @@ export function BitGrid({
   const binaryString = toBinaryWithWidth(decimal, bitWidth);
 
   const handleBitToggle = (position: number) => {
+    // Only allow toggling bits within the current bit width
+    if (position >= bitWidth) return;
+
     try {
       const newDecimal = toggleBit(decimal, position);
       const newValue = newDecimal.toString(base).toUpperCase();
@@ -33,19 +35,31 @@ export function BitGrid({
   const renderBitGroup = (startBit: number, endBit: number) => {
     const bits = [];
     for (let i = endBit; i >= startBit; i--) {
-      const isSet = testBit(decimal, i);
-      const bitValue = binaryString[bitWidth - 1 - i];
+      const isWithinBitWidth = i < bitWidth;
+      const isSet = isWithinBitWidth ? testBit(decimal, i) : false;
+      const bitValue = isWithinBitWidth
+        ? binaryString[bitWidth - 1 - i] || "0"
+        : "0";
 
       bits.push(
         <Button
           key={i}
           variant={isSet ? "default" : "outline"}
           size="sm"
-          className={`w-8 h-8 p-0 font-mono text-xs ${
-            isSet ? "bg-primary text-primary-foreground" : "bg-background"
+          disabled={!isWithinBitWidth}
+          className={`w-6 h-6 p-0 font-mono text-xs ${
+            !isWithinBitWidth
+              ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+              : isSet
+              ? "bg-primary text-primary-foreground"
+              : "bg-background hover:bg-muted"
           }`}
           onClick={() => handleBitToggle(i)}
-          title={`Bit ${i}: ${bitValue} (Click to toggle)`}
+          title={
+            !isWithinBitWidth
+              ? `Bit ${i}: unused (beyond ${bitWidth}-bit limit)`
+              : `Bit ${i}: ${bitValue} (Click to toggle)`
+          }
         >
           {bitValue}
         </Button>
@@ -57,17 +71,18 @@ export function BitGrid({
   const renderBitGroups = () => {
     const groups = [];
     const bitsPerGroup = 8;
+    const totalBits = 64; // Fixed 64-bit display
 
-    for (let i = bitWidth - bitsPerGroup; i >= 0; i -= bitsPerGroup) {
-      const endBit = Math.min(i + bitsPerGroup - 1, bitWidth - 1);
+    for (let i = totalBits - bitsPerGroup; i >= 0; i -= bitsPerGroup) {
+      const endBit = Math.min(i + bitsPerGroup - 1, totalBits - 1);
       const startBit = i;
 
       groups.push(
-        <div key={`group-${i}`} className="flex gap-1">
-          <div className="text-xs text-muted-foreground self-center mr-2 min-w-[3rem]">
+        <div key={`group-${i}`} className="flex gap-1 items-center">
+          <div className="text-xs text-muted-foreground self-center mr-1 min-w-[2.5rem] text-right">
             {endBit}-{startBit}
           </div>
-          <div className="flex gap-1">{renderBitGroup(startBit, endBit)}</div>
+          <div className="flex gap-0.5">{renderBitGroup(startBit, endBit)}</div>
         </div>
       );
     }
@@ -75,37 +90,36 @@ export function BitGrid({
     return groups;
   };
 
-  return (
-    <Card className="w-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg">
-          Bit Visualization ({bitWidth}-bit)
-        </CardTitle>
-        <div className="text-sm text-muted-foreground">
-          Click any bit to toggle its value
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {renderBitGroups()}
+  const activeBits = binaryString.split("").filter((bit) => bit === "1").length;
+  const totalActiveBits = bitWidth;
 
-        {/* Bit Information */}
-        <div className="mt-4 pt-3 border-t">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Set bits:</span>{" "}
-              <span className="font-mono">
-                {binaryString.split("").filter((bit) => bit === "1").length}
-              </span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Clear bits:</span>{" "}
-              <span className="font-mono">
-                {binaryString.split("").filter((bit) => bit === "0").length}
-              </span>
-            </div>
-          </div>
+  return (
+    <div className="w-full space-y-1">
+      <div className="text-xs text-muted-foreground mb-1">
+        {bitWidth}-bit active • Click to toggle
+      </div>
+
+      <div className="space-y-0.5">{renderBitGroups()}</div>
+
+      {/* Compact Bit Information */}
+      <div className="pt-2 border-t">
+        <div className="flex justify-between text-xs">
+          <span>
+            <span className="text-muted-foreground">Set:</span>{" "}
+            <span className="font-mono">{activeBits}</span>
+          </span>
+          <span>
+            <span className="text-muted-foreground">Clear:</span>{" "}
+            <span className="font-mono">{totalActiveBits - activeBits}</span>
+          </span>
+          <span>
+            <span className="text-muted-foreground">Unused:</span>{" "}
+            <span className="font-mono text-muted-foreground">
+              {64 - bitWidth}
+            </span>
+          </span>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

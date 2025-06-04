@@ -87,7 +87,7 @@ export function ButtonGrid({ base, mode, onButtonClick }: ButtonGridProps) {
             className: "bg-gray-500/10 hover:bg-gray-500/20",
           },
         ],
-        // Row 3: Numbers and operations
+        // Row 3: Numbers and basic operations
         [
           { label: "7", value: "7", type: "number", disabled: base < 8 },
           { label: "8", value: "8", type: "number", disabled: base < 10 },
@@ -113,98 +113,26 @@ export function ButtonGrid({ base, mode, onButtonClick }: ButtonGridProps) {
             className:
               "bg-orange-500/10 hover:bg-orange-500/20 text-orange-600",
           },
-          {
-            label: "sin",
-            value: "sin",
-            type: "function",
-            className:
-              "bg-purple-500/10 hover:bg-purple-500/20 text-purple-600",
-          },
-          {
-            label: "cos",
-            value: "cos",
-            type: "function",
-            className:
-              "bg-purple-500/10 hover:bg-purple-500/20 text-purple-600",
-          },
-          {
-            label: "tan",
-            value: "tan",
-            type: "function",
-            className:
-              "bg-purple-500/10 hover:bg-purple-500/20 text-purple-600",
-          },
-        ],
-        // Row 4: Numbers and functions
-        [
-          { label: "4", value: "4", type: "number" },
-          { label: "5", value: "5", type: "number" },
-          { label: "6", value: "6", type: "number" },
-          {
-            label: "=",
-            value: "=",
-            type: "operation",
-            className:
-              "bg-green-500/10 hover:bg-green-500/20 text-green-600 col-span-2",
-          },
           { label: "±", value: "negate", type: "function" },
-          {
-            label: "log",
-            value: "log",
-            type: "function",
-            className:
-              "bg-purple-500/10 hover:bg-purple-500/20 text-purple-600",
-          },
-          {
-            label: "ln",
-            value: "ln",
-            type: "function",
-            className:
-              "bg-purple-500/10 hover:bg-purple-500/20 text-purple-600",
-          },
-          {
-            label: "√",
-            value: "sqrt",
-            type: "function",
-            className:
-              "bg-purple-500/10 hover:bg-purple-500/20 text-purple-600",
-          },
+          { label: "(", value: "(", type: "special" },
+          { label: ")", value: ")", type: "special" },
         ],
-        // Row 5: Numbers and memory
+        // Row 4: Numbers
         [
-          { label: "1", value: "1", type: "number" },
+          { label: "4", value: "4", type: "number", disabled: base < 8 },
+          { label: "5", value: "5", type: "number", disabled: base < 8 },
+          { label: "6", value: "6", type: "number", disabled: base < 8 },
+          { label: "1", value: "1", type: "number", disabled: base < 2 },
           { label: "2", value: "2", type: "number", disabled: base < 8 },
           { label: "3", value: "3", type: "number", disabled: base < 8 },
           { label: "0", value: "0", type: "number" },
-          {
-            label: "M+",
-            value: "memory-add",
-            type: "special",
-            className: "bg-gray-500/10 hover:bg-gray-500/20",
-          },
-          {
-            label: "M−",
-            value: "memory-subtract",
-            type: "special",
-            className: "bg-gray-500/10 hover:bg-gray-500/20",
-          },
-          {
-            label: "MR",
-            value: "memory-recall",
-            type: "special",
-            className: "bg-gray-500/10 hover:bg-gray-500/20",
-          },
-          {
-            label: "MC",
-            value: "memory-clear",
-            type: "special",
-            className: "bg-gray-500/10 hover:bg-gray-500/20",
-          },
+          { label: ".", value: ".", type: "number" },
           {
             label: "=",
             value: "=",
             type: "operation",
-            className: "bg-green-500/10 hover:bg-green-500/20 text-green-600",
+            className:
+              "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
           },
         ],
       ];
@@ -251,20 +179,16 @@ export function ButtonGrid({ base, mode, onButtonClick }: ButtonGridProps) {
   const buttonRows = getButtonConfig();
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {buttonRows.map((row, rowIndex) => (
-        <div key={rowIndex} className="grid grid-cols-9 gap-2">
+        <div key={rowIndex} className="grid grid-cols-9 gap-1">
           {row.map((button, buttonIndex) => (
             <Button
               key={`${rowIndex}-${buttonIndex}`}
               variant="outline"
-              size="lg"
+              size="sm"
               disabled={button.disabled}
-              className={`h-12 font-mono ${button.className || ""} ${
-                button.label === "=" && button.className?.includes("col-span-2")
-                  ? "col-span-2"
-                  : ""
-              }`}
+              className={`h-10 font-mono text-xs ${button.className || ""}`}
               onClick={() => onButtonClick(button.value, button.type)}
             >
               {button.label}
