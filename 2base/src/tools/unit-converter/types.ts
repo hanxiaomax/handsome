@@ -122,7 +122,7 @@ export interface OutputPanelProps {
   onCreateCustom: () => void;
 }
 
-export interface ResultCardProps {
+export interface ResultRowProps {
   result: ConversionResult;
   isFocused: boolean;
   onToggleFocus: () => void;
@@ -130,7 +130,7 @@ export interface ResultCardProps {
   onSwapUnits: () => void;
 }
 
-export interface CustomConversionCardProps {
+export interface CustomConversionRowProps {
   conversion: CustomConversion;
   inputValue: number;
 }
