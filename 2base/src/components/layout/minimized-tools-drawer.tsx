@@ -8,11 +8,8 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { X, Maximize2, Minimize2 } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { useMinimizedTools } from "@/contexts/minimized-tools-context";
-import { getToolVersionInfo } from "@/lib/tool-utils";
 
 interface MinimizedToolsDrawerProps {
   children: React.ReactNode;
@@ -45,100 +42,60 @@ export function MinimizedToolsDrawer({ children }: MinimizedToolsDrawerProps) {
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen} direction="bottom">
       <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent className="max-h-[80vh]">
-        <DrawerHeader className="pb-4">
+      <DrawerContent className="max-h-[60vh]">
+        <DrawerHeader className="pb-3 pt-3">
           <div className="flex items-center justify-between">
-            <DrawerTitle className="flex items-center gap-2">
-              <Minimize2 className="h-5 w-5" />
-              Minimized Tools ({minimizedTools.length})
+            <DrawerTitle className="flex items-center gap-2 text-sm font-medium">
+              <ChevronDown className="h-4 w-4" />
+              <span className="tabular-nums font-mono">
+                {minimizedTools.length}
+              </span>
+              <span>
+                minimized tool{minimizedTools.length !== 1 ? "s" : ""}
+              </span>
             </DrawerTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearAll}
-                className="text-destructive hover:text-destructive"
-              >
-                <X className="h-4 w-4 mr-1" />
-                Close All
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearAll}
+              className="text-xs h-7 px-2 text-muted-foreground hover:text-destructive"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Clear All
+            </Button>
           </div>
         </DrawerHeader>
 
         <div className="px-4 pb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto">
-            {minimizedTools.map((minimizedTool) => {
-              const versionInfo = getToolVersionInfo(minimizedTool.toolInfo);
-              const timeSinceMinimized = Math.floor(
-                (Date.now() - minimizedTool.minimizedAt) / 1000 / 60
-              );
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 max-h-[45vh] overflow-y-auto">
+            {minimizedTools.map((minimizedTool) => (
+              <div
+                key={minimizedTool.id}
+                className="flex items-center gap-2 p-2 bg-background border border-border/50 rounded-md hover:bg-accent/50 cursor-pointer transition-colors group"
+                onClick={() =>
+                  handleRestoreTool(
+                    minimizedTool.id,
+                    minimizedTool.toolInfo.path
+                  )
+                }
+              >
+                {/* Tool Name */}
+                <span className="flex-1 text-sm font-medium truncate">
+                  {minimizedTool.toolInfo.name}
+                </span>
 
-              return (
-                <Card
-                  key={minimizedTool.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow group"
-                  onClick={() =>
-                    handleRestoreTool(
-                      minimizedTool.id,
-                      minimizedTool.toolInfo.path
-                    )
-                  }
+                {/* Close Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-destructive-foreground transition-all"
+                  onClick={(e) => handleCloseTool(minimizedTool.id, e)}
+                  title="Close Tool"
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
-                        <minimizedTool.toolInfo.icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium truncate">
-                            {minimizedTool.toolInfo.name}
-                          </h3>
-                          {versionInfo.isNew && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px] px-1 py-0 h-4 bg-green-100 text-green-700 border-green-200 font-medium"
-                            >
-                              NEW
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate mb-2">
-                          {minimizedTool.toolInfo.description}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">
-                            Minimized {timeSinceMinimized}m ago
-                          </span>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 hover:bg-primary hover:text-primary-foreground"
-                              title="Restore Tool"
-                            >
-                              <Maximize2 className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                              onClick={(e) =>
-                                handleCloseTool(minimizedTool.id, e)
-                              }
-                              title="Close Tool"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
           </div>
         </div>
       </DrawerContent>

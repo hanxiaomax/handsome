@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { GlobalSearch } from "@/components/navigation/global-search";
+import { MinimizedToolsIndicator } from "@/components/layout/minimized-tools-indicator";
 import { useNavigate } from "react-router-dom";
 import { Minus, Home, Bookmark, Info } from "lucide-react";
 
@@ -148,7 +149,7 @@ export function ToolLayout({
         {/* Sidebar Area - App Navigation */}
         <AppSidebar selectedTool={null} onNavigateHome={handleNavigateHome} />
 
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden relative">
           {/* Header Area - Website Title */}
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-14 items-center px-4 gap-4">
@@ -183,6 +184,9 @@ export function ToolLayout({
             {/* Tool Content - Below Tool Info */}
             <div className="flex-1 overflow-auto bg-muted/30">{children}</div>
           </div>
+
+          {/* Minimized Tools Indicator - Managed by ToolLayout */}
+          <MinimizedToolsIndicator />
         </main>
       </div>
     </SidebarProvider>

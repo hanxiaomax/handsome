@@ -1,6 +1,5 @@
-import { Minimize2 } from "lucide-react";
+import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useMinimizedTools } from "@/contexts/minimized-tools-context";
 import { MinimizedToolsDrawer } from "./minimized-tools-drawer";
 
@@ -12,23 +11,20 @@ export function MinimizedToolsIndicator() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-50">
       <MinimizedToolsDrawer>
         <Button
-          size="lg"
-          className="rounded-full shadow-lg hover:shadow-xl transition-shadow relative"
+          variant="secondary"
+          size="sm"
+          className="h-8 px-3 bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg hover:shadow-xl hover:bg-background/90 transition-all duration-200 rounded-full text-xs font-medium"
           title={`${minimizedTools.length} minimized tool${
             minimizedTools.length !== 1 ? "s" : ""
           }`}
         >
-          <Minimize2 className="h-5 w-5 mr-2" />
-          Minimized Tools
-          <Badge
-            variant="secondary"
-            className="ml-2 bg-background text-foreground border"
-          >
+          <ChevronUp className="h-3 w-3 mr-1.5" />
+          <span className="tabular-nums font-mono">
             {minimizedTools.length}
-          </Badge>
+          </span>
         </Button>
       </MinimizedToolsDrawer>
     </div>
