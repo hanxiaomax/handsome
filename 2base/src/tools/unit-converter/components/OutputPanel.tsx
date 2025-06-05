@@ -85,9 +85,9 @@ export function OutputPanel({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[200px]">Unit</TableHead>
+              <TableHead className="w-[160px]">Unit</TableHead>
               <TableHead className="text-right">Value</TableHead>
-              <TableHead className="w-[120px] text-center">Actions</TableHead>
+              <TableHead className="w-[100px] text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -143,9 +143,9 @@ export function OutputPanel({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[200px]">Custom Unit</TableHead>
+                    <TableHead className="w-[160px]">Custom Unit</TableHead>
                     <TableHead className="text-right">Value</TableHead>
-                    <TableHead className="w-[120px] text-center">
+                    <TableHead className="w-[100px] text-center">
                       Actions
                     </TableHead>
                   </TableRow>

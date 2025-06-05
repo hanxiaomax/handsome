@@ -38,6 +38,7 @@ export default function UnitConverter() {
   return (
     <ToolWrapper
       toolInfo={toolInfo}
+      maxWidth="4xl"
       state={{
         converterState: {
           ...uiState,
@@ -45,7 +46,7 @@ export default function UnitConverter() {
         },
       }}
     >
-      <div className="w-full p-6 space-y-6 mt-5">
+      <div className="p-6 space-y-6 mt-5">
         {/* Input Section - Using new InputPanel component */}
         <InputPanel
           value={uiState.inputValue}
