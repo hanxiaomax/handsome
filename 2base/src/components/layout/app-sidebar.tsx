@@ -1,4 +1,4 @@
-import { Heart, Home, Wrench } from "lucide-react";
+import { Heart, Wrench } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -13,7 +13,6 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { tools } from "@/data/tools";
 import { getToolVersionInfo } from "@/lib/tool-utils";
@@ -24,7 +23,7 @@ interface AppSidebarProps {
   onNavigateHome: () => void;
 }
 
-export function AppSidebar({ selectedTool, onNavigateHome }: AppSidebarProps) {
+export function AppSidebar({ selectedTool }: AppSidebarProps) {
   const navigate = useNavigate();
   const { isMobile, setOpenMobile } = useSidebar();
   const { favorites } = useFavorites();
