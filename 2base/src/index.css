@@ -275,3 +275,44 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+/* Low Poly 背景动画 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) scale(1);
+  }
+  25% {
+    transform: translateY(-10px) translateX(5px) scale(1.02);
+  }
+  50% {
+    transform: translateY(-5px) translateX(-3px) scale(0.98);
+  }
+  75% {
+    transform: translateY(-15px) translateX(8px) scale(1.01);
+  }
+}
+
+/* 更细微的浮动动画变体 */
+@keyframes floatSubtle {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-5px) translateX(3px) rotate(0.5deg);
+  }
+  66% {
+    transform: translateY(-2px) translateX(-2px) rotate(-0.3deg);
+  }
+}
+
+/* 粒子动画 */
+@keyframes particle {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 1;
+  }
+}
