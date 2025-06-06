@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { LandingPage } from "@/app/landing-page";
 import { Homepage } from "@/app/homepage";
 import ProgrammerCalculator from "@/tools/programmer-calculator/ui";
 import UUIDGenerator from "@/tools/uuid-generator/ui";
@@ -26,7 +27,8 @@ function App() {
       <MinimizedToolsProvider>
         <Router basename={basename}>
           <Routes>
-            <Route path="/" element={<Homepage />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/tools" element={<Homepage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route
               path="/tools/programmer-calculator"
