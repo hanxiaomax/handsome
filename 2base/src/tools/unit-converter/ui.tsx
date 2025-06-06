@@ -54,7 +54,6 @@ export default function UnitConverter() {
           category={uiState.selectedCategory}
           onValueChange={handlers.onInputValueChange}
           onUnitChange={handlers.onInputUnitChange}
-          onCalculatorValue={handlers.onCalculatorValue}
         />
 
         {/* Output Section - Using new OutputPanel component */}

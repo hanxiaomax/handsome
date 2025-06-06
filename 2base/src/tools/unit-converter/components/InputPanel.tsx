@@ -1,8 +1,7 @@
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CategorySelector } from "./CategorySelector";
 import { UnitCombobox } from "./combobox";
-import { ScientificCalculator } from "./calculator";
+import { InputWithCalculator } from "@/components/common/input-with-calculator";
 import type { InputPanelProps } from "../types";
 import { unitCategories } from "../lib/data";
 
@@ -16,7 +15,6 @@ export function InputPanel({
   category,
   onValueChange,
   onUnitChange,
-  onCalculatorValue,
 }: InputPanelProps) {
   // Get current category data
   const selectedCategory = unitCategories.find((c) => c.id === category);
@@ -36,20 +34,20 @@ export function InputPanel({
         }}
       />
 
-      {/* Value Input */}
+      {/* Value Input with Calculator */}
       <div className="space-y-2">
         <Label htmlFor="input-value">Value</Label>
-        <div className="flex items-center">
-          <Input
-            id="input-value"
-            type="number"
-            placeholder="Enter value..."
-            value={value || ""}
-            onChange={(e) => onValueChange(parseFloat(e.target.value) || 0)}
-            className="text-lg"
-          />
-          <ScientificCalculator onValueSelect={onCalculatorValue} />
-        </div>
+        <InputWithCalculator
+          value={value || 0}
+          placeholder="Enter value..."
+          onValueChange={onValueChange}
+          calculatorButtonVariant="destructive"
+          calculatorButtonSize="sm"
+          className="w-full"
+          inputClassName="text-lg"
+          type="number"
+          min={0}
+        />
       </div>
 
       {/* Unit Selection */}
