@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { GlobalSearch } from "@/components/navigation/global-search";
-import { MinimizedToolsIndicator } from "@/components/layout/minimized-tools-indicator";
 import { useNavigate } from "react-router-dom";
 import { Minus, Home, Bookmark, Info } from "lucide-react";
 
@@ -191,8 +190,7 @@ export function ToolLayout({
             <div className="flex-1 overflow-auto bg-muted/30">{children}</div>
           </div>
 
-          {/* Minimized Tools Indicator - Managed by ToolLayout */}
-          <MinimizedToolsIndicator />
+          {/* Minimized Tools Indicator is managed globally in App.tsx */}
         </main>
       </div>
     </SidebarProvider>

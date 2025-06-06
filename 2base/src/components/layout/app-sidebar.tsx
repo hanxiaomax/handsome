@@ -128,16 +128,7 @@ export function AppSidebar({ selectedTool, onNavigateHome }: AppSidebarProps) {
       </SidebarContent>
 
       {/* Sidebar Footer - Navigation Buttons */}
-      <SidebarFooter id="sidebar-footer" className="p-4">
-        <Button
-          variant="outline"
-          onClick={onNavigateHome}
-          className="w-full justify-start"
-        >
-          <Home className="h-4 w-4 mr-2" />
-          Back to Home
-        </Button>
-      </SidebarFooter>
+      <SidebarFooter id="sidebar-footer" className="p-4"></SidebarFooter>
     </Sidebar>
   );
 }
