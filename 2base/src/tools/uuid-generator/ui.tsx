@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Copy, RotateCcw, Plus, Check } from 'lucide-react'
+import { toast } from 'sonner'
 import { ToolWrapper } from '@/components/common/tool-wrapper'
 import { UUIDGenerator, type UUIDGeneratorState, type UUIDFormat } from './lib'
 import { toolInfo } from './toolInfo'
@@ -45,12 +46,14 @@ function UUIDGeneratorTool() {
     navigator.clipboard.writeText(allUUIDs)
     setCopiedAll(true)
     setTimeout(() => setCopiedAll(false), 2000)
+    toast.success(`Copied ${state.generatedUUIDs.length} UUIDs to clipboard`)
   }, [state.generatedUUIDs])
   
   const handleCopyUUID = useCallback((uuid: string) => {
     navigator.clipboard.writeText(uuid)
     setCopiedUUID(uuid)
     setTimeout(() => setCopiedUUID(null), 2000)
+    toast.success('UUID copied to clipboard')
   }, [])
   
   const handleClear = useCallback(() => {
