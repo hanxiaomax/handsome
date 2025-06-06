@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-interface LowPolyBackgroundProps {
+interface CustomBackgroundProps {
   seed?: string; // 可选的种子值，用于可重现的随机效果
   complexity?: "simple" | "medium" | "complex"; // 复杂度控制
   animated?: boolean; // 是否启用动画
@@ -60,11 +60,11 @@ function generateRandomPolygon(
   return points.join(" ");
 }
 
-export function LowPolyBackground({
+export function CustomBackground({
   seed,
   complexity = "medium",
   animated = true,
-}: LowPolyBackgroundProps) {
+}: CustomBackgroundProps) {
   const backgroundData = useMemo(() => {
     const rng = new SeededRandom(seed || `${Date.now()}-${Math.random()}`);
 

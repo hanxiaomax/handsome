@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { GlobalSearch } from "@/components/navigation/global-search";
-import { LowPolyBackground } from "@/components/common/lowpoly-background";
+import { CustomBackground } from "@/components/common/custom-background";
 import { ChevronDown } from "lucide-react";
 
 export function LandingPage() {
@@ -92,8 +92,8 @@ export function LandingPage() {
         isAnimating ? "animate-pulse" : ""
       }`}
     >
-      {/* Random Low Poly Artistic Background */}
-      <LowPolyBackground complexity="simple" animated={true} />
+      {/* Custom Artistic Background */}
+      <CustomBackground complexity="simple" animated={true} />
 
       {/* Main Content */}
       <main className="relative z-10 flex-1 flex items-center justify-center min-h-screen">

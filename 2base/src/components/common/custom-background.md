@@ -1,34 +1,35 @@
-# LowPolyBackground Component
+# CustomBackground Component (自定义背景组件)
 
-A modular, randomly generated Low Poly artistic background component for React applications.
+A modular, randomly generated artistic background component for React applications.
 
 ## Features
 
 - 🎲 **Random Generation**: Each load creates a unique background
-- 🎨 **Artistic Design**: Low poly geometric shapes with gradients
+- 🎨 **Artistic Design**: Geometric shapes with gradients and animations
 - ⚡ **Performance Optimized**: SVG-based with hardware acceleration
 - 🎛️ **Configurable**: Multiple complexity levels and customization options
 - 🌙 **Theme Compatible**: Automatically adapts to light/dark themes
 - 📱 **Responsive**: Scales perfectly on all screen sizes
+- 🔧 **Customizable Algorithm**: Designed for easy algorithm modifications
 
 ## Installation
 
-The component is located at `src/components/common/lowpoly-background.tsx` and can be imported directly:
+The component is located at `src/components/common/custom-background.tsx` and can be imported directly:
 
 ```typescript
-import { LowPolyBackground } from "@/components/common/lowpoly-background";
+import { CustomBackground } from "@/components/common/custom-background";
 ```
 
 ## Basic Usage
 
 ### Simple Random Background
 ```typescript
-<LowPolyBackground />
+<CustomBackground />
 ```
 
 ### With Configuration
 ```typescript
-<LowPolyBackground 
+<CustomBackground 
   complexity="medium"
   animated={true}
 />
@@ -36,7 +37,7 @@ import { LowPolyBackground } from "@/components/common/lowpoly-background";
 
 ### Full Configuration
 ```typescript
-<LowPolyBackground 
+<CustomBackground 
   seed="my-custom-seed"
   complexity="complex"
   animated={true}
@@ -52,13 +53,13 @@ import { LowPolyBackground } from "@/components/common/lowpoly-background";
 
 ```typescript
 // Random background (changes on each load)
-<LowPolyBackground />
+<CustomBackground />
 
 // Fixed background (same pattern every time)
-<LowPolyBackground seed="project-homepage" />
+<CustomBackground seed="project-homepage" />
 
 // User-specific background
-<LowPolyBackground seed={`user-${userId}`} />
+<CustomBackground seed={`user-${userId}`} />
 ```
 
 ### `complexity?: "simple" | "medium" | "complex"`
@@ -73,13 +74,13 @@ import { LowPolyBackground } from "@/components/common/lowpoly-background";
 
 ```typescript
 // Subtle background for text-heavy pages
-<LowPolyBackground complexity="simple" />
+<CustomBackground complexity="simple" />
 
 // Balanced background for landing pages
-<LowPolyBackground complexity="medium" />
+<CustomBackground complexity="medium" />
 
 // Rich background for hero sections
-<LowPolyBackground complexity="complex" />
+<CustomBackground complexity="complex" />
 ```
 
 ### `animated?: boolean`
@@ -88,10 +89,10 @@ import { LowPolyBackground } from "@/components/common/lowpoly-background";
 
 ```typescript
 // Animated background (default)
-<LowPolyBackground animated={true} />
+<CustomBackground animated={true} />
 
 // Static background (better for performance)
-<LowPolyBackground animated={false} />
+<CustomBackground animated={false} />
 ```
 
 ## Layout Integration
@@ -99,7 +100,7 @@ import { LowPolyBackground } from "@/components/common/lowpoly-background";
 ### Full Screen Background
 ```typescript
 <div className="min-h-screen relative">
-  <LowPolyBackground />
+  <CustomBackground />
   <div className="relative z-10">
     {/* Your content here */}
   </div>
@@ -109,7 +110,7 @@ import { LowPolyBackground } from "@/components/common/lowpoly-background";
 ### Section Background
 ```typescript
 <section className="relative py-20">
-  <LowPolyBackground complexity="simple" />
+  <CustomBackground complexity="simple" />
   <div className="relative z-10 container mx-auto">
     {/* Section content */}
   </div>
@@ -119,7 +120,7 @@ import { LowPolyBackground } from "@/components/common/lowpoly-background";
 ### Card Background
 ```typescript
 <div className="relative p-6 rounded-lg overflow-hidden">
-  <LowPolyBackground complexity="simple" animated={false} />
+  <CustomBackground complexity="simple" animated={false} />
   <div className="relative z-10">
     {/* Card content */}
   </div>
@@ -133,7 +134,7 @@ import { LowPolyBackground } from "@/components/common/lowpoly-background";
 const { theme } = useTheme();
 const backgroundSeed = `theme-${theme}-${pageId}`;
 
-<LowPolyBackground seed={backgroundSeed} />
+<CustomBackground seed={backgroundSeed} />
 ```
 
 ### Performance Optimization
@@ -141,7 +142,7 @@ const backgroundSeed = `theme-${theme}-${pageId}`;
 // For mobile devices, use simpler backgrounds
 const isMobile = useMediaQuery('(max-width: 768px)');
 
-<LowPolyBackground 
+<CustomBackground 
   complexity={isMobile ? "simple" : "medium"}
   animated={!isMobile}
 />
@@ -152,32 +153,80 @@ const isMobile = useMediaQuery('(max-width: 768px)');
 const season = getCurrentSeason();
 const seasonalSeed = `season-${season}-2024`;
 
-<LowPolyBackground seed={seasonalSeed} />
+<CustomBackground seed={seasonalSeed} />
 ```
 
-## Customization
+## Algorithm Customization
 
-### Custom CSS Variables
-The component uses CSS variables for theming. Override them for custom colors:
+The CustomBackground component is designed for easy algorithm modifications. The core generation logic is contained in these key functions:
 
-```css
-.custom-background {
-  --primary: 220 100% 50%; /* Custom blue */
+### 1. Random Number Generator
+```typescript
+class SeededRandom {
+  // Custom PRNG implementation
+  // Modify for different random distributions
 }
 ```
 
+### 2. Shape Generation
 ```typescript
-<div className="custom-background">
-  <LowPolyBackground />
-</div>
+function generateRandomPolygon(
+  rng: SeededRandom,
+  centerX: number,
+  centerY: number,
+  size: number,
+  sides: number = 4
+): string {
+  // Customize polygon generation algorithm
+  // Add new shape types (circles, curves, etc.)
+}
 ```
 
-### Animation Speed Control
-Modify animation durations by overriding CSS:
+### 3. Layout Algorithm
+```typescript
+const backgroundData = useMemo(() => {
+  // Main generation logic
+  // Modify for different layouts, patterns, colors
+}, [seed, complexity]);
+```
 
-```css
-.slow-animation .animate-[float_*] {
-  animation-duration: calc(var(--duration) * 2) !important;
+## Extending the Algorithm
+
+### Adding New Shape Types
+```typescript
+// Example: Add circle generation
+function generateCircle(rng: SeededRandom, x: number, y: number, radius: number) {
+  return {
+    cx: x,
+    cy: y,
+    r: radius
+  };
+}
+```
+
+### Custom Color Schemes
+```typescript
+// Example: Multiple color variations
+const colorSchemes = [
+  'hsl(var(--primary))',
+  'hsl(var(--secondary))',
+  'hsl(var(--accent))'
+];
+
+const color = rng.choice(colorSchemes);
+```
+
+### Pattern Algorithms
+```typescript
+// Example: Grid-based placement
+function generateGridPattern(rng: SeededRandom, gridSize: number) {
+  const elements = [];
+  for (let x = 0; x < gridSize; x++) {
+    for (let y = 0; y < gridSize; y++) {
+      // Generate elements in grid positions
+    }
+  }
+  return elements;
 }
 ```
 
@@ -196,17 +245,17 @@ Modify animation durations by overriding CSS:
 ### Best Practices
 ```typescript
 // ✅ Good: Use appropriate complexity
-<LowPolyBackground complexity="simple" />
+<CustomBackground complexity="simple" />
 
 // ✅ Good: Disable animations on mobile
-<LowPolyBackground animated={!isMobile} />
+<CustomBackground animated={!isMobile} />
 
 // ❌ Avoid: Too complex for small screens
-<LowPolyBackground complexity="complex" /> // on mobile
+<CustomBackground complexity="complex" /> // on mobile
 
 // ❌ Avoid: Multiple instances without seeds
-<LowPolyBackground />
-<LowPolyBackground /> // Different patterns, may be confusing
+<CustomBackground />
+<CustomBackground /> // Different patterns, may be confusing
 ```
 
 ## Examples
@@ -216,7 +265,7 @@ Modify animation durations by overriding CSS:
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/10 relative">
-      <LowPolyBackground complexity="medium" />
+      <CustomBackground complexity="medium" />
       
       <main className="relative z-10 flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -236,7 +285,7 @@ export function LandingPage() {
 export function HeroSection() {
   return (
     <section className="relative py-32 overflow-hidden">
-      <LowPolyBackground 
+      <CustomBackground 
         seed="hero-2024"
         complexity="complex"
       />
@@ -251,25 +300,6 @@ export function HeroSection() {
         </button>
       </div>
     </section>
-  );
-}
-```
-
-### Loading Screen
-```typescript
-export function LoadingScreen() {
-  return (
-    <div className="fixed inset-0 flex items-center justify-center">
-      <LowPolyBackground 
-        complexity="simple"
-        animated={true}
-      />
-      
-      <div className="relative z-10 text-center">
-        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    </div>
   );
 }
 ```
@@ -297,6 +327,16 @@ export function LoadingScreen() {
 - ✅ Firefox 88+
 - ✅ Safari 14+
 - ✅ Edge 90+
+
+## Future Development
+
+The CustomBackground component is designed as a foundation for more advanced background generation algorithms. Planned improvements include:
+
+- **Physical simulations**: Particle physics, fluid dynamics
+- **Fractal patterns**: Mandelbrot sets, L-systems
+- **Interactive elements**: Mouse-responsive animations
+- **AI-generated patterns**: Machine learning-based designs
+- **3D effects**: WebGL integration for 3D backgrounds
 
 ## Troubleshooting
 
