@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { GlobalSearch } from "@/components/navigation/global-search";
 import { CustomBackground } from "@/components/common/custom-background";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Dices } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+import { tools } from "@/data/tools";
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -11,6 +14,17 @@ export function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScrollTime = useRef<number>(0);
   const scrollThreshold = 100; // 滚动阈值
+
+  // 随机选择工具
+  const handleRandomTool = () => {
+    // 过滤掉演示工具
+    const availableTools = tools.filter((tool) => tool.id !== "layout-demo");
+    if (availableTools.length > 0) {
+      const randomTool =
+        availableTools[Math.floor(Math.random() * availableTools.length)];
+      navigate(randomTool.path);
+    }
+  };
 
   // 监听滚动事件
   useEffect(() => {
@@ -116,13 +130,29 @@ export function LandingPage() {
               className="w-full max-w-none mx-auto"
             >
               <div className="w-[70%] mx-auto">
-                <GlobalSearch
-                  width="100%"
-                  size="lg"
-                  placeholder="Search through all tools and documentation..."
-                  showShortcut={false}
-                  className="shadow-xl hover:border-primary/30 transition-all duration-300"
-                />
+                {/* Search Container with Dice Button */}
+                <div className="flex items-center gap-3">
+                  {/* Search Box */}
+                  <div className="flex-1">
+                    <GlobalSearch
+                      width="100%"
+                      size="lg"
+                      placeholder="Search through all tools and documentation..."
+                      showShortcut={false}
+                      className="shadow-xl hover:border-primary/30 transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Random Tool Button */}
+                  <Button
+                    onClick={handleRandomTool}
+                    variant="ghost"
+                    className="hover:bg-primary/5"
+                    aria-label="试试手气"
+                  >
+                    <Dices className="h-7 w-7" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
