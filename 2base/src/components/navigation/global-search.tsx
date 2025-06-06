@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Wrench, ExternalLink } from "lucide-react";
+import { Search, Wrench, ExternalLink, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   CommandDialog,
@@ -17,6 +17,32 @@ import { tools } from "@/data/tools";
 import { documents } from "@/data/documents";
 import type { ToolInfo } from "@/types/tool";
 import type { DocumentInfo } from "@/data/documents";
+
+// 快捷选项配置
+interface QuickAction {
+  id: string;
+  label: string;
+  icon: typeof Search;
+  path: string;
+  description?: string;
+}
+
+const quickActions: QuickAction[] = [
+  {
+    id: "browse-tools",
+    label: "Browse All Tools",
+    icon: Search,
+    path: "/tools",
+    description: "Explore all available tools",
+  },
+  {
+    id: "view-favorites",
+    label: "View Favorites",
+    icon: Heart,
+    path: "/favorites",
+    description: "Access your favorite tools",
+  },
+];
 
 interface GlobalSearchProps {
   className?: string;
@@ -266,20 +292,16 @@ export function GlobalSearch({
             <>
               <CommandSeparator />
               <CommandGroup heading="Quick Actions">
-                <CommandItem
-                  onSelect={() => runCommand(() => navigate("/"))}
-                  className="flex items-center gap-2 px-4 py-2"
-                >
-                  <Search className="h-4 w-4" />
-                  <span>Browse All Tools</span>
-                </CommandItem>
-                <CommandItem
-                  onSelect={() => runCommand(() => navigate("/favorites"))}
-                  className="flex items-center gap-2 px-4 py-2"
-                >
-                  <Search className="h-4 w-4" />
-                  <span>View Favorites</span>
-                </CommandItem>
+                {quickActions.map((action) => (
+                  <CommandItem
+                    key={action.id}
+                    onSelect={() => runCommand(() => navigate(action.path))}
+                    className="flex items-center gap-2 px-4 py-2"
+                  >
+                    <action.icon className="h-4 w-4" />
+                    <span>{action.label}</span>
+                  </CommandItem>
+                ))}
               </CommandGroup>
             </>
           )}
