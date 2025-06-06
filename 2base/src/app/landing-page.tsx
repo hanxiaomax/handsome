@@ -4,16 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { GlobalSearch } from "@/components/navigation/global-search";
 import { tools } from "@/data/tools";
-import {
-  Zap,
-  ChevronDown,
-  ArrowRight,
-  Code,
-  Shield,
-  FileText,
-  Settings,
-  Image,
-} from "lucide-react";
+import { Zap, ChevronDown } from "lucide-react";
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -107,16 +98,6 @@ export function LandingPage() {
     navigate("/favorites");
   };
 
-  // 获取工具类别统计
-  const categories = [
-    { id: "development", name: "Development", icon: Code },
-    { id: "text", name: "Text Tools", icon: FileText },
-    { id: "file", name: "File Tools", icon: Settings },
-    { id: "encode", name: "Encoding", icon: Shield },
-    { id: "image", name: "Images", icon: Image },
-    { id: "crypto", name: "Crypto", icon: Shield },
-  ];
-
   return (
     <div
       ref={containerRef}
@@ -157,107 +138,29 @@ export function LandingPage() {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <main className="relative z-10 flex-1 flex items-center justify-center min-h-[calc(100vh-4rem)] pt-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Hero Content */}
-          <div className="space-y-8">
+          <div className="space-y-12">
             {/* Main Title */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight">
                 Vibe once,{" "}
                 <span className="text-primary bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                  runs anytime
+                  run anytime
                 </span>
               </h1>
-              <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                All-in-one toolkit for developers and creators.
-                <br />
-                <span className="text-primary font-medium">
-                  No installation required. Start instantly.
-                </span>
-              </p>
             </div>
 
             {/* Global Search - 全局搜索区域 */}
-            <div id="global-search-section" className="max-w-4xl mx-auto">
-              <div className="space-y-3">
+            <div
+              id="global-search-section"
+              className="w-full max-w-none mx-auto"
+            >
+              <div className="w-[70%] mx-auto">
                 {/* 自定义样式的全局搜索 */}
-                <div className="transform scale-110">
-                  <GlobalSearch className="h-12 text-base shadow-lg border-2 hover:border-primary/20 transition-all duration-200" />
-                </div>
+                <GlobalSearch className="h-14 text-lg shadow-xl hover:border-primary/30 transition-all duration-300 w-full" />
               </div>
-            </div>
-
-            {/* Stats */}
-            <div className="flex items-center justify-center space-x-8 sm:space-x-12">
-              <div className="text-center">
-                <div className="text-3xl sm:text-4xl font-bold text-primary">
-                  {tools.length}+
-                </div>
-                <div className="text-sm sm:text-base text-muted-foreground">
-                  Tools
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl sm:text-4xl font-bold text-primary">
-                  100%
-                </div>
-                <div className="text-sm sm:text-base text-muted-foreground">
-                  Free
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl sm:text-4xl font-bold text-primary">
-                  0
-                </div>
-                <div className="text-sm sm:text-base text-muted-foreground">
-                  Setup
-                </div>
-              </div>
-            </div>
-
-            {/* Categories Preview */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 max-w-2xl mx-auto">
-              {categories.map((category) => {
-                const IconComponent = category.icon;
-                const categoryTools = tools.filter(
-                  (tool) => tool.category === category.id
-                );
-
-                return (
-                  <div
-                    key={category.id}
-                    className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer"
-                    onClick={handleEnterTools}
-                  >
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <IconComponent className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="text-xs font-medium text-center">
-                      {categoryTools.length}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* CTA Button */}
-            <div className="space-y-4">
-              <Button
-                size="lg"
-                onClick={handleEnterTools}
-                className="h-14 px-8 text-lg font-semibold group"
-                disabled={isAnimating}
-              >
-                {isAnimating ? (
-                  "Entering Tools..."
-                ) : (
-                  <>
-                    Start Exploring
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </Button>
             </div>
           </div>
         </div>
