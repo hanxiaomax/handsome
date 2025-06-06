@@ -7,28 +7,124 @@ interface CustomBackgroundProps {
   animated?: boolean; // 是否启用动画
 }
 
-// 工具名称多语言数据
-const toolNames = [
-  { en: "Programmer Calculator", zh: "程序员计算器", ja: "プログラマー電卓" },
-  { en: "UUID Generator", zh: "UUID生成器", ja: "UUID生成器" },
-  { en: "World Clock", zh: "世界时钟", ja: "世界時計" },
-  { en: "Unit Converter", zh: "单位转换器", ja: "単位変換器" },
-  { en: "Unix Timestamp", zh: "Unix时间戳", ja: "Unixタイムスタンプ" },
-  { en: "Markdown Editor", zh: "Markdown编辑器", ja: "Markdownエディタ" },
-  { en: "Emoji Library", zh: "表情符号库", ja: "絵文字ライブラリ" },
-  { en: "Color Palette", zh: "调色板", ja: "カラーパレット" },
-  { en: "Chart Generator", zh: "图表生成器", ja: "チャート生成器" },
-  { en: "XML Parser", zh: "XML解析器", ja: "XMLパーサー" },
-  { en: "Text Formatter", zh: "文本格式化", ja: "テキストフォーマッタ" },
-  { en: "Code Converter", zh: "代码转换器", ja: "コード変換器" },
-  { en: "Hash Generator", zh: "哈希生成器", ja: "ハッシュ生成器" },
-  { en: "QR Code", zh: "二维码", ja: "QRコード" },
-  { en: "Image Optimizer", zh: "图片优化器", ja: "画像最適化" },
-  { en: "JSON Validator", zh: "JSON验证器", ja: "JSONバリデータ" },
-  { en: "CSS Generator", zh: "CSS生成器", ja: "CSS生成器" },
-  { en: "Password Generator", zh: "密码生成器", ja: "パスワード生成器" },
-  { en: "Base64 Encoder", zh: "Base64编码", ja: "Base64エンコーダ" },
-  { en: "URL Shortener", zh: "链接缩短", ja: "URL短縮" },
+// 不同编程语言的代码片段数据
+const codeStatements = [
+  // JavaScript/TypeScript
+  {
+    code: "console.log('Hello World')",
+    language: "javascript",
+    color: "#f7df1e",
+  },
+  {
+    code: "const result = await fetch(url)",
+    language: "javascript",
+    color: "#f7df1e",
+  },
+  { code: "array.map(x => x * 2)", language: "javascript", color: "#f7df1e" },
+  {
+    code: "export default function Component()",
+    language: "typescript",
+    color: "#3178c6",
+  },
+  {
+    code: "interface Props { name: string }",
+    language: "typescript",
+    color: "#3178c6",
+  },
+
+  // Python
+  { code: "def fibonacci(n): return n", language: "python", color: "#3776ab" },
+  { code: "import pandas as pd", language: "python", color: "#3776ab" },
+  {
+    code: "list(map(lambda x: x*2, arr))",
+    language: "python",
+    color: "#3776ab",
+  },
+  { code: "if __name__ == '__main__':", language: "python", color: "#3776ab" },
+
+  // Java
+  {
+    code: "public static void main(String[] args)",
+    language: "java",
+    color: "#ed8b00",
+  },
+  {
+    code: "List<String> items = new ArrayList<>()",
+    language: "java",
+    color: "#ed8b00",
+  },
+  {
+    code: "try { execute(); } catch (Exception e)",
+    language: "java",
+    color: "#ed8b00",
+  },
+
+  // Go
+  {
+    code: 'func main() { fmt.Println("Hello") }',
+    language: "go",
+    color: "#00add8",
+  },
+  { code: "go func() { /* goroutine */ }()", language: "go", color: "#00add8" },
+  {
+    code: "type User struct { Name string }",
+    language: "go",
+    color: "#00add8",
+  },
+
+  // Rust
+  {
+    code: "fn main() -> Result<(), Error>",
+    language: "rust",
+    color: "#ce422b",
+  },
+  { code: "let mut vec = Vec::new()", language: "rust", color: "#ce422b" },
+  {
+    code: "match result { Ok(val) => val }",
+    language: "rust",
+    color: "#ce422b",
+  },
+
+  // C++
+  { code: "#include <iostream>", language: "cpp", color: "#00599c" },
+  { code: "std::vector<int> nums{1, 2, 3}", language: "cpp", color: "#00599c" },
+  {
+    code: "auto lambda = [](int x) { return x; }",
+    language: "cpp",
+    color: "#00599c",
+  },
+
+  // PHP
+  { code: "<?php echo 'Hello World'; ?>", language: "php", color: "#777bb4" },
+  {
+    code: "$users = array_map('trim', $data)",
+    language: "php",
+    color: "#777bb4",
+  },
+
+  // Swift
+  {
+    code: "func greet(name: String) -> String",
+    language: "swift",
+    color: "#fa7343",
+  },
+  {
+    code: "let numbers = [1, 2, 3].map { $0 * 2 }",
+    language: "swift",
+    color: "#fa7343",
+  },
+
+  // Kotlin
+  {
+    code: 'fun main() = println("Hello")',
+    language: "kotlin",
+    color: "#7f52ff",
+  },
+  {
+    code: "data class User(val name: String)",
+    language: "kotlin",
+    color: "#7f52ff",
+  },
 ];
 
 // 随机数生成器（基于种子）
@@ -94,24 +190,24 @@ function generateFloatingTexts(rng: SeededRandom, complexity: string) {
   };
 
   const count = textCounts[complexity as keyof typeof textCounts];
-  const languages: ("en" | "zh" | "ja")[] = ["en", "zh", "ja"];
 
   return Array.from({ length: count }, (_, i) => {
-    const tool = rng.choice(toolNames);
-    const lang = rng.choice(languages);
-    const text = tool[lang];
+    const statement = rng.choice(codeStatements);
+    const text = statement.code;
+    const language = statement.language;
+    const syntaxColor = statement.color;
 
     // 生成随机垂直位置，水平位置由动画控制
     const y = rng.range(15, 85); // 15%-85% 垂直位置
 
-    // 生成随机样式
-    const fontSize = rng.range(0.8, 2.2); // rem，稍微小一点
-    const minOpacity = rng.range(0.02, 0.05); // 最小透明度
-    const maxOpacity = rng.range(0.08, 0.15); // 最大透明度
+    // 统一字号为 1.2rem
+    const fontSize = 1.2;
+    const minOpacity = rng.range(0.08, 0.15); // 最小透明度
+    const maxOpacity = rng.range(0.2, 0.4); // 最大透明度
 
     // 生成随机动画参数
-    const duration = rng.range(30, 80); // 更长的动画持续时间，更缓慢
-    const delay = rng.range(0, 3); // 极短延迟，让文字几乎立即显示
+    const duration = rng.range(20, 80); // 更长的动画持续时间，更缓慢
+    const delay = rng.range(0, 1); // 极短延迟，让文字几乎立即显示
     const direction = rng.choice(["normal", "reverse"]); // 左到右 或 右到左
 
     // 根据方向选择动画类型
@@ -120,10 +216,22 @@ function generateFloatingTexts(rng: SeededRandom, complexity: string) {
         ? rng.choice(["floatTextHorizontalReverse", "floatAndFlickerReverse"])
         : rng.choice(["floatTextHorizontal", "floatAndFlicker"]);
 
+    // 生成随机的起始和结束位置，让文字可以中途出现或消失
+    const startX = rng.range(-30, 50); // 起始位置：-30vw 到 50vw
+    const endX = rng.range(50, 130); // 结束位置：50vw 到 130vw
+
+    // 确保有足够的运动距离
+    const minDistance = 40; // 最小运动距离 40vw
+    const actualEndX =
+      direction === "reverse"
+        ? startX - Math.max(minDistance, startX - endX)
+        : startX + Math.max(minDistance, endX - startX);
+
     return {
       id: `text-${i}`,
       text,
-      language: lang,
+      language,
+      syntaxColor,
       y,
       fontSize,
       minOpacity,
@@ -132,6 +240,14 @@ function generateFloatingTexts(rng: SeededRandom, complexity: string) {
       delay,
       direction,
       animationType,
+      startX:
+        direction === "reverse"
+          ? Math.max(startX, actualEndX)
+          : Math.min(startX, actualEndX),
+      endX:
+        direction === "reverse"
+          ? Math.min(startX, actualEndX)
+          : Math.max(startX, actualEndX),
     };
   });
 }
@@ -372,7 +488,7 @@ export function CustomBackground({
         ))}
       </div>
 
-      {/* 漂浮文字层 - 横向漂浮闪烁效果 */}
+      {/* 漂浮文字层 - 横向漂浮闪烁效果与语法高亮 */}
       <div className="absolute inset-0">
         {backgroundData.floatingTexts.map((textItem) => (
           <div
@@ -383,11 +499,13 @@ export function CustomBackground({
                 top: `${textItem.y}%`,
                 left: "0%",
                 fontSize: `${textItem.fontSize}rem`,
-                color: "hsl(var(--foreground))",
+                color: textItem.syntaxColor,
                 opacity: 0,
                 visibility: "hidden",
                 "--min-opacity": textItem.minOpacity,
                 "--max-opacity": textItem.maxOpacity,
+                "--start-x": `${textItem.startX}vw`,
+                "--end-x": `${textItem.endX}vw`,
                 ...(animated && {
                   animation: `${textItem.animationType} ${textItem.duration}s linear infinite`,
                   animationDelay: `${textItem.delay}s`,

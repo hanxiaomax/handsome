@@ -52,10 +52,10 @@
   }
 }
 
-/* 横向漂浮文字动画 - 左到右 */
+/* 横向漂浮文字动画 - 动态起始和结束位置 */
 @keyframes floatTextHorizontal {
   0% {
-    transform: translateX(-20vw);
+    transform: translateX(var(--start-x, -20vw));
     opacity: 0;
     visibility: hidden;
   }
@@ -72,16 +72,16 @@
     visibility: visible;
   }
   100% {
-    transform: translateX(120vw);
+    transform: translateX(var(--end-x, 120vw));
     opacity: 0;
     visibility: hidden;
   }
 }
 
-/* 横向漂浮文字动画 - 右到左 */
+/* 横向漂浮文字动画 - 反向动态起始和结束位置 */
 @keyframes floatTextHorizontalReverse {
   0% {
-    transform: translateX(120vw);
+    transform: translateX(var(--start-x, 120vw));
     opacity: 0;
     visibility: hidden;
   }
@@ -98,7 +98,7 @@
     visibility: visible;
   }
   100% {
-    transform: translateX(-20vw);
+    transform: translateX(var(--end-x, -20vw));
     opacity: 0;
     visibility: hidden;
   }
@@ -130,10 +130,10 @@
   }
 }
 
-/* 组合动画：漂浮 + 闪烁 - 左到右 */
+/* 组合动画：漂浮 + 闪烁 - 动态位置 */
 @keyframes floatAndFlicker {
   0% {
-    transform: translateX(-20vw);
+    transform: translateX(var(--start-x, -20vw));
     opacity: 0;
     visibility: hidden;
   }
@@ -198,16 +198,16 @@
     visibility: visible;
   }
   100% {
-    transform: translateX(120vw);
+    transform: translateX(var(--end-x, 120vw));
     opacity: 0;
     visibility: hidden;
   }
 }
 
-/* 组合动画：漂浮 + 闪烁 - 右到左 */
+/* 组合动画：漂浮 + 闪烁 - 反向动态位置 */
 @keyframes floatAndFlickerReverse {
   0% {
-    transform: translateX(120vw);
+    transform: translateX(var(--start-x, 120vw));
     opacity: 0;
     visibility: hidden;
   }
@@ -272,7 +272,7 @@
     visibility: visible;
   }
   100% {
-    transform: translateX(-20vw);
+    transform: translateX(var(--end-x, -20vw));
     opacity: 0;
     visibility: hidden;
   }
