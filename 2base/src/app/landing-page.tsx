@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
+import { GlobalSearch } from "@/components/navigation/global-search";
 import { tools } from "@/data/tools";
 import {
   Zap,
@@ -177,6 +178,16 @@ export function LandingPage() {
               </p>
             </div>
 
+            {/* Global Search - 全局搜索区域 */}
+            <div id="global-search-section" className="max-w-4xl mx-auto">
+              <div className="space-y-3">
+                {/* 自定义样式的全局搜索 */}
+                <div className="transform scale-110">
+                  <GlobalSearch className="h-12 text-base shadow-lg border-2 hover:border-primary/20 transition-all duration-200" />
+                </div>
+              </div>
+            </div>
+
             {/* Stats */}
             <div className="flex items-center justify-center space-x-8 sm:space-x-12">
               <div className="text-center">
@@ -247,10 +258,6 @@ export function LandingPage() {
                   </>
                 )}
               </Button>
-
-              <p className="text-sm text-muted-foreground">
-                or scroll down to enter
-              </p>
             </div>
           </div>
         </div>
