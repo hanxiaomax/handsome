@@ -133,7 +133,7 @@ export function ToolLayout({
   const navigate = useNavigate();
 
   const handleNavigateHome = () => {
-    navigate("/");
+    navigate("/tools");
   };
 
   return (
@@ -155,7 +155,13 @@ export function ToolLayout({
             <div className="flex h-14 items-center px-4 gap-4">
               <SidebarTrigger />
               <div className="flex-1">
-                <h2 className="text-lg font-semibold">Vibe Tools</h2>
+                <h2
+                  className="text-lg font-semibold cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => navigate("/")}
+                  title="HOME"
+                >
+                  Vibe Tools
+                </h2>
                 <p className="text-sm text-muted-foreground">
                   Vibe once runs anytime
                 </p>

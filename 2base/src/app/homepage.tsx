@@ -60,7 +60,15 @@ function HomepageContent() {
           <div className="flex h-14 items-center px-4 gap-4">
             <SidebarTrigger />
             <div className="flex-1">
-              <h2 className="text-lg font-semibold">
+              <h2
+                className={`text-lg font-semibold ${
+                  !selectedToolData
+                    ? "cursor-pointer hover:text-primary transition-colors"
+                    : ""
+                }`}
+                onClick={!selectedToolData ? () => navigate("/") : undefined}
+                title={!selectedToolData ? "home" : undefined}
+              >
                 {selectedToolData ? selectedToolData.name : "Vibe Tools"}
               </h2>
               {!selectedToolData && (

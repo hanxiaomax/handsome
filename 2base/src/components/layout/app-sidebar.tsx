@@ -57,7 +57,13 @@ export function AppSidebar({ selectedTool, onNavigateHome }: AppSidebarProps) {
             <Wrench className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-bold text-lg">Vibe Tools</h1>
+            <h1
+              className="font-bold text-lg cursor-pointer hover:text-primary transition-colors"
+              onClick={() => navigate("/")}
+              title="回到首页"
+            >
+              Vibe Tools
+            </h1>
             <p className="text-xs text-muted-foreground">
               Vibe once runs anytime
             </p>
