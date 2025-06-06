@@ -20,9 +20,19 @@ import type { DocumentInfo } from "@/data/documents";
 
 interface GlobalSearchProps {
   className?: string;
+  width?: "sm" | "md" | "lg" | "xl" | "full" | string;
+  size?: "sm" | "md" | "lg";
+  placeholder?: string;
+  showShortcut?: boolean;
 }
 
-export function GlobalSearch({ className }: GlobalSearchProps) {
+export function GlobalSearch({
+  className,
+  width = "md",
+  size = "sm",
+  placeholder,
+  showShortcut = true,
+}: GlobalSearchProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
@@ -63,21 +73,107 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     command();
   };
 
+  // 根据 width 属性生成宽度类名
+  const getWidthClass = () => {
+    if (typeof width === "string" && width.includes("w-")) {
+      // 如果是自定义宽度类，直接返回
+      return width;
+    }
+
+    switch (width) {
+      case "sm":
+        return "w-48";
+      case "md":
+        return "w-64";
+      case "lg":
+        return "w-80";
+      case "xl":
+        return "w-96";
+      case "full":
+        return "w-full";
+      default:
+        // 如果是自定义值（如 "70%"），作为内联样式
+        return "";
+    }
+  };
+
+  // 根据 size 属性生成尺寸类名
+  const getSizeClasses = () => {
+    switch (size) {
+      case "sm":
+        return "h-8 text-sm";
+      case "md":
+        return "h-10 text-base";
+      case "lg":
+        return "h-12 text-lg";
+      default:
+        return "h-8 text-sm";
+    }
+  };
+
+  // 将自定义 size 映射到 Button 组件支持的 size
+  const getButtonSize = () => {
+    switch (size) {
+      case "lg":
+        return "lg";
+      case "md":
+        return "default";
+      case "sm":
+      default:
+        return "sm";
+    }
+  };
+
+  // 生成占位符文本
+  const getPlaceholder = () => {
+    if (placeholder) return placeholder;
+
+    switch (size) {
+      case "lg":
+        return "Search tools and documentation...";
+      case "md":
+        return "Search tools & docs...";
+      default:
+        return "Search...";
+    }
+  };
+
+  const widthClass = getWidthClass();
+  const sizeClasses = getSizeClasses();
+  const buttonSize = getButtonSize();
+  const dynamicPlaceholder = getPlaceholder();
+
+  // 处理自定义宽度（百分比或其他CSS值）
+  const customStyle = !widthClass && typeof width === "string" ? { width } : {};
+
   return (
     <>
       {/* Search Trigger Button */}
       <Button
         variant="outline"
-        size="sm"
-        className={`relative h-8 w-full justify-start rounded-md bg-background text-sm font-normal text-muted-foreground shadow-none sm:pr-12 md:w-40 lg:w-64 ${className}`}
+        size={buttonSize}
+        className={`relative ${widthClass} ${sizeClasses} justify-start rounded-md bg-background font-normal text-muted-foreground shadow-none ${
+          showShortcut ? "sm:pr-12" : "pr-4"
+        } ${className || ""}`}
+        style={customStyle}
         onClick={() => setOpen(true)}
       >
         <Search className="mr-2 h-4 w-4" />
-        <span className="hidden lg:inline-flex">Search tools & docs...</span>
-        <span className="inline-flex lg:hidden">Search...</span>
-        <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
-          <span className="text-xs">⌘</span>K
-        </kbd>
+        <span
+          className={`${
+            size === "lg" ? "inline-flex" : "hidden lg:inline-flex"
+          }`}
+        >
+          {dynamicPlaceholder}
+        </span>
+        {size !== "lg" && (
+          <span className="inline-flex lg:hidden">Search...</span>
+        )}
+        {showShortcut && (
+          <kbd className="pointer-events-none absolute right-1.5 top-1/2 transform -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
+            <span className="text-xs">⌘</span>K
+          </kbd>
+        )}
       </Button>
 
       {/* Search Dialog */}

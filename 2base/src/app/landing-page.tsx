@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { GlobalSearch } from "@/components/navigation/global-search";
-import { tools } from "@/data/tools";
-import { Zap, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -87,17 +84,6 @@ export function LandingPage() {
     };
   }, [navigate, isAnimating]);
 
-  const handleEnterTools = () => {
-    if (!isAnimating) {
-      setIsAnimating(true);
-      navigate("/tools");
-    }
-  };
-
-  const handleViewFavorites = () => {
-    navigate("/favorites");
-  };
-
   return (
     <div
       ref={containerRef}
@@ -111,34 +97,8 @@ export function LandingPage() {
         <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-primary/5 to-transparent rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold">Vibe Tools</span>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={handleEnterTools}>
-                Enter Tools
-              </Button>
-              <Button variant="ghost" onClick={handleViewFavorites}>
-                Favorites
-              </Button>
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
-      <main className="relative z-10 flex-1 flex items-center justify-center min-h-[calc(100vh-4rem)] pt-16">
+      <main className="relative z-10 flex-1 flex items-center justify-center min-h-screen">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Hero Content */}
           <div className="space-y-12">
@@ -158,8 +118,13 @@ export function LandingPage() {
               className="w-full max-w-none mx-auto"
             >
               <div className="w-[70%] mx-auto">
-                {/* 自定义样式的全局搜索 */}
-                <GlobalSearch className="h-14 text-lg shadow-xl hover:border-primary/30 transition-all duration-300 w-full" />
+                <GlobalSearch
+                  width="100%"
+                  size="lg"
+                  placeholder="Search through all tools and documentation..."
+                  showShortcut={false}
+                  className="shadow-xl hover:border-primary/30 transition-all duration-300"
+                />
               </div>
             </div>
           </div>
