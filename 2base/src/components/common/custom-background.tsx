@@ -2,132 +2,217 @@ import { useMemo } from "react";
 import "./custom-background.css";
 
 interface CustomBackgroundProps {
-  seed?: string; // 可选的种子值，用于可重现的随机效果
-  complexity?: "simple" | "medium" | "complex"; // 复杂度控制
-  animated?: boolean; // 是否启用动画
+  seed?: string; // Optional seed value for reproducible random effects
+  complexity?: "simple" | "medium" | "complex"; // Complexity control
+  animated?: boolean; // Whether to enable animations
 }
 
-// 不同编程语言的代码片段数据
+// Code snippets data for different programming languages
 const codeStatements = [
   // JavaScript/TypeScript
   {
     code: "console.log('Hello World')",
     language: "javascript",
-    color: "#f7df1e",
+    chartColor: "chart-1",
   },
   {
     code: "const result = await fetch(url)",
     language: "javascript",
-    color: "#f7df1e",
+    chartColor: "chart-1",
   },
-  { code: "array.map(x => x * 2)", language: "javascript", color: "#f7df1e" },
+  {
+    code: "array.map(x => x * 2)",
+    language: "javascript",
+    chartColor: "chart-1",
+  },
   {
     code: "export default function Component()",
     language: "typescript",
-    color: "#3178c6",
+    chartColor: "chart-2",
   },
   {
     code: "interface Props { name: string }",
     language: "typescript",
-    color: "#3178c6",
+    chartColor: "chart-2",
   },
 
   // Python
-  { code: "def fibonacci(n): return n", language: "python", color: "#3776ab" },
-  { code: "import pandas as pd", language: "python", color: "#3776ab" },
+  {
+    code: "def fibonacci(n): return n",
+    language: "python",
+    chartColor: "chart-3",
+  },
+  { code: "import pandas as pd", language: "python", chartColor: "chart-3" },
   {
     code: "list(map(lambda x: x*2, arr))",
     language: "python",
-    color: "#3776ab",
+    chartColor: "chart-3",
   },
-  { code: "if __name__ == '__main__':", language: "python", color: "#3776ab" },
+  {
+    code: "if __name__ == '__main__':",
+    language: "python",
+    chartColor: "chart-3",
+  },
 
   // Java
   {
     code: "public static void main(String[] args)",
     language: "java",
-    color: "#ed8b00",
+    chartColor: "chart-4",
   },
   {
     code: "List<String> items = new ArrayList<>()",
     language: "java",
-    color: "#ed8b00",
+    chartColor: "chart-4",
   },
   {
     code: "try { execute(); } catch (Exception e)",
     language: "java",
-    color: "#ed8b00",
+    chartColor: "chart-4",
   },
 
   // Go
   {
     code: 'func main() { fmt.Println("Hello") }',
     language: "go",
-    color: "#00add8",
+    chartColor: "chart-5",
   },
-  { code: "go func() { /* goroutine */ }()", language: "go", color: "#00add8" },
+  {
+    code: "go func() { /* goroutine */ }()",
+    language: "go",
+    chartColor: "chart-5",
+  },
   {
     code: "type User struct { Name string }",
     language: "go",
-    color: "#00add8",
+    chartColor: "chart-5",
   },
 
   // Rust
   {
     code: "fn main() -> Result<(), Error>",
     language: "rust",
-    color: "#ce422b",
+    chartColor: "chart-1",
   },
-  { code: "let mut vec = Vec::new()", language: "rust", color: "#ce422b" },
+  { code: "let mut vec = Vec::new()", language: "rust", chartColor: "chart-1" },
   {
     code: "match result { Ok(val) => val }",
     language: "rust",
-    color: "#ce422b",
+    chartColor: "chart-1",
   },
 
   // C++
-  { code: "#include <iostream>", language: "cpp", color: "#00599c" },
-  { code: "std::vector<int> nums{1, 2, 3}", language: "cpp", color: "#00599c" },
+  { code: "#include <iostream>", language: "cpp", chartColor: "chart-2" },
+  {
+    code: "std::vector<int> nums{1, 2, 3}",
+    language: "cpp",
+    chartColor: "chart-2",
+  },
   {
     code: "auto lambda = [](int x) { return x; }",
     language: "cpp",
-    color: "#00599c",
+    chartColor: "chart-2",
   },
 
   // PHP
-  { code: "<?php echo 'Hello World'; ?>", language: "php", color: "#777bb4" },
+  {
+    code: "<?php echo 'Hello World'; ?>",
+    language: "php",
+    chartColor: "chart-3",
+  },
   {
     code: "$users = array_map('trim', $data)",
     language: "php",
-    color: "#777bb4",
+    chartColor: "chart-3",
   },
 
   // Swift
   {
     code: "func greet(name: String) -> String",
     language: "swift",
-    color: "#fa7343",
+    chartColor: "chart-4",
   },
   {
     code: "let numbers = [1, 2, 3].map { $0 * 2 }",
     language: "swift",
-    color: "#fa7343",
+    chartColor: "chart-4",
   },
 
   // Kotlin
   {
     code: 'fun main() = println("Hello")',
     language: "kotlin",
-    color: "#7f52ff",
+    chartColor: "chart-5",
   },
   {
     code: "data class User(val name: String)",
     language: "kotlin",
-    color: "#7f52ff",
+    chartColor: "chart-5",
   },
 ];
 
-// 随机数生成器（基于种子）
+// Animation configuration parameters
+const animationConfig = {
+  // Floating text configuration
+  floatingText: {
+    // Position parameters
+    position: {
+      yRange: { min: 15, max: 90 }, // Vertical position range (%)
+      startXRange: { min: -30, max: 50 }, // Start horizontal position range (vw)
+      endXRange: { min: 50, max: 130 }, // End horizontal position range (vw)
+      minDistance: 40, // Minimum movement distance (vw)
+    },
+
+    // Visual parameters
+    visual: {
+      fontSize: 1.2, // Font size (rem)
+      opacityRange: {
+        min: { min: 0.02, max: 0.08 }, // Minimum opacity range
+        max: { min: 0.2, max: 0.3 }, // Maximum opacity range
+      },
+    },
+
+    // Animation parameters
+    animation: {
+      durationRange: { min: 20, max: 80 }, // Animation duration range (seconds)
+      delayRange: { min: 0, max: 0.5 }, // Animation delay range (seconds)
+      directions: ["normal", "reverse"], // Animation direction options
+      types: {
+        normal: ["floatTextHorizontal", "floatAndFlicker"],
+        reverse: ["floatTextHorizontalReverse", "floatAndFlickerReverse"],
+      },
+    },
+  },
+
+  // Polygon configuration
+  polygons: {
+    sizeRange: { min: 60, max: 150 }, // Size range
+    sidesOptions: [3, 4, 5, 6], // Sides options
+    opacityRange: {
+      start: { min: 0.01, max: 0.06 }, // Start opacity
+      end: { min: 0.01, max: 0.04 }, // End opacity
+    },
+    animationDurationRange: { min: 20, max: 40 }, // Animation duration
+    pulseRateRange: { min: 10, max: 25 }, // Pulse rate
+  },
+
+  // Line configuration
+  lines: {
+    opacityRange: { min: 0.02, max: 0.1 }, // Opacity range
+    animationDurationRange: { min: 30, max: 50 }, // Animation duration
+    pulseRateRange: { min: 8, max: 16 }, // Pulse rate
+  },
+
+  // Particle configuration
+  particles: {
+    positionRange: { min: 10, max: 90 }, // Position range (%)
+    sizeRange: { min: 0.5, max: 1.5 }, // Size range (rem)
+    opacityRange: { min: 0.05, max: 0.2 }, // Opacity range
+    animationDurationRange: { min: 8, max: 25 }, // Animation duration
+  },
+};
+
+// Seeded random number generator
 class SeededRandom {
   private seed: number;
 
@@ -159,7 +244,7 @@ class SeededRandom {
   }
 }
 
-// 生成随机多边形点
+// Generate random polygon points
 function generateRandomPolygon(
   rng: SeededRandom,
   centerX: number,
@@ -171,8 +256,8 @@ function generateRandomPolygon(
   const angleStep = (Math.PI * 2) / sides;
 
   for (let i = 0; i < sides; i++) {
-    const angle = i * angleStep + rng.range(-0.3, 0.3); // 添加随机偏移
-    const radius = size * rng.range(0.7, 1.3); // 随机半径变化
+    const angle = i * angleStep + rng.range(-0.3, 0.3); // Add random offset
+    const radius = size * rng.range(0.7, 1.3); // Random radius variation
     const x = centerX + Math.cos(angle) * radius;
     const y = centerY + Math.sin(angle) * radius;
     points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
@@ -181,7 +266,7 @@ function generateRandomPolygon(
   return points.join(" ");
 }
 
-// 生成漂浮文字数据
+// Generate floating text data
 function generateFloatingTexts(rng: SeededRandom, complexity: string) {
   const textCounts = {
     simple: 6,
@@ -190,38 +275,57 @@ function generateFloatingTexts(rng: SeededRandom, complexity: string) {
   };
 
   const count = textCounts[complexity as keyof typeof textCounts];
+  const config = animationConfig.floatingText;
 
   return Array.from({ length: count }, (_, i) => {
     const statement = rng.choice(codeStatements);
     const text = statement.code;
     const language = statement.language;
-    const syntaxColor = statement.color;
+    const syntaxColor = statement.chartColor;
 
-    // 生成随机垂直位置，水平位置由动画控制
-    const y = rng.range(15, 85); // 15%-85% 垂直位置
+    // Generate random vertical position using config
+    const y = rng.range(config.position.yRange.min, config.position.yRange.max);
 
-    // 统一字号为 1.2rem
-    const fontSize = 1.2;
-    const minOpacity = rng.range(0.08, 0.15); // 最小透明度
-    const maxOpacity = rng.range(0.2, 0.4); // 最大透明度
+    // Use configured font size
+    const fontSize = config.visual.fontSize;
+    const minOpacity = rng.range(
+      config.visual.opacityRange.min.min,
+      config.visual.opacityRange.min.max
+    );
+    const maxOpacity = rng.range(
+      config.visual.opacityRange.max.min,
+      config.visual.opacityRange.max.max
+    );
 
-    // 生成随机动画参数
-    const duration = rng.range(20, 80); // 更长的动画持续时间，更缓慢
-    const delay = rng.range(0, 1); // 极短延迟，让文字几乎立即显示
-    const direction = rng.choice(["normal", "reverse"]); // 左到右 或 右到左
+    // Generate random animation parameters using config
+    const duration = rng.range(
+      config.animation.durationRange.min,
+      config.animation.durationRange.max
+    );
+    const delay = rng.range(
+      config.animation.delayRange.min,
+      config.animation.delayRange.max
+    );
+    const direction = rng.choice(config.animation.directions);
 
-    // 根据方向选择动画类型
+    // Select animation type based on direction
     const animationType =
       direction === "reverse"
-        ? rng.choice(["floatTextHorizontalReverse", "floatAndFlickerReverse"])
-        : rng.choice(["floatTextHorizontal", "floatAndFlicker"]);
+        ? rng.choice(config.animation.types.reverse)
+        : rng.choice(config.animation.types.normal);
 
-    // 生成随机的起始和结束位置，让文字可以中途出现或消失
-    const startX = rng.range(-30, 50); // 起始位置：-30vw 到 50vw
-    const endX = rng.range(50, 130); // 结束位置：50vw 到 130vw
+    // Generate random start and end positions using config
+    const startX = rng.range(
+      config.position.startXRange.min,
+      config.position.startXRange.max
+    );
+    const endX = rng.range(
+      config.position.endXRange.min,
+      config.position.endXRange.max
+    );
 
-    // 确保有足够的运动距离
-    const minDistance = 40; // 最小运动距离 40vw
+    // Ensure sufficient movement distance
+    const minDistance = config.position.minDistance;
     const actualEndX =
       direction === "reverse"
         ? startX - Math.max(minDistance, startX - endX)
@@ -260,24 +364,27 @@ export function CustomBackground({
   const backgroundData = useMemo(() => {
     const rng = new SeededRandom(seed || `${Date.now()}-${Math.random()}`);
 
-    // 根据复杂度确定元素数量
+    // Determine element counts based on complexity
     const elementCounts = {
-      simple: { polygons: 3, lines: 2, particles: 2 }, // 减少几何元素，为文字让路
+      simple: { polygons: 3, lines: 2, particles: 2 }, // Reduce geometric elements to make way for text
       medium: { polygons: 4, lines: 3, particles: 3 },
       complex: { polygons: 6, lines: 4, particles: 4 },
     };
 
     const counts = elementCounts[complexity];
 
-    // 生成随机多边形 (减少透明度，让文字更突出)
+    // Generate random polygons (reduce opacity to make text stand out)
     const polygons = Array.from({ length: counts.polygons }, (_, i) => {
       const centerX = rng.range(0, 1200);
       const centerY = rng.range(0, 800);
-      const size = rng.range(60, 150); // 减小尺寸
-      const sides = rng.choice([3, 4, 5, 6]);
+      const size = rng.range(
+        animationConfig.polygons.sizeRange.min,
+        animationConfig.polygons.sizeRange.max
+      );
+      const sides = rng.choice(animationConfig.polygons.sidesOptions);
       const gradientId = `grad${i + 1}`;
 
-      // 随机渐变方向
+      // Random gradient directions
       const directions = [
         { x1: "0%", y1: "0%", x2: "100%", y2: "100%" },
         { x1: "100%", y1: "0%", x2: "0%", y2: "100%" },
@@ -287,10 +394,22 @@ export function CustomBackground({
       ];
 
       const direction = rng.choice(directions);
-      const opacity1 = rng.range(0.01, 0.06); // 更低的透明度
-      const opacity2 = rng.range(0.01, 0.04);
-      const animationDuration = rng.range(20, 40);
-      const pulseRate = rng.range(10, 25);
+      const opacity1 = rng.range(
+        animationConfig.polygons.opacityRange.start.min,
+        animationConfig.polygons.opacityRange.start.max
+      );
+      const opacity2 = rng.range(
+        animationConfig.polygons.opacityRange.end.min,
+        animationConfig.polygons.opacityRange.end.max
+      );
+      const animationDuration = rng.range(
+        animationConfig.polygons.animationDurationRange.min,
+        animationConfig.polygons.animationDurationRange.max
+      );
+      const pulseRate = rng.range(
+        animationConfig.polygons.pulseRateRange.min,
+        animationConfig.polygons.pulseRateRange.max
+      );
 
       return {
         points: generateRandomPolygon(rng, centerX, centerY, size, sides),
@@ -304,7 +423,7 @@ export function CustomBackground({
       };
     });
 
-    // 生成随机连接线 (同样减少透明度)
+    // Generate random connecting lines (also reduce opacity)
     const lines = Array.from({ length: counts.lines }, (_, i) => {
       const x1 = rng.range(0, 1200);
       const y1 = rng.range(0, 800);
@@ -312,9 +431,18 @@ export function CustomBackground({
       const y2 = rng.range(0, 800);
       const isVertical = Math.abs(x2 - x1) < Math.abs(y2 - y1);
       const gradientId = `lineGrad${i + 1}`;
-      const opacity = rng.range(0.02, 0.1); // 降低透明度
-      const animationDuration = rng.range(30, 50);
-      const pulseRate = rng.range(8, 16);
+      const opacity = rng.range(
+        animationConfig.lines.opacityRange.min,
+        animationConfig.lines.opacityRange.max
+      );
+      const animationDuration = rng.range(
+        animationConfig.lines.animationDurationRange.min,
+        animationConfig.lines.animationDurationRange.max
+      );
+      const pulseRate = rng.range(
+        animationConfig.lines.pulseRateRange.min,
+        animationConfig.lines.pulseRateRange.max
+      );
 
       return {
         x1,
@@ -329,18 +457,33 @@ export function CustomBackground({
       };
     });
 
-    // 生成随机粒子 (减少数量和透明度)
+    // Generate random particles (reduce count and opacity)
     const particles = Array.from({ length: counts.particles }, () => {
-      const x = rng.range(10, 90); // 百分比位置
-      const y = rng.range(10, 90);
-      const size = rng.range(0.5, 1.5); // 减小尺寸
-      const opacity = rng.range(0.05, 0.2);
-      const animationDuration = rng.range(8, 25);
+      const x = rng.range(
+        animationConfig.particles.positionRange.min,
+        animationConfig.particles.positionRange.max
+      );
+      const y = rng.range(
+        animationConfig.particles.positionRange.min,
+        animationConfig.particles.positionRange.max
+      );
+      const size = rng.range(
+        animationConfig.particles.sizeRange.min,
+        animationConfig.particles.sizeRange.max
+      );
+      const opacity = rng.range(
+        animationConfig.particles.opacityRange.min,
+        animationConfig.particles.opacityRange.max
+      );
+      const animationDuration = rng.range(
+        animationConfig.particles.animationDurationRange.min,
+        animationConfig.particles.animationDurationRange.max
+      );
 
       return { x, y, size, opacity, animationDuration };
     });
 
-    // 生成漂浮文字
+    // Generate floating text
     const floatingTexts = generateFloatingTexts(rng, complexity);
 
     return { polygons, lines, particles, floatingTexts };
@@ -348,14 +491,14 @@ export function CustomBackground({
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* 主要几何形状 */}
+      {/* Main geometric shapes */}
       <svg
         className="absolute inset-0 w-full h-full"
         viewBox="0 0 1200 800"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          {/* 动态生成的渐变 */}
+          {/* Dynamically generated gradients */}
           {backgroundData.polygons.map((polygon) => (
             <linearGradient
               key={polygon.gradientId}
@@ -378,7 +521,7 @@ export function CustomBackground({
             </linearGradient>
           ))}
 
-          {/* 线条渐变 */}
+          {/* Line gradients */}
           {backgroundData.lines.map((line) => (
             <linearGradient
               key={line.gradientId}
@@ -407,7 +550,7 @@ export function CustomBackground({
           ))}
         </defs>
 
-        {/* 动态生成的多边形 */}
+        {/* Dynamically generated polygons */}
         {backgroundData.polygons.map((polygon, index) => (
           <g
             key={`polygon-${index}`}
@@ -434,13 +577,13 @@ export function CustomBackground({
         ))}
       </svg>
 
-      {/* 连接线条层 */}
+      {/* Connecting lines layer */}
       <svg
         className="absolute inset-0 w-full h-full"
         viewBox="0 0 1200 800"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* 动态生成的连接线 */}
+        {/* Dynamically generated connecting lines */}
         {backgroundData.lines.map((line, index) => (
           <g
             key={`line-${index}`}
@@ -467,7 +610,7 @@ export function CustomBackground({
         ))}
       </svg>
 
-      {/* 浮动粒子 */}
+      {/* Floating particles */}
       <div className="absolute inset-0">
         {backgroundData.particles.map((particle, index) => (
           <div
@@ -488,7 +631,7 @@ export function CustomBackground({
         ))}
       </div>
 
-      {/* 漂浮文字层 - 横向漂浮闪烁效果与语法高亮 */}
+      {/* Floating text layer - horizontal floating flicker effects with syntax highlighting */}
       <div className="absolute inset-0">
         {backgroundData.floatingTexts.map((textItem) => (
           <div
@@ -499,7 +642,7 @@ export function CustomBackground({
                 top: `${textItem.y}%`,
                 left: "0%",
                 fontSize: `${textItem.fontSize}rem`,
-                color: textItem.syntaxColor,
+                color: `hsl(var(--${textItem.syntaxColor}))`,
                 opacity: 0,
                 visibility: "hidden",
                 "--min-opacity": textItem.minOpacity,

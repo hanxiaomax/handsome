@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { GlobalSearch } from "@/components/navigation/global-search";
 import { CustomBackground } from "@/components/common/custom-background";
+import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { ChevronDown, Dices } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -108,6 +109,13 @@ export function LandingPage() {
     >
       {/* Custom Artistic Background */}
       <CustomBackground complexity="simple" animated={true} />
+
+      {/* Top Navigation - Theme Toggle */}
+      <header className="relative z-20 w-full">
+        <div className="absolute top-6 right-6">
+          <ThemeToggle />
+        </div>
+      </header>
 
       {/* Main Content */}
       <main className="relative z-10 flex-1 flex items-center justify-center min-h-screen">
