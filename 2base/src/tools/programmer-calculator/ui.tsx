@@ -18,10 +18,10 @@ import { useCalculatorLogic } from "./lib/hooks/useCalculatorLogic";
 import { Display } from "./components/display";
 import { BitGrid } from "./components/bit-grid";
 import { FloatingCalculator } from "./components/floating-calculator";
+import { NumberBaseConverter } from "./components/number-base-converter";
+import { BitOperationsPanel } from "./components/bit-operations-panel";
 
 // New Components (placeholder implementations - to be implemented)
-// import { NumberBaseConverter } from "./components/number-base-converter";
-// import { BitOperationsPanel } from "./components/bit-operations-panel";
 // import { EncodingConverter } from "./components/encoding-converter";
 // import { HashGenerator } from "./components/hash-generator";
 // import { FloatingPointAnalyzer } from "./components/floating-point-analyzer";
@@ -155,19 +155,13 @@ export default function ProgrammerCalculator() {
                     value="converter"
                     className="h-full overflow-auto mt-0"
                   >
-                    <div className="p-6 space-y-4">
-                      <h3 className="text-lg font-medium">
-                        Number Base Converter
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Convert between different number bases (Binary, Octal,
-                        Decimal, Hexadecimal)
-                      </p>
-                      <div className="h-32 bg-muted/20 rounded border-2 border-dashed border-muted flex items-center justify-center">
-                        <span className="text-muted-foreground">
-                          Number Base Converter - Coming Soon
-                        </span>
-                      </div>
+                    <div className="p-6">
+                      <NumberBaseConverter
+                        currentValue={state.currentValue}
+                        currentBase={state.base}
+                        onValueChange={handlers.onBitValueChange}
+                        onBaseChange={handlers.onBaseChange}
+                      />
                     </div>
                   </TabsContent>
 
@@ -176,17 +170,13 @@ export default function ProgrammerCalculator() {
                     value="bitops"
                     className="h-full overflow-auto mt-0"
                   >
-                    <div className="p-6 space-y-4">
-                      <h3 className="text-lg font-medium">Bit Operations</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Perform bitwise operations like AND, OR, XOR, NOT,
-                        shifts
-                      </p>
-                      <div className="h-32 bg-muted/20 rounded border-2 border-dashed border-muted flex items-center justify-center">
-                        <span className="text-muted-foreground">
-                          Bit Operations Panel - Coming Soon
-                        </span>
-                      </div>
+                    <div className="p-6">
+                      <BitOperationsPanel
+                        value={state.currentValue}
+                        base={state.base}
+                        bitWidth={state.bitWidth}
+                        onValueChange={handlers.onBitValueChange}
+                      />
                     </div>
                   </TabsContent>
 

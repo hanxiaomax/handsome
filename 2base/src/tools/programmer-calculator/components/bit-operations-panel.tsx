@@ -26,6 +26,7 @@ export function BitOperationsPanel({
   value,
   base,
   bitWidth,
+  onValueChange: _onValueChange,
 }: BitOperationsPanelProps) {
   // Calculate bit statistics
   const decimal = parseInt(value || "0", base);
@@ -52,6 +53,7 @@ export function BitOperationsPanel({
           Advanced bitwise operations and bit field manipulations
         </p>
       </div>
+
       {/* Basic Bitwise Operations */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold">Basic Bitwise Operations</h3>
