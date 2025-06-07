@@ -10,10 +10,12 @@ import { toolInfo as colorPaletteInfo } from "@/tools/color-palette/toolInfo";
 import { toolInfo as productChartGeneratorInfo } from "@/tools/product-chart-generator/toolInfo";
 import { toolInfo as xmlParserInfo } from "@/tools/xml-parser/toolInfo";
 import { toolInfo as layoutDemoInfo } from "@/tools/layout-demo/toolInfo";
+import { toolInfo as calculatorInfo } from "@/tools/calculator/toolInfo";
 
 export const tools: ToolInfo[] = [
   // All implemented tools with their actual toolInfo
   layoutDemoInfo, // Demo tool for layout showcase
+  calculatorInfo, // Calculator component demonstration tool
   programmerCalculatorInfo,
   uuidGeneratorInfo,
   worldClockInfo,

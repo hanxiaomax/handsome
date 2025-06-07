@@ -12,6 +12,7 @@ import ColorPalette from "@/tools/color-palette/ui";
 import ProductChartGenerator from "@/tools/product-chart-generator/ui";
 import XMLParser from "@/tools/xml-parser/ui";
 import LayoutDemo from "@/tools/layout-demo/ui";
+import Calculator from "@/tools/calculator/ui";
 import FavoritesPage from "@/app/favorites";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { MinimizedToolsProvider } from "@/contexts/minimized-tools-context";
@@ -50,6 +51,7 @@ function App() {
             />
             <Route path="/tools/xml-parser" element={<XMLParser />} />
             <Route path="/tools/layout-demo" element={<LayoutDemo />} />
+            <Route path="/tools/calculator" element={<Calculator />} />
           </Routes>
           <MinimizedToolsIndicator />
           <Toaster />
