@@ -33,19 +33,7 @@ export default function CalculatorTool() {
   return (
     <ToolWrapper toolInfo={toolInfo} state={{ calculatorState: toolState }}>
       {/* Main Calculator Tool Container - Primary workspace */}
-      <div
-        id="calculator-tool-container"
-        className="w-full p-6 space-y-6 mt-12"
-      >
-        {/* Tool Header */}
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold">Advanced Calculator Tool</h2>
-          <p className="text-muted-foreground">
-            Demonstration of the Calculator component's various modes and data
-            binding capabilities
-          </p>
-        </div>
-
+      <div id="calculator-tool-container" className="w-full p-6 space-y-6">
         {/* Calculator Modes Tabs */}
         <Tabs defaultValue="variants" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
