@@ -40,8 +40,10 @@ pids
 # Coverage directory used by tools like istanbul
 coverage
 *.lcov
+2base/html
 
 # Temporary folders
 tmp/
 temp/
-2base/html
+
+.tasks/
