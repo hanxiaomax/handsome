@@ -12,7 +12,7 @@ import { useCalculatorState } from "./lib/hooks/useCalculatorState";
 import { useCalculatorLogic } from "./lib/hooks/useCalculatorLogic";
 import { parseValue, formatForBase } from "./lib/base-converter";
 import { toBinaryWithWidth } from "./lib/base-converter";
-import { toggleBit, testBit } from "./lib/bitwise";
+import { toggleBit } from "./lib/bitwise";
 
 // Tool-specific Components
 import {
@@ -66,10 +66,8 @@ export default function ProgrammerCalculator() {
     }
   };
 
-  // Get current decimal value for bit visualization
-  const currentDecimal = parseValue(state.currentValue || "0", state.base);
-
   // Calculate bit statistics
+  const currentDecimal = parseValue(state.currentValue || "0", state.base);
   const binaryString64 = toBinaryWithWidth(currentDecimal, 64);
   const activeBits =
     binaryString64.substring(64 - state.bitWidth).split("1").length - 1;
@@ -95,14 +93,14 @@ export default function ProgrammerCalculator() {
 
         {/* Bit Visualization */}
         <BitVisualization
-          currentDecimal={currentDecimal}
+          currentValue={state.currentValue || "0"}
+          base={state.base}
           bitWidth={state.bitWidth}
           activeBits={activeBits}
           clearBits={clearBits}
           unusedBits={unusedBits}
           bitsPerRow={32}
           onBitToggle={handleBitToggle}
-          testBit={testBit}
         />
 
         {/* Control Bar */}

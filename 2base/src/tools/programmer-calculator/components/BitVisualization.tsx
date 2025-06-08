@@ -1,28 +1,74 @@
-import type { BitWidth } from "../types";
+import type { BitWidth, Base } from "../types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface BitVisualizationProps {
-  currentDecimal: number;
+  currentValue: string;
+  base: Base;
   bitWidth: BitWidth;
   activeBits: number;
   clearBits: number;
   unusedBits: number;
   bitsPerRow: 8 | 16 | 32;
   onBitToggle: (position: number) => void;
-  testBit: (value: number, position: number) => boolean;
 }
 
 export function BitVisualization({
-  currentDecimal,
+  currentValue,
+  base,
   bitWidth,
   activeBits,
   clearBits,
   unusedBits,
   bitsPerRow,
   onBitToggle,
-  testBit,
 }: BitVisualizationProps) {
+  // Convert string value to BigInt to avoid precision loss
+  const getBigIntValue = (): bigint => {
+    try {
+      if (!currentValue || currentValue === "0") return 0n;
+
+      let cleanInput = currentValue;
+      // Remove base prefixes if present
+      if (cleanInput.startsWith("0x") || cleanInput.startsWith("0X")) {
+        cleanInput = cleanInput.slice(2);
+      } else if (cleanInput.startsWith("0b") || cleanInput.startsWith("0B")) {
+        cleanInput = cleanInput.slice(2);
+      } else if (cleanInput.startsWith("0o") || cleanInput.startsWith("0O")) {
+        cleanInput = cleanInput.slice(2);
+      }
+
+      // Use BigInt with proper base parsing
+      if (base === 16) {
+        return BigInt("0x" + cleanInput);
+      } else if (base === 8) {
+        return BigInt("0o" + cleanInput);
+      } else if (base === 2) {
+        return BigInt("0b" + cleanInput);
+      } else {
+        // Decimal
+        return BigInt(cleanInput);
+      }
+    } catch {
+      return 0n;
+    }
+  };
+
+  // Get BigInt value and create bit string representation
+  const bigIntValue = getBigIntValue();
+  const bitString = bigIntValue.toString(2).padStart(64, "0");
+
+  // Helper function to test bit from string representation
+  const testBitFromString = (position: number): boolean => {
+    // BitString is ordered from MSB to LSB, so we need to reverse the index
+    const stringIndex = 64 - 1 - position;
+    return (
+      stringIndex >= 0 &&
+      stringIndex < bitString.length &&
+      bitString[stringIndex] === "1"
+    );
+  };
+
   // Render bit grid from highest to lowest bit
   const renderBitGrid = () => {
     const totalBits = 64;
@@ -31,7 +77,8 @@ export function BitVisualization({
 
     // Helper function to create a single bit button
     const createBitButton = (bitPosition: number) => {
-      const isSet = testBit(currentDecimal, bitPosition);
+      // Use string-based bit testing for accuracy with large numbers
+      const isSet = testBitFromString(bitPosition);
       const isDisabled = bitPosition >= bitWidth;
 
       return (

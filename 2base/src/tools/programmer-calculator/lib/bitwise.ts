@@ -169,8 +169,10 @@ export function toBitString(value: number, bitWidth: BitWidth): string {
 // Utility function for debugging - get bit array
 export function toBitArray(value: number, bitWidth: BitWidth): boolean[] {
   const bits: boolean[] = [];
+  const bigValue = numberToBigInt(value);
   for (let i = 0; i < bitWidth; i++) {
-    bits.push(testBit(value, i));
+    const mask = 1n << BigInt(i);
+    bits.push((bigValue & mask) !== 0n);
   }
   return bits;
 }
