@@ -1,299 +1,421 @@
 "use client";
 
-import { useState } from "react";
-// Card components removed for cleaner, more minimalist design
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ToolWrapper } from "@/components/common/tool-wrapper";
+import { Calculator } from "lucide-react";
 
 // Tool Configuration
 import { toolInfo } from "./toolInfo";
-import type { BitWidth } from "./types";
+import type { Base, BitWidth } from "./types";
 
-// Business Logic (Hooks)
+// Business Logic
 import { useCalculatorState } from "./lib/hooks/useCalculatorState";
 import { useCalculatorLogic } from "./lib/hooks/useCalculatorLogic";
-
-// UI Components
-import { Display } from "./components/display";
-import { BitGrid } from "./components/bit-grid";
-import { FloatingCalculator } from "./components/floating-calculator";
-import { NumberBaseConverter } from "./components/number-base-converter";
-import { BitOperationsPanel } from "./components/bit-operations-panel";
-
-// New Components (placeholder implementations - to be implemented)
-// import { EncodingConverter } from "./components/encoding-converter";
-// import { HashGenerator } from "./components/hash-generator";
-// import { FloatingPointAnalyzer } from "./components/floating-point-analyzer";
-// import { OperationHistory } from "./components/operation-history";
+import { parseValue, formatForBase } from "./lib/base-converter";
+import { toBinaryWithWidth } from "./lib/base-converter";
+import { toggleBit, testBit } from "./lib/bitwise";
 
 export default function ProgrammerCalculator() {
-  // State Management Hook
+  // State Management
   const { state, actions } = useCalculatorState();
-
-  // Business Logic Hook
   const { handlers } = useCalculatorLogic(state, actions);
 
-  // UI State for tabs
-  const [activeTab, setActiveTab] = useState("converter");
+  // Helper functions
+  const convertAndDisplay = (
+    value: string,
+    fromBase: Base,
+    toBase: Base
+  ): string => {
+    try {
+      if (!value || value === "0") return "0";
+      const decimal = parseValue(value, fromBase);
+      return formatForBase(decimal.toString(), toBase);
+    } catch {
+      return "Error";
+    }
+  };
+
+  const handleBaseSelect = (base: Base) => {
+    try {
+      const decimal = parseValue(state.currentValue || "0", state.base);
+      const newValue = formatForBase(decimal.toString(), base);
+      actions.setBase(base);
+      actions.setCurrentValue(newValue);
+    } catch {
+      actions.setBase(base);
+      actions.setCurrentValue("0");
+    }
+  };
+
+  const handleBitToggle = (position: number) => {
+    try {
+      const decimal = parseValue(state.currentValue || "0", state.base);
+      const newDecimal = toggleBit(decimal, position);
+      const newValue = formatForBase(newDecimal.toString(), state.base);
+      actions.setCurrentValue(newValue);
+    } catch {
+      // Handle error silently
+    }
+  };
+
+  // Get current decimal value for bit visualization
+  const currentDecimal = parseValue(state.currentValue || "0", state.base);
+  const binaryString64 = toBinaryWithWidth(currentDecimal, 64);
+
+  // Render 64-bit grid (32 bits per row)
+  const renderBitGrid = () => {
+    const rows = [];
+
+    // Row 1: Bits 63-32
+    const row1Bits = [];
+    for (let i = 63; i >= 32; i--) {
+      const isSet = testBit(currentDecimal, i);
+      const isDisabled = i >= state.bitWidth;
+      const bitValue = binaryString64[63 - i] || "0";
+
+      row1Bits.push(
+        <button
+          key={i}
+          disabled={isDisabled}
+          className={`w-4 h-4 text-xs font-mono border rounded ${
+            isDisabled
+              ? "bg-muted/50 text-muted-foreground/50 border-muted cursor-not-allowed"
+              : isSet
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-background text-foreground border-border hover:bg-muted"
+          }`}
+          onClick={() => !isDisabled && handleBitToggle(i)}
+          title={isDisabled ? `Bit ${i}: disabled` : `Bit ${i}: ${bitValue}`}
+        >
+          {bitValue}
+        </button>
+      );
+    }
+
+    // Row 2: Bits 31-0
+    const row2Bits = [];
+    for (let i = 31; i >= 0; i--) {
+      const isSet = testBit(currentDecimal, i);
+      const isDisabled = i >= state.bitWidth;
+      const bitValue = binaryString64[63 - i] || "0";
+
+      row2Bits.push(
+        <button
+          key={i}
+          disabled={isDisabled}
+          className={`w-4 h-4 text-xs font-mono border rounded ${
+            isDisabled
+              ? "bg-muted/50 text-muted-foreground/50 border-muted cursor-not-allowed"
+              : isSet
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-background text-foreground border-border hover:bg-muted"
+          }`}
+          onClick={() => !isDisabled && handleBitToggle(i)}
+          title={isDisabled ? `Bit ${i}: disabled` : `Bit ${i}: ${bitValue}`}
+        >
+          {bitValue}
+        </button>
+      );
+    }
+
+    rows.push(
+      <div key="row1" className="flex items-center gap-1">
+        <span className="text-xs text-muted-foreground min-w-[3rem] text-right">
+          63-32
+        </span>
+        <div className="flex gap-0.5">{row1Bits}</div>
+      </div>
+    );
+
+    rows.push(
+      <div key="row2" className="flex items-center gap-1">
+        <span className="text-xs text-muted-foreground min-w-[3rem] text-right">
+          31-0
+        </span>
+        <div className="flex gap-0.5">{row2Bits}</div>
+      </div>
+    );
+
+    return rows;
+  };
+
+  // Calculator button grid
+  const buttonGrid = [
+    // Row 1
+    [
+      { label: "(", value: "(", type: "special" },
+      { label: ")", value: ")", type: "special" },
+      { label: "XOR", value: "^", type: "operation" },
+      { label: "D", value: "D", type: "number", disabled: state.base < 16 },
+      { label: "E", value: "E", type: "number", disabled: state.base < 16 },
+      { label: "F", value: "F", type: "number", disabled: state.base < 16 },
+      { label: "⌫", value: "backspace", type: "special" },
+    ],
+    // Row 2
+    [
+      { label: "AND", value: "&", type: "operation" },
+      { label: "OR", value: "|", type: "operation" },
+      { label: "NOR", value: "nor", type: "function" },
+      { label: "A", value: "A", type: "number", disabled: state.base < 16 },
+      { label: "B", value: "B", type: "number", disabled: state.base < 16 },
+      { label: "C", value: "C", type: "number", disabled: state.base < 16 },
+      { label: "÷", value: "/", type: "operation" },
+    ],
+    // Row 3
+    [
+      { label: "NOT", value: "~", type: "operation" },
+      { label: "<<", value: "<<", type: "operation" },
+      { label: ">>", value: ">>", type: "operation" },
+      { label: "7", value: "7", type: "number", disabled: state.base < 8 },
+      { label: "8", value: "8", type: "number", disabled: state.base < 10 },
+      { label: "9", value: "9", type: "number", disabled: state.base < 10 },
+      { label: "×", value: "*", type: "operation" },
+    ],
+    // Row 4
+    [
+      { label: "NEG", value: "negate", type: "function" },
+      { label: "X<<Y", value: "lsl", type: "function" },
+      { label: "X>>Y", value: "lsr", type: "function" },
+      { label: "4", value: "4", type: "number", disabled: state.base < 8 },
+      { label: "5", value: "5", type: "number", disabled: state.base < 8 },
+      { label: "6", value: "6", type: "number", disabled: state.base < 8 },
+      { label: "−", value: "-", type: "operation" },
+    ],
+    // Row 5
+    [
+      { label: "mod", value: "%", type: "operation" },
+      { label: "RoL", value: "rol", type: "function" },
+      { label: "RoR", value: "ror", type: "function" },
+      { label: "1", value: "1", type: "number" },
+      { label: "2", value: "2", type: "number", disabled: state.base < 8 },
+      { label: "3", value: "3", type: "number", disabled: state.base < 8 },
+      { label: "+", value: "+", type: "operation" },
+    ],
+    // Row 6
+    [
+      { label: "📋", value: "copy", type: "special" },
+      { label: "flip₂", value: "flip2", type: "function" },
+      { label: "flip₁₆", value: "flip16", type: "function" },
+      { label: "FF", value: "ff", type: "special" },
+      { label: "0", value: "0", type: "number" },
+      { label: "00", value: "00", type: "number" },
+      { label: "=", value: "=", type: "operation" },
+    ],
+  ];
+
+  const activeBits =
+    binaryString64.substring(64 - state.bitWidth).split("1").length - 1;
+  const clearBits = state.bitWidth - activeBits;
+  const unusedBits = 64 - state.bitWidth;
 
   return (
     <ToolWrapper toolInfo={toolInfo} state={{ calculatorState: state }}>
-      {/* Main Tool Container - Left-Right Split Layout */}
+      {/* Main Calculator Panel */}
       <div
-        id="programmer-calculator-container"
-        className="w-full h-[calc(100vh-8rem)] p-6 mt-5"
+        id="programmer-calculator-panel"
+        className="w-full max-w-3xl mx-auto p-3 space-y-3"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
-          {/* Left Panel - Enhanced Calculator with Display and Visualization */}
-          <div
-            id="left-calculator-panel"
-            className="lg:col-span-1 space-y-3 flex flex-col"
-          >
-            {/* Enhanced Display Section - Multi-base and Bit Visualization */}
-            <div id="calculator-display" className="space-y-4">
-              <Display
-                value={state.currentValue}
-                currentBase={state.base}
-                bitWidth={state.bitWidth}
-                error={state.error}
-                onBaseChange={handlers.onBaseChange}
-              />
-
-              {/* Integrated Bit Visualization */}
-              <div className="bg-background border rounded-lg p-2">
-                <BitGrid
-                  value={state.currentValue}
-                  base={state.base}
-                  bitWidth={state.bitWidth}
-                  onValueChange={handlers.onBitValueChange}
-                />
-              </div>
-            </div>
-
-            {/* Compact Quick Controls - Only Bit Width */}
-            <div id="quick-controls" className="space-y-2">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                  Bit Width
-                </label>
-                <ToggleGroup
-                  type="single"
-                  value={state.bitWidth.toString()}
-                  onValueChange={(value) => {
-                    if (value)
-                      handlers.onBitWidthChange(parseInt(value) as BitWidth);
-                  }}
-                  className="w-full"
-                >
-                  <ToggleGroupItem value="8" className="flex-1 text-xs h-8">
-                    8
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="16" className="flex-1 text-xs h-8">
-                    16
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="32" className="flex-1 text-xs h-8">
-                    32
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="64" className="flex-1 text-xs h-8">
-                    64
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-            </div>
-
-            {/* Calculator Guide */}
-            <div
-              id="calculator-guide"
-              className="flex-1 flex items-center justify-center"
-            >
-              <div className="text-center text-muted-foreground">
-                <div className="text-sm font-medium mb-2">Calculator Input</div>
-                <p className="text-xs opacity-70">
-                  Use the floating calculator button
-                </p>
-                <p className="text-xs opacity-70">in the bottom right corner</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Panel - Tools and Features */}
-          <div
-            id="right-tools-panel"
-            className="lg:col-span-2 flex flex-col h-full"
-          >
-            {/* Tabbed Content Areas - Horizontal Layout */}
-            <div id="tabbed-content-area" className="flex-1 overflow-hidden">
-              <Tabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="h-full flex flex-col"
-              >
-                {/* Horizontal Tab List */}
-                <TabsList className="grid grid-cols-5 w-full">
-                  <TabsTrigger value="converter" className="text-xs">
-                    Number Base
-                  </TabsTrigger>
-                  <TabsTrigger value="bitops" className="text-xs">
-                    Bit Operations
-                  </TabsTrigger>
-                  <TabsTrigger value="encoding" className="text-xs">
-                    Encoding
-                  </TabsTrigger>
-                  <TabsTrigger value="analysis" className="text-xs">
-                    Analysis
-                  </TabsTrigger>
-                  <TabsTrigger value="tools" className="text-xs">
-                    Tools
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Tab Content Area */}
-                <div className="flex-1 overflow-auto mt-4">
-                  {/* Tab 1: Number Base Converter */}
-                  <TabsContent
-                    value="converter"
-                    className="h-full overflow-auto mt-0"
-                  >
-                    <div className="p-6">
-                      <NumberBaseConverter
-                        currentValue={state.currentValue}
-                        currentBase={state.base}
-                        onValueChange={handlers.onBitValueChange}
-                        onBaseChange={handlers.onBaseChange}
-                      />
-                    </div>
-                  </TabsContent>
-
-                  {/* Tab 2: Bit Operations */}
-                  <TabsContent
-                    value="bitops"
-                    className="h-full overflow-auto mt-0"
-                  >
-                    <div className="p-6">
-                      <BitOperationsPanel
-                        value={state.currentValue}
-                        base={state.base}
-                        bitWidth={state.bitWidth}
-                        onValueChange={handlers.onBitValueChange}
-                      />
-                    </div>
-                  </TabsContent>
-
-                  {/* Tab 3: Encoding Tools */}
-                  <TabsContent
-                    value="encoding"
-                    className="h-full overflow-auto mt-0"
-                  >
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 h-full p-6">
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">
-                          Encoding Converter
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Convert between different text encodings
-                        </p>
-                        <div className="h-32 bg-muted/20 rounded border-2 border-dashed border-muted flex items-center justify-center">
-                          <span className="text-muted-foreground">
-                            Encoding Converter - Coming Soon
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Hash Generator</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Generate MD5, SHA1, SHA256 hashes
-                        </p>
-                        <div className="h-32 bg-muted/20 rounded border-2 border-dashed border-muted flex items-center justify-center">
-                          <span className="text-muted-foreground">
-                            Hash Generator - Coming Soon
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  {/* Tab 4: Analysis Tools */}
-                  <TabsContent
-                    value="analysis"
-                    className="h-full overflow-auto mt-0"
-                  >
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full p-6">
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">
-                          Floating Point Analyzer
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Analyze IEEE 754 floating point representation
-                        </p>
-                        <div className="h-32 bg-muted/20 rounded border-2 border-dashed border-muted flex items-center justify-center">
-                          <span className="text-muted-foreground">
-                            Floating Point Analyzer - Coming Soon
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">
-                          Endianness Converter
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Convert between Big Endian and Little Endian byte
-                          order
-                        </p>
-                        <div className="h-32 bg-muted/20 rounded border-2 border-dashed border-muted flex items-center justify-center">
-                          <span className="text-muted-foreground">
-                            Endianness Converter - Coming Soon
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  {/* Tab 5: Additional Tools */}
-                  <TabsContent
-                    value="tools"
-                    className="h-full overflow-auto mt-0"
-                  >
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full p-6">
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">
-                          Operation History
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          View history of calculations and operations
-                        </p>
-                        <div className="h-32 bg-muted/20 rounded border-2 border-dashed border-muted flex items-center justify-center">
-                          <span className="text-muted-foreground">
-                            Operation History - Coming Soon
-                          </span>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Batch Converter</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Convert multiple numbers at once
-                        </p>
-                        <div className="h-32 bg-muted/20 rounded border-2 border-dashed border-muted flex items-center justify-center">
-                          <span className="text-muted-foreground">
-                            Batch Converter - Coming Soon
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </div>
-              </Tabs>
-            </div>
+        {/* Header */}
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2">
+            <Calculator className="h-4 w-4" />
+            <h1 className="text-lg font-bold">Programmer Calculator</h1>
           </div>
         </div>
-      </div>
 
-      {/* Floating Calculator */}
-      <FloatingCalculator
-        base={state.base}
-        mode="programmer"
-        onButtonClick={handlers.onButtonClick}
-      />
+        {/* Main Display Area - Following reference image layout */}
+        <div className="border rounded-lg p-3 space-y-2">
+          {/* Main Value Display */}
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-muted-foreground">
+              {state.base === 2
+                ? "BIN"
+                : state.base === 8
+                ? "OCT"
+                : state.base === 10
+                ? "DEC"
+                : "HEX"}{" "}
+              ({state.bitWidth}-bit)
+            </span>
+            <div className="text-2xl font-mono font-bold">
+              {state.error ? (
+                <span className="text-destructive">Error</span>
+              ) : (
+                <span>{state.currentValue || "0"}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Multi-Base Display Grid */}
+          <div className="space-y-1">
+            <button
+              onClick={() => handleBaseSelect(16)}
+              className={`w-full p-2 rounded border text-left flex justify-between items-center transition-colors ${
+                state.base === 16
+                  ? "bg-accent border-accent-foreground"
+                  : "hover:bg-muted"
+              }`}
+            >
+              <span className="text-xs text-muted-foreground">HEX</span>
+              <span className="font-mono text-sm">
+                {convertAndDisplay(state.currentValue, state.base, 16)}
+              </span>
+            </button>
+
+            <button
+              onClick={() => handleBaseSelect(10)}
+              className={`w-full p-2 rounded border text-left flex justify-between items-center transition-colors ${
+                state.base === 10
+                  ? "bg-accent border-accent-foreground"
+                  : "hover:bg-muted"
+              }`}
+            >
+              <span className="text-xs text-muted-foreground">DEC</span>
+              <span className="font-mono text-sm">
+                {convertAndDisplay(state.currentValue, state.base, 10)}
+              </span>
+            </button>
+
+            <button
+              onClick={() => handleBaseSelect(8)}
+              className={`w-full p-2 rounded border text-left flex justify-between items-center transition-colors ${
+                state.base === 8
+                  ? "bg-accent border-accent-foreground"
+                  : "hover:bg-muted"
+              }`}
+            >
+              <span className="text-xs text-muted-foreground">OCT</span>
+              <span className="font-mono text-sm">
+                {convertAndDisplay(state.currentValue, state.base, 8)}
+              </span>
+            </button>
+
+            <button
+              onClick={() => handleBaseSelect(2)}
+              className={`w-full p-2 rounded border text-left flex justify-between items-center transition-colors ${
+                state.base === 2
+                  ? "bg-accent border-accent-foreground"
+                  : "hover:bg-muted"
+              }`}
+            >
+              <span className="text-xs text-muted-foreground">BIN</span>
+              <span className="font-mono text-sm truncate">
+                {convertAndDisplay(state.currentValue, state.base, 2)}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Bit Visualization - Always show 64 bits, 32 per row */}
+        <div className="border rounded-lg p-3 space-y-2">
+          <div className="text-xs text-muted-foreground">
+            64-bit active • Click to toggle
+          </div>
+          <div className="space-y-1">{renderBitGrid()}</div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Set: {activeBits}</span>
+            <span>Clear: {clearBits}</span>
+            <span>Unused: {unusedBits}</span>
+          </div>
+        </div>
+
+        {/* Control Bar - Bit Width + Control Buttons */}
+        <div className="flex items-center gap-2">
+          <ToggleGroup
+            type="single"
+            value={state.bitWidth.toString()}
+            onValueChange={(value) => {
+              if (value) handlers.onBitWidthChange(parseInt(value) as BitWidth);
+            }}
+            size="sm"
+          >
+            <ToggleGroupItem value="8" className="h-8 px-2 text-xs">
+              8
+            </ToggleGroupItem>
+            <ToggleGroupItem value="16" className="h-8 px-2 text-xs">
+              16
+            </ToggleGroupItem>
+            <ToggleGroupItem value="32" className="h-8 px-2 text-xs">
+              32
+            </ToggleGroupItem>
+            <ToggleGroupItem value="64" className="h-8 px-2 text-xs">
+              64
+            </ToggleGroupItem>
+          </ToggleGroup>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2 text-xs"
+            onClick={() => handlers.onButtonClick("clear", "special")}
+          >
+            Clear
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2 text-xs"
+            onClick={() => handlers.onButtonClick("~", "operation")}
+          >
+            NOT
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2 text-xs"
+            onClick={() => handlers.onButtonClick("<<", "operation")}
+          >
+            LSL
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-2 text-xs"
+            onClick={() => handlers.onButtonClick(">>", "operation")}
+          >
+            LSR
+          </Button>
+        </div>
+
+        {/* Calculator Button Grid - Compact */}
+        <div className="border rounded-lg p-2">
+          <div className="grid grid-cols-7 gap-1">
+            {buttonGrid.flat().map((button, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                disabled={button.disabled}
+                className="h-8 text-xs font-mono"
+                onClick={() =>
+                  handlers.onButtonClick(
+                    button.value,
+                    button.type as
+                      | "number"
+                      | "operation"
+                      | "function"
+                      | "special"
+                  )
+                }
+              >
+                {button.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Status Bar */}
+        <div className="flex justify-between items-center text-xs text-muted-foreground">
+          <div>Mode: Programmer</div>
+          <div>Base: {state.base}</div>
+          <div>Width: {state.bitWidth}-bit</div>
+        </div>
+      </div>
     </ToolWrapper>
   );
 }
