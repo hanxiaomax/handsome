@@ -198,7 +198,7 @@ export function useCalculatorLogic(
     const handleKeyDown = (event: KeyboardEvent) => {
       const { key, ctrlKey } = event;
 
-      // Prevent default for calculator keys
+      // Prevent default for calculator keys (but allow Tab for navigation)
       if (
         /[0-9A-Fa-f+\-*/%&|^~()=]/.test(key) ||
         key === "Enter" ||
@@ -206,6 +206,11 @@ export function useCalculatorLogic(
         key === "Backspace"
       ) {
         event.preventDefault();
+      }
+
+      // Allow Tab key for normal navigation
+      if (key === "Tab") {
+        return; // Don't handle Tab, let browser handle navigation
       }
 
       // Base switching shortcuts

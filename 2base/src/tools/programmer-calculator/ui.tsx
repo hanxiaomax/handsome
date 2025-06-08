@@ -36,7 +36,7 @@ export default function ProgrammerCalculator() {
   ): string => {
     try {
       if (!value || value === "0") return "0";
-      const decimal = parseValue(value, fromBase);
+      const decimal = parseValue(value, fromBase, state.bitWidth);
       return formatForBase(decimal.toString(), toBase);
     } catch {
       return "Error";
@@ -45,7 +45,11 @@ export default function ProgrammerCalculator() {
 
   const handleBaseSelect = (base: Base) => {
     try {
-      const decimal = parseValue(state.currentValue || "0", state.base);
+      const decimal = parseValue(
+        state.currentValue || "0",
+        state.base,
+        state.bitWidth
+      );
       const newValue = formatForBase(decimal.toString(), base);
       actions.setBase(base);
       actions.setCurrentValue(newValue);
@@ -57,7 +61,11 @@ export default function ProgrammerCalculator() {
 
   const handleBitToggle = (position: number) => {
     try {
-      const decimal = parseValue(state.currentValue || "0", state.base);
+      const decimal = parseValue(
+        state.currentValue || "0",
+        state.base,
+        state.bitWidth
+      );
       const newDecimal = toggleBit(decimal, position, state.bitWidth);
       const newValue = formatForBase(newDecimal.toString(), state.base);
       actions.setCurrentValue(newValue);
@@ -66,8 +74,16 @@ export default function ProgrammerCalculator() {
     }
   };
 
+  const handleClear = () => {
+    actions.resetState();
+  };
+
   // Calculate bit statistics
-  const currentDecimal = parseValue(state.currentValue || "0", state.base);
+  const currentDecimal = parseValue(
+    state.currentValue || "0",
+    state.base,
+    state.bitWidth
+  );
   const binaryString64 = toBinaryWithWidth(currentDecimal, 64);
   const activeBits =
     binaryString64.substring(64 - state.bitWidth).split("1").length - 1;
@@ -88,6 +104,7 @@ export default function ProgrammerCalculator() {
           bitWidth={state.bitWidth}
           error={!!state.error}
           onBaseSelect={handleBaseSelect}
+          onClear={handleClear}
           convertAndDisplay={convertAndDisplay}
         />
 
@@ -106,9 +123,11 @@ export default function ProgrammerCalculator() {
         {/* Control Bar */}
         <ControlBar
           bitWidth={state.bitWidth}
+          base={state.base}
           onBitWidthChange={(width: BitWidth) =>
             handlers.onBitWidthChange(width)
           }
+          onBaseChange={(base: Base) => handleBaseSelect(base)}
         />
 
         {/* Calculator Button Grid */}

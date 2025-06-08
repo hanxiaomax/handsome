@@ -123,9 +123,13 @@ export function toBinaryWithWidth(value: number, bitWidth: BitWidth): string {
 }
 
 /**
- * Parse input value considering the current base
+ * Parse input value considering the current base and apply bit width constraints
  */
-export function parseValue(input: string, base: Base): number {
+export function parseValue(
+  input: string,
+  base: Base,
+  bitWidth?: BitWidth
+): number {
   if (!input || input === "0") return 0;
 
   // Remove base prefixes if present
@@ -143,5 +147,28 @@ export function parseValue(input: string, base: Base): number {
     throw new Error("Invalid number format");
   }
 
+  // Apply bit width constraints if specified
+  if (bitWidth !== undefined) {
+    return applyBitWidth(result, bitWidth);
+  }
+
   return result;
+}
+
+/**
+ * Get maximum value for a specific bit width
+ */
+export function getMaxValueForBitWidth(bitWidth: BitWidth): number {
+  if (bitWidth === 64) {
+    return Number.MAX_SAFE_INTEGER; // For 64-bit, use safe integer limit
+  }
+  return Math.pow(2, bitWidth) - 1;
+}
+
+/**
+ * Check if a value exceeds the maximum for the given bit width
+ */
+export function exceedsMaxValue(value: number, bitWidth: BitWidth): boolean {
+  const maxValue = getMaxValueForBitWidth(bitWidth);
+  return value > maxValue;
 }

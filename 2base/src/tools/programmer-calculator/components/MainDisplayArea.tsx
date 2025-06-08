@@ -1,4 +1,5 @@
 import type { Base } from "../types";
+import { Button } from "@/components/ui/button";
 
 interface MainDisplayAreaProps {
   currentValue: string;
@@ -6,6 +7,7 @@ interface MainDisplayAreaProps {
   bitWidth: number;
   error: boolean;
   onBaseSelect: (base: Base) => void;
+  onClear: () => void;
   convertAndDisplay: (value: string, fromBase: Base, toBase: Base) => string;
 }
 
@@ -15,22 +17,33 @@ export function MainDisplayArea({
   bitWidth,
   error,
   onBaseSelect,
+  onClear,
   convertAndDisplay,
 }: MainDisplayAreaProps) {
   return (
     <div className="border rounded-lg p-3 space-y-2">
       {/* Main Value Display */}
       <div className="flex justify-between items-center">
-        <span className="text-xs text-muted-foreground">
-          {base === 2
-            ? "BIN"
-            : base === 8
-            ? "OCT"
-            : base === 10
-            ? "DEC"
-            : "HEX"}{" "}
-          ({bitWidth}-bit)
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {base === 2
+              ? "BIN"
+              : base === 8
+              ? "OCT"
+              : base === 10
+              ? "DEC"
+              : "HEX"}{" "}
+            ({bitWidth}-bit)
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClear}
+            className="h-6 px-2 text-xs"
+          >
+            Clear
+          </Button>
+        </div>
         <div className="text-2xl font-mono font-bold">
           {error ? (
             <span className="text-destructive">Error</span>
