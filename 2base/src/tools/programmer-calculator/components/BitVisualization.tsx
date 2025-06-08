@@ -6,9 +6,6 @@ interface BitVisualizationProps {
   currentValue: string;
   base: Base;
   bitWidth: BitWidth;
-  activeBits: number;
-  clearBits: number;
-  unusedBits: number;
   bitsPerRow: 8 | 16 | 32;
   onBitToggle: (position: number) => void;
 }
@@ -17,9 +14,6 @@ export function BitVisualization({
   currentValue,
   base,
   bitWidth,
-  activeBits,
-  clearBits,
-  unusedBits,
   bitsPerRow,
   onBitToggle,
 }: BitVisualizationProps) {
@@ -163,7 +157,7 @@ export function BitVisualization({
 
       rows.push(
         <div key={`row-${row}`} className="mb-2">
-          <div className="flex gap-1 justify-start">{groups}</div>
+          <div className="flex gap-1 justify-center">{groups}</div>
         </div>
       );
     }
@@ -173,20 +167,10 @@ export function BitVisualization({
 
   return (
     <div className="space-y-2">
-      {/* Header with bit statistics */}
-      <div className="flex items-center justify-between py-1">
-        <div className="text-sm text-muted-foreground">
-          {bitWidth}-bit active • Click to toggle
-        </div>
-        <div className="flex gap-3 text-sm text-muted-foreground">
-          <span>Set: {activeBits}</span>
-          <span>Clear: {clearBits}</span>
-          <span>Unused: {unusedBits}</span>
-        </div>
-      </div>
-
       {/* Bit grid */}
-      <div className="space-y-1">{renderBitGrid()}</div>
+      <div className="space-y-1 flex flex-col items-center">
+        {renderBitGrid()}
+      </div>
     </div>
   );
 }

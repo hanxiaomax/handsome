@@ -1,13 +1,11 @@
 import type { Base } from "../types";
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface MainDisplayAreaProps {
   currentValue: string;
   base: Base;
   bitWidth: number;
   error: boolean;
-  onBaseSelect: (base: Base) => void;
-  onClear: () => void;
   convertAndDisplay: (value: string, fromBase: Base, toBase: Base) => string;
 }
 
@@ -16,35 +14,32 @@ export function MainDisplayArea({
   base,
   bitWidth,
   error,
-  onBaseSelect,
-  onClear,
   convertAndDisplay,
 }: MainDisplayAreaProps) {
+  const copyToClipboard = async (value: string, format: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`Copied ${format} value: ${value}`);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      toast.error("Failed to copy to clipboard");
+    }
+  };
+  const currentBaseString =
+    base === 2 ? "BIN" : base === 8 ? "OCT" : base === 10 ? "DEC" : "HEX";
+
   return (
-    <div className="border rounded-lg p-3 space-y-2">
+    <div className="bg-muted/20  p-4 space-y-3">
+      {/* Header - Current Base and Bit Width */}
+      <div className="text-right">
+        <span className="text-xs text-muted-foreground font-medium">
+          {currentBaseString} ({bitWidth}-bit)
+        </span>
+      </div>
+
       {/* Main Value Display */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {base === 2
-              ? "BIN"
-              : base === 8
-              ? "OCT"
-              : base === 10
-              ? "DEC"
-              : "HEX"}{" "}
-            ({bitWidth}-bit)
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onClear}
-            className="h-6 px-2 text-xs"
-          >
-            Clear
-          </Button>
-        </div>
-        <div className="text-2xl font-mono font-bold">
+      <div className="text-right">
+        <div className="text-2xl p-2 border-2 font-mono font-bold min-h-[2.5rem] flex items-center justify-end">
           {error ? (
             <span className="text-destructive">Error</span>
           ) : (
@@ -54,54 +49,62 @@ export function MainDisplayArea({
       </div>
 
       {/* Multi-Base Display Grid */}
-      <div className="space-y-1">
+      <div>
         <button
-          onClick={() => onBaseSelect(16)}
-          className={`w-full p-2 rounded border text-left flex justify-between items-center transition-colors ${
-            base === 16
-              ? "bg-accent border-accent-foreground"
-              : "hover:bg-muted"
+          onClick={() =>
+            copyToClipboard(convertAndDisplay(currentValue, base, 16), "HEX")
+          }
+          className={`w-full p-3 rounded  text-left flex justify-between items-center transition-colors hover:bg-muted/50 ${
+            base === 16 ? "bg-accent/60 " : ""
           }`}
+          title="Click to copy HEX value"
         >
-          <span className="text-xs text-muted-foreground">HEX</span>
+          <span className="text-sm font-medium text-muted-foreground">HEX</span>
           <span className="font-mono text-sm">
             {convertAndDisplay(currentValue, base, 16)}
           </span>
         </button>
 
         <button
-          onClick={() => onBaseSelect(10)}
-          className={`w-full p-2 rounded border text-left flex justify-between items-center transition-colors ${
-            base === 10
-              ? "bg-accent border-accent-foreground"
-              : "hover:bg-muted"
+          onClick={() =>
+            copyToClipboard(convertAndDisplay(currentValue, base, 10), "DEC")
+          }
+          className={`w-full p-3 rounded  text-left flex justify-between items-center transition-colors hover:bg-muted/50 ${
+            base === 10 ? "bg-accent/60 " : ""
           }`}
+          title="Click to copy DEC value"
         >
-          <span className="text-xs text-muted-foreground">DEC</span>
+          <span className="text-sm font-medium text-muted-foreground">DEC</span>
           <span className="font-mono text-sm">
             {convertAndDisplay(currentValue, base, 10)}
           </span>
         </button>
 
         <button
-          onClick={() => onBaseSelect(8)}
-          className={`w-full p-2 rounded border text-left flex justify-between items-center transition-colors ${
-            base === 8 ? "bg-accent border-accent-foreground" : "hover:bg-muted"
+          onClick={() =>
+            copyToClipboard(convertAndDisplay(currentValue, base, 8), "OCT")
+          }
+          className={`w-full p-3 rounded  text-left flex justify-between items-center transition-colors hover:bg-muted/50 ${
+            base === 8 ? "bg-accent/60 " : ""
           }`}
+          title="Click to copy OCT value"
         >
-          <span className="text-xs text-muted-foreground">OCT</span>
+          <span className="text-sm font-medium text-muted-foreground">OCT</span>
           <span className="font-mono text-sm">
             {convertAndDisplay(currentValue, base, 8)}
           </span>
         </button>
 
         <button
-          onClick={() => onBaseSelect(2)}
-          className={`w-full p-2 rounded border text-left flex justify-between items-center transition-colors ${
-            base === 2 ? "bg-accent border-accent-foreground" : "hover:bg-muted"
+          onClick={() =>
+            copyToClipboard(convertAndDisplay(currentValue, base, 2), "BIN")
+          }
+          className={`w-full p-3 rounded  text-left flex justify-between items-center transition-colors hover:bg-muted/50 ${
+            base === 2 ? "bg-accent/60 " : ""
           }`}
+          title="Click to copy BIN value"
         >
-          <span className="text-xs text-muted-foreground">BIN</span>
+          <span className="text-sm font-medium text-muted-foreground">BIN</span>
           <span className="font-mono text-sm truncate">
             {convertAndDisplay(currentValue, base, 2)}
           </span>

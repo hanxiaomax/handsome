@@ -2,6 +2,7 @@
 
 // import { useState } from "react";
 import { ToolWrapper } from "@/components/common/tool-wrapper";
+import { Toaster } from "sonner";
 
 // Tool Configuration
 import { toolInfo } from "./toolInfo";
@@ -11,7 +12,6 @@ import type { Base, BitWidth } from "./types";
 import { useCalculatorState } from "./lib/hooks/useCalculatorState";
 import { useCalculatorLogic } from "./lib/hooks/useCalculatorLogic";
 import { parseValue, formatForBase } from "./lib/base-converter";
-import { toBinaryWithWidth } from "./lib/base-converter";
 import { toggleBit } from "./lib/bitwise";
 
 // Tool-specific Components
@@ -75,27 +75,19 @@ export default function ProgrammerCalculator() {
   };
 
   const handleClear = () => {
-    actions.resetState();
+    actions.clearValues();
   };
 
-  // Calculate bit statistics
-  const currentDecimal = parseValue(
-    state.currentValue || "0",
-    state.base,
-    state.bitWidth
-  );
-  const binaryString64 = toBinaryWithWidth(currentDecimal, 64);
-  const activeBits =
-    binaryString64.substring(64 - state.bitWidth).split("1").length - 1;
-  const clearBits = state.bitWidth - activeBits;
-  const unusedBits = 64 - state.bitWidth;
-
   return (
-    <ToolWrapper toolInfo={toolInfo} state={{ calculatorState: state }}>
+    <ToolWrapper
+      toolInfo={toolInfo}
+      state={{ calculatorState: state }}
+      maxWidth="full"
+    >
       {/* Main Calculator Panel */}
       <div
         id="programmer-calculator-panel"
-        className="w-full max-w-3xl mx-auto p-3 space-y-3"
+        className="w-full mt-5 max-w-3xl mx-auto border rounded-lg p-3 space-y-2"
       >
         {/* Main Display Area */}
         <MainDisplayArea
@@ -103,22 +95,18 @@ export default function ProgrammerCalculator() {
           base={state.base}
           bitWidth={state.bitWidth}
           error={!!state.error}
-          onBaseSelect={handleBaseSelect}
-          onClear={handleClear}
           convertAndDisplay={convertAndDisplay}
         />
-
-        {/* Bit Visualization */}
-        <BitVisualization
-          currentValue={state.currentValue || "0"}
-          base={state.base}
-          bitWidth={state.bitWidth}
-          activeBits={activeBits}
-          clearBits={clearBits}
-          unusedBits={unusedBits}
-          bitsPerRow={32}
-          onBitToggle={handleBitToggle}
-        />
+        <div className="border rounded-lg p-2">
+          {/* Bit Visualization */}
+          <BitVisualization
+            currentValue={state.currentValue || "0"}
+            base={state.base}
+            bitWidth={state.bitWidth}
+            bitsPerRow={32}
+            onBitToggle={handleBitToggle}
+          />
+        </div>
 
         {/* Control Bar */}
         <ControlBar
@@ -136,11 +124,13 @@ export default function ProgrammerCalculator() {
           onButtonClick={(value: string, type) =>
             handlers.onButtonClick(value, type)
           }
+          onClear={handleClear}
         />
 
         {/* Status Bar */}
         <StatusBar base={state.base} bitWidth={state.bitWidth} />
       </div>
+      <Toaster />
     </ToolWrapper>
   );
 }

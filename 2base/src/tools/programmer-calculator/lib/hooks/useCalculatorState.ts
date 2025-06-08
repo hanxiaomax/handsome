@@ -72,6 +72,19 @@ export function useCalculatorState() {
     resetState: useCallback(() => {
       setState(initialState);
     }, []),
+
+    clearValues: useCallback(() => {
+      setState((prev) => ({
+        ...prev,
+        currentValue: "0",
+        previousValue: "",
+        operation: null,
+        memory: 0,
+        history: [],
+        isNewNumber: true,
+        error: null,
+      }));
+    }, []),
   };
 
   return { state, actions };

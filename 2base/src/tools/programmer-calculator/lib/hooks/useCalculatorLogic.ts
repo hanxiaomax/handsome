@@ -13,7 +13,7 @@ import {
   formatResult,
   validateInput,
 } from "../calculator";
-import { parseValue } from "../base-converter";
+import { parseValue, exceedsMaxValue } from "../base-converter";
 
 interface CalculatorActions {
   updateState: (updates: Partial<CalculatorState>) => void;
@@ -28,6 +28,7 @@ interface CalculatorActions {
   setIsNewNumber: (isNewNumber: boolean) => void;
   setError: (error: string | null) => void;
   resetState: () => void;
+  clearValues: () => void;
 }
 
 export function useCalculatorLogic(
@@ -40,21 +41,38 @@ export function useCalculatorLogic(
         actions.setError(null);
 
         switch (type) {
-          case "number":
+          case "number": {
+            // Silently ignore invalid input instead of showing error
             if (!validateInput(value, state.base)) {
-              actions.setError("Invalid digit for current base");
               return;
             }
 
+            let newValue: string;
             if (state.isNewNumber) {
-              actions.setCurrentValue(value === "0" ? "0" : value);
-              actions.setIsNewNumber(false);
+              newValue = value === "0" ? "0" : value;
             } else {
-              actions.setCurrentValue(
-                state.currentValue === "0" ? value : state.currentValue + value
-              );
+              newValue =
+                state.currentValue === "0" ? value : state.currentValue + value;
+            }
+
+            // Check if the new value exceeds the maximum for current bit width
+            try {
+              const numericValue = parseValue(newValue, state.base);
+              if (exceedsMaxValue(numericValue, state.bitWidth)) {
+                // Silently ignore input that exceeds maximum
+                return;
+              }
+            } catch {
+              // Silently ignore invalid number format
+              return;
+            }
+
+            actions.setCurrentValue(newValue);
+            if (state.isNewNumber) {
+              actions.setIsNewNumber(false);
             }
             break;
+          }
 
           case "operation":
             if (value === "=") {
@@ -107,7 +125,7 @@ export function useCalculatorLogic(
           case "special":
             switch (value) {
               case "clear":
-                actions.resetState();
+                actions.clearValues();
                 break;
               case "backspace":
                 if (state.currentValue.length > 1) {
@@ -155,9 +173,10 @@ export function useCalculatorLogic(
         actions.setCurrentValue(newValue);
         actions.setError(null);
       } catch {
+        // Silently reset to "0" if base conversion fails
         actions.setBase(newBase);
         actions.setCurrentValue("0");
-        actions.setError("Base conversion error");
+        actions.setError(null);
       }
     },
     [state.currentValue, state.base, actions]
