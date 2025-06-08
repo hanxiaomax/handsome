@@ -189,6 +189,95 @@ import type { ToolInfo } from '@/types/tool'
 
 ## Tool Development Guidelines
 
+### Tool Refactoring Best Practices
+
+#### Incremental Refactoring Strategy
+
+**Core Principle**: When performing large-scale refactoring, prioritize modifying existing tool components and layouts rather than rewriting the entire ui.tsx file.
+
+##### ✅ Recommended Refactoring Approach
+
+1. **Component Extraction Method**:
+   ```typescript
+   // Step 1: Identify extractable functional blocks
+   // Step 2: Create dedicated component files  
+   // Step 3: Gradually replace content blocks in ui.tsx
+   // Step 4: Preserve existing state management and event handling logic
+   
+   // Original ui.tsx (maintain overall structure)
+   export default function MyTool() {
+     // Keep existing state management
+     const { state, actions } = useToolState();
+     const { handlers } = useToolLogic(state, actions);
+     
+     return (
+       <ToolWrapper toolInfo={toolInfo} state={state}>
+         {/* Gradually replace with components */}
+         <MainDisplayArea {...displayProps} />
+         <ControlPanel {...controlProps} />
+         <ResultsSection {...resultsProps} />
+       </ToolWrapper>
+     );
+   }
+   ```
+
+2. **Layout Optimization Method**:
+   ```typescript
+   // Optimize layout based on existing structure, don't rewrite
+   // ❌ Avoid: Complete ui.tsx rewrite
+   // ✅ Recommended: Adjust based on existing structure
+   
+   // Maintain original container structure
+   <div className="w-full p-6 space-y-6">
+     {/* Only modify internal component arrangement and styling */}
+     <div className="grid grid-cols-2 gap-4"> {/* New layout approach */}
+       <ExistingInputComponent />
+       <ExistingOutputComponent />
+     </div>
+   </div>
+   ```
+
+3. **Progressive Migration**:
+   ```typescript
+   // Phased migration maintaining functional continuity
+   
+   // Phase 1: Extract components but keep original structure
+   <div id="original-container">
+     <NewComponent1 {...props} />
+     {/* Keep other original parts */}
+     <div className="original-section">...</div>
+   </div>
+   
+   // Phase 2: Gradually replace more parts
+   <div id="original-container">
+     <NewComponent1 {...props} />
+     <NewComponent2 {...props} />
+     {/* Remaining original parts */}
+   </div>
+   
+   // Phase 3: Complete componentization
+   <div id="original-container">
+     <NewComponent1 {...props} />
+     <NewComponent2 {...props} />
+     <NewComponent3 {...props} />
+   </div>
+   ```
+
+##### ❌ Refactoring Methods to Avoid
+
+1. **Complete ui.tsx Rewrite**: High risk, breaks existing state management, difficult code review
+2. **One-time Massive Changes**: Hard to track issues, difficult rollback, impacts development efficiency  
+3. **Ignoring Existing Architecture**: Breaks code continuity, increases team learning cost
+
+##### Refactoring Checklist
+
+- [ ] **Maintain Functional Integrity**: Functions identical before and after refactoring
+- [ ] **Preserve State Management**: Don't change existing state management logic
+- [ ] **Keep Event Handling**: Existing event handlers continue to work
+- [ ] **Incremental Validation**: Can build and run successfully after each step
+- [ ] **Update Documentation**: Update related documentation promptly
+- [ ] **Test Coverage**: Ensure refactored code has sufficient testing
+
 ### Tool Component Structure
 ```typescript
 // tools/[tool-name]/ui.tsx
@@ -1163,7 +1252,8 @@ export const toolInfo: ToolInfo = {
 - [ ] Dark mode support is included and functional
 - [ ] No Chinese characters in any code or comments
 - [ ] Common components are used appropriately
-- [ ] Tool-specific components are justified and well-designed 
+- [ ] Tool-specific components are justified and well-designed
+- [ ] **Refactoring follows incremental approach**: Large-scale changes are done through component extraction and gradual replacement, not ui.tsx rewrites
 
 ### Advanced Tool Review Checklist
 For complex tools with advanced features:
