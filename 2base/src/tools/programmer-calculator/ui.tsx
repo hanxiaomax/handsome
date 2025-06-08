@@ -111,12 +111,6 @@ export default function ProgrammerCalculator() {
           onBitWidthChange={(width: BitWidth) =>
             handlers.onBitWidthChange(width)
           }
-          onButtonClick={(value: string, type: string) =>
-            handlers.onButtonClick(
-              value,
-              type as "number" | "operation" | "function" | "special"
-            )
-          }
         />
 
         {/* Calculator Button Grid */}

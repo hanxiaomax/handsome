@@ -1,18 +1,12 @@
-import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { BitWidth } from "../types";
 
 interface ControlBarProps {
   bitWidth: BitWidth;
   onBitWidthChange: (width: BitWidth) => void;
-  onButtonClick: (value: string, type: string) => void;
 }
 
-export function ControlBar({
-  bitWidth,
-  onBitWidthChange,
-  onButtonClick,
-}: ControlBarProps) {
+export function ControlBar({ bitWidth, onBitWidthChange }: ControlBarProps) {
   return (
     <div className="flex items-center gap-2">
       <ToggleGroup
