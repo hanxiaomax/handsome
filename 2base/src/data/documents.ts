@@ -8,7 +8,7 @@ export interface DocumentInfo {
   category: "guide" | "specification" | "reference" | "changelog";
   tags: string[];
   icon: React.ComponentType<{ className?: string }>;
-  content?: string; // 可以添加文档内容摘要用于搜索
+  content?: string;
 }
 
 export const documents: DocumentInfo[] = [
