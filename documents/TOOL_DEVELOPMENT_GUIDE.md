@@ -198,6 +198,7 @@ src/tools/your-tool-name/
 - 主界面组件，负责整体布局和组件组合
 - 使用ToolWrapper实现标准化控制
 - 集成状态管理和业务逻辑Hook
+- **重要规范：不要在工具UI中添加独立的header，ToolWrapper已提供统一头部**
 
 #### 2. 组件层 (`components/`)
 - 工具专用的UI组件
@@ -604,7 +605,278 @@ export default function TabTool() {
 }
 ```
 
+## 🎨 UI组件开发规范
+
+### 关键布局规范
+
+#### 1. 禁止添加工具标题头部
+**❌ 错误示例**：
+```typescript
+export default function MyTool() {
+  return (
+    <ToolWrapper toolInfo={toolInfo}>
+      {/* ❌ 不要在工具内部添加头部！ */}
+      <div className="text-center">
+        <h1 className="text-lg font-bold">My Tool</h1>
+      </div>
+      
+      <div className="p-6">
+        {/* 工具内容 */}
+      </div>
+    </ToolWrapper>
+  )
+}
+```
+
+**✅ 正确示例**：
+```typescript
+export default function MyTool() {
+  return (
+    <ToolWrapper toolInfo={toolInfo}>
+      {/* ✅ 直接开始工具内容，头部由ToolWrapper/ToolLayout自动提供 */}
+      <div className="w-full p-6 space-y-6">
+        {/* 工具内容 */}
+      </div>
+    </ToolWrapper>
+  )
+}
+```
+
+#### 2. 标准化头部系统
+项目的头部系统采用三层结构：
+
+1. **网站头部** (ToolLayout提供)：
+   - 网站标题 "Vibe Tools"
+   - 侧边栏开关
+   - 全局搜索
+   - 主题切换
+
+2. **工具控制头部** (ToolLayout WindowControls提供)：
+   - 工具名称 (居中显示)
+   - 工具描述 (悬浮提示)
+   - 控制按钮：文档、首页、收藏、最小化
+
+3. **工具内容区域** (你的UI组件)：
+   - 工具的具体功能界面
+   - **不包含任何标题或头部元素**
+
+#### 3. 布局最佳实践
+
+**多面板布局模式**：
+```typescript
+// 适用于复杂工具，需要同时展示输入输出
+<ToolWrapper toolInfo={toolInfo}>
+  <div className="flex flex-col h-full mt-12"> {/* 注意mt-12留给控制栏 */}
+    <ResizablePanelGroup direction="horizontal" className="flex-1">
+      <ResizablePanel defaultSize={50}>
+        {/* 左侧内容 */}
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel defaultSize={50}>
+        {/* 右侧内容 */}
+      </ResizablePanel>
+    </ResizablePanelGroup>
+  </div>
+</ToolWrapper>
+```
+
+**单卡片布局模式**：
+```typescript
+// 适用于简单工具
+<ToolWrapper toolInfo={toolInfo}>
+  <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
+    <Card>
+      <CardHeader>
+        <CardTitle>输入</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* 输入区域 */}
+      </CardContent>
+    </Card>
+    
+    <Card>
+      <CardHeader>
+        <CardTitle>结果</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* 输出区域 */}
+      </CardContent>
+    </Card>
+  </div>
+</ToolWrapper>
+```
+
+**紧凑布局模式**：
+```typescript
+// 适用于计算器类工具
+<ToolWrapper toolInfo={toolInfo}>
+  <div className="w-full max-w-3xl mx-auto p-3 space-y-3">
+    {/* 显示区域 */}
+    <div className="border rounded-lg p-3">
+      {/* 主显示 */}
+    </div>
+    
+    {/* 控制区域 */}
+    <div className="flex items-center gap-2">
+      {/* 控制按钮 */}
+    </div>
+    
+    {/* 操作区域 */}
+    <div className="border rounded-lg p-2">
+      {/* 按钮网格等 */}
+    </div>
+  </div>
+</ToolWrapper>
+```
+
+#### 4. 间距规范
+- **外容器**: 使用 `p-3` 到 `p-6` 进行内边距
+- **组件间距**: 使用 `space-y-3` 到 `space-y-6` 进行垂直间距
+- **按钮间距**: 使用 `gap-1` 到 `gap-2` 进行小组件间距
+- **卡片内容**: 使用 CardHeader/CardContent 的默认间距
+
+#### 5. 响应式设计
+- **最大宽度限制**: 根据工具复杂度使用 `max-w-3xl`、`max-w-4xl` 等
+- **居中对齐**: 使用 `mx-auto` 实现居中
+- **移动端适配**: 确保在小屏幕上功能可用
+
+### 组件命名和ID规范
+为了便于维护和通信，工具组件应该使用语义化的ID：
+
+```typescript
+export default function MyTool() {
+  return (
+    <ToolWrapper toolInfo={toolInfo}>
+      {/* 主容器 */}
+      <div id="tool-main-container" className="w-full p-6 space-y-6">
+        
+        {/* 输入区域 */}
+        <div id="input-section" className="space-y-4">
+          {/* 输入控件 */}
+        </div>
+        
+        {/* 控制面板 */}
+        <div id="control-panel" className="flex items-center gap-2">
+          {/* 控制按钮 */}
+        </div>
+        
+        {/* 结果显示 */}
+        <div id="results-section" className="space-y-4">
+          {/* 结果内容 */}
+        </div>
+      </div>
+    </ToolWrapper>
+  )
+}
+        </Tabs>
+      </div>
+    </ToolWrapper>
+  )
+}
+```
+
 ## 🧱 组件化最佳实践
+
+### 🔄 重构最佳实践
+
+#### 增量式重构原则
+
+**核心原则**: 当进行大规模重构时，优先通过修改工具现有的组件和布局来实现，而不是直接重写整个ui.tsx文件。
+
+##### ✅ 推荐的重构方法
+
+1. **组件提炼法**：
+   ```typescript
+   // 步骤1：识别可提炼的功能区块
+   // 步骤2：创建专用组件文件
+   // 步骤3：逐步替换ui.tsx中的内容块
+   // 步骤4：保持原有状态管理和事件处理逻辑
+   
+   // 原有ui.tsx（保持整体结构）
+   export default function MyTool() {
+     // 保持现有的状态管理
+     const { state, actions } = useToolState();
+     const { handlers } = useToolLogic(state, actions);
+     
+     return (
+       <ToolWrapper toolInfo={toolInfo} state={state}>
+         {/* 逐步替换为组件 */}
+         <MainDisplayArea {...displayProps} />
+         <ControlPanel {...controlProps} />
+         <ResultsSection {...resultsProps} />
+       </ToolWrapper>
+     );
+   }
+   ```
+
+2. **布局优化法**：
+   ```typescript
+   // 在现有基础上优化布局，而不是重写
+   // ❌ 避免：完全重写ui.tsx
+   // ✅ 推荐：在现有结构基础上调整
+   
+   // 保持原有的容器结构
+   <div className="w-full p-6 space-y-6">
+     {/* 只修改内部组件的排列和样式 */}
+     <div className="grid grid-cols-2 gap-4"> {/* 新的布局方式 */}
+       <ExistingInputComponent />
+       <ExistingOutputComponent />
+     </div>
+   </div>
+   ```
+
+3. **渐进式迁移**：
+   ```typescript
+   // 阶段性迁移，保持功能连续性
+   
+   // Phase 1: 提炼组件但保持原有结构
+   <div id="original-container">
+     <NewComponent1 {...props} />
+     {/* 保留原有的其他部分 */}
+     <div className="original-section">...</div>
+   </div>
+   
+   // Phase 2: 逐步替换更多部分
+   <div id="original-container">
+     <NewComponent1 {...props} />
+     <NewComponent2 {...props} />
+     {/* 最后剩余的原有部分 */}
+   </div>
+   
+   // Phase 3: 完全组件化
+   <div id="original-container">
+     <NewComponent1 {...props} />
+     <NewComponent2 {...props} />
+     <NewComponent3 {...props} />
+   </div>
+   ```
+
+##### ❌ 避免的重构方法
+
+1. **完全重写ui.tsx**：
+   - 风险高，容易引入新bug
+   - 破坏现有的状态管理逻辑
+   - 难以进行代码review
+   - 测试成本高
+
+2. **一次性大规模修改**：
+   - 难以追踪问题来源
+   - 回滚困难
+   - 影响开发效率
+
+3. **忽略现有架构**：
+   - 破坏代码的连续性
+   - 增加团队学习成本
+   - 可能引入不兼容的更改
+
+##### 重构检查清单
+
+- [ ] **保持功能完整性**：重构前后功能完全一致
+- [ ] **保留状态管理**：不改变现有的状态管理逻辑
+- [ ] **保持事件处理**：现有的事件处理器继续工作
+- [ ] **增量验证**：每个步骤后都能成功构建和运行
+- [ ] **文档更新**：及时更新相关文档
+- [ ] **测试覆盖**：确保重构后的代码有足够的测试
 
 ### 专用组件设计原则
 
