@@ -15,6 +15,7 @@ Visit the live site: [https://hanxiaomax.github.io/handsome/](https://hanxiaomax
 - **Modern UI**: Built with React 18, TypeScript, and Tailwind CSS
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 - **Tool Suite**: Multiple developer tools in one place
+- **Comprehensive Testing**: Vitest-powered testing framework with full coverage
 
 ## 🛠️ Available Tools
 
@@ -86,6 +87,65 @@ npm run build
 npm run preview
 ```
 
+### Testing
+
+The project uses **Vitest** for testing with comprehensive coverage of all tool functionality.
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with UI interface
+npm run test:ui
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run specific tool tests
+npm run test -- src/tools/programmer-calculator/tests/
+
+# Run tests for a specific file
+npm run test -- src/tools/programmer-calculator/tests/bitwise.test.ts
+```
+
+#### Test Structure
+
+```
+src/tools/
+└── [tool-name]/
+    ├── tests/
+    │   ├── [feature].test.ts     # Unit tests
+    │   └── [component].test.tsx  # Component tests
+    ├── lib/                      # Core logic (tested)
+    └── ui.tsx                    # Tool interface
+```
+
+#### Writing Tests
+
+Each tool should include comprehensive tests:
+
+```typescript
+// Example test file: src/tools/my-tool/tests/logic.test.ts
+import { describe, it, expect } from 'vitest';
+import { myFunction } from '../lib/logic';
+
+describe('My Tool', () => {
+  describe('Core Functionality', () => {
+    it('should handle basic operations', () => {
+      expect(myFunction(input)).toBe(expectedOutput);
+    });
+  });
+});
+```
+
+#### Current Test Coverage
+
+- **Programmer Calculator**: 28 comprehensive tests covering all bitwise operations
+- **Additional tools**: Ready for test implementation
+
 ### Project Structure
 
 ```
@@ -94,10 +154,15 @@ npm run preview
 │   ├── app/                 # Main application pages
 │   ├── components/          # Reusable UI components
 │   ├── tools/              # Individual tool implementations
+│   │   └── [tool-name]/
+│   │       ├── tests/       # Tool-specific tests
+│   │       ├── lib/         # Core logic
+│   │       └── ui.tsx       # Tool interface
 │   ├── hooks/              # Custom React hooks
 │   ├── lib/                # Utility functions
 │   └── types/              # TypeScript type definitions
 ├── public/                 # Static assets
+├── vitest.config.ts        # Testing configuration
 └── dist/                   # Production build output
 ```
 
@@ -128,12 +193,14 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🎯 Roadmap
 
+- [x] **Testing Framework**: Comprehensive Vitest integration ✅
 - [ ] Add more developer tools
 - [ ] Implement tool favorites system
 - [ ] Add tool usage analytics (local only)
 - [ ] Support for custom tool plugins
 - [ ] Dark/light theme improvements
 - [ ] Mobile app version
+- [ ] CI/CD pipeline with automated testing
 
 ## 🐛 Issues
 

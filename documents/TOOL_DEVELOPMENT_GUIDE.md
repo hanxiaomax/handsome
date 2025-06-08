@@ -571,78 +571,7 @@ export default function SimpleTool() {
 }
 ```
 
-### Tab面板模式
-
-适用于多视图切换的工具：
-
-```typescript
-export default function TabTool() {
-  return (
-    <ToolWrapper toolInfo={toolInfo} state={state}>
-      <div className="w-full p-6 mt-12">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="input">Input</TabsTrigger>
-            <TabsTrigger value="process">Process</TabsTrigger>
-            <TabsTrigger value="output">Output</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="input">
-            {/* 输入界面 */}
-          </TabsContent>
-          
-          <TabsContent value="process">
-            {/* 处理界面 */}
-          </TabsContent>
-          
-          <TabsContent value="output">
-            {/* 输出界面 */}
-          </TabsContent>
-        </Tabs>
-      </div>
-    </ToolWrapper>
-  )
-}
-```
-
-## 🎨 UI组件开发规范
-
-### 关键布局规范
-
-#### 1. 禁止添加工具标题头部
-**❌ 错误示例**：
-```typescript
-export default function MyTool() {
-  return (
-    <ToolWrapper toolInfo={toolInfo}>
-      {/* ❌ 不要在工具内部添加头部！ */}
-      <div className="text-center">
-        <h1 className="text-lg font-bold">My Tool</h1>
-      </div>
-      
-      <div className="p-6">
-        {/* 工具内容 */}
-      </div>
-    </ToolWrapper>
-  )
-}
-```
-
-**✅ 正确示例**：
-```typescript
-export default function MyTool() {
-  return (
-    <ToolWrapper toolInfo={toolInfo}>
-      {/* ✅ 直接开始工具内容，头部由ToolWrapper/ToolLayout自动提供 */}
-      <div className="w-full p-6 space-y-6">
-        {/* 工具内容 */}
-      </div>
-    </ToolWrapper>
-  )
-}
-```
-
-#### 2. 标准化头部系统
+#### 1. 标准化头部系统
 项目的头部系统采用三层结构：
 
 1. **网站头部** (ToolLayout提供)：
@@ -660,7 +589,7 @@ export default function MyTool() {
    - 工具的具体功能界面
    - **不包含任何标题或头部元素**
 
-#### 3. 布局最佳实践
+#### 2. 布局最佳实践
 
 **多面板布局模式**：
 ```typescript

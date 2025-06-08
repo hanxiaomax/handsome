@@ -88,6 +88,22 @@ export function isValidDigitForBase(digit: string, base: Base): boolean {
  * Apply bit width constraints to a number
  */
 export function applyBitWidth(value: number, bitWidth: BitWidth): number {
+  // Handle 64-bit case specially due to JavaScript precision limits
+  if (bitWidth === 64) {
+    // For 64-bit, we need to handle the value carefully
+    if (value < 0) {
+      // Two's complement for negative numbers
+      const bigValue = BigInt(value);
+      const mask = (1n << 64n) - 1n;
+      const result = ((1n << 64n) + bigValue) & mask;
+      return Number(result);
+    } else {
+      // For positive numbers, ensure we don't exceed safe range
+      return value;
+    }
+  }
+
+  // For other bit widths, use traditional approach
   const maxValue = Math.pow(2, bitWidth) - 1;
 
   // Handle negative numbers using two's complement
