@@ -36,42 +36,6 @@ export function ControlBar({
           64
         </ToggleGroupItem>
       </ToggleGroup>
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-8 px-2 text-xs"
-        onClick={() => onButtonClick("clear", "special")}
-      >
-        Clear
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-8 px-2 text-xs"
-        onClick={() => onButtonClick("~", "operation")}
-      >
-        NOT
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-8 px-2 text-xs"
-        onClick={() => onButtonClick("<<", "operation")}
-      >
-        LSL
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-8 px-2 text-xs"
-        onClick={() => onButtonClick(">>", "operation")}
-      >
-        LSR
-      </Button>
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import type { BitWidth } from "../types";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface BitVisualizationProps {
   currentDecimal: number;
@@ -21,108 +23,100 @@ export function BitVisualization({
   onBitToggle,
   testBit,
 }: BitVisualizationProps) {
-  // Render 64-bit grid with configurable bits per row
+  // Render bit grid from highest to lowest bit
   const renderBitGrid = () => {
-    const rows = [];
     const totalBits = 64;
     const numRows = Math.ceil(totalBits / bitsPerRow);
+    const rows = [];
 
-    // Create bit button
-    const createBitButton = (bitIndex: number) => {
-      const isSet = testBit(currentDecimal, bitIndex);
-      const isDisabled = bitIndex >= bitWidth;
+    // Helper function to create a single bit button
+    const createBitButton = (bitPosition: number) => {
+      const isSet = testBit(currentDecimal, bitPosition);
+      const isDisabled = bitPosition >= bitWidth;
 
       return (
-        <button
-          key={bitIndex}
-          disabled={isDisabled}
-          className={`w-6 h-6 text-xs font-mono border-0 ${
-            isDisabled
-              ? "bg-muted/30 text-muted-foreground/50 cursor-not-allowed"
-              : isSet
-              ? "bg-orange-500 text-white hover:bg-orange-600"
-              : "bg-muted/80 text-foreground hover:bg-muted"
-          }`}
-          onClick={() => !isDisabled && onBitToggle(bitIndex)}
-          title={
-            isDisabled
-              ? `Bit ${bitIndex}: disabled`
-              : `Bit ${bitIndex}: ${isSet ? "1" : "0"}`
-          }
+        <div
+          key={`bit-${bitPosition}`}
+          className="flex flex-col items-center gap-0.5"
         >
-          {isSet ? "1" : "0"}
-        </button>
+          {/* Bit position label */}
+          <div className="text-xs text-muted-foreground font-mono w-5 text-center leading-none">
+            {bitPosition}
+          </div>
+
+          {/* Bit button */}
+          <Button
+            variant={isSet ? "default" : "outline"}
+            size="sm"
+            disabled={isDisabled}
+            className={cn(
+              "w-5 h-5 text-xs font-mono p-0 min-w-0 leading-none",
+              isDisabled && "opacity-30 cursor-not-allowed",
+              isSet &&
+                !isDisabled &&
+                "bg-primary text-primary-foreground hover:bg-primary/90",
+              !isSet &&
+                !isDisabled &&
+                "hover:bg-accent hover:text-accent-foreground"
+            )}
+            onClick={() => !isDisabled && onBitToggle(bitPosition)}
+            title={`Bit ${bitPosition}: ${isSet ? "1" : "0"}${
+              isDisabled ? " (disabled)" : ""
+            }`}
+          >
+            {isSet ? "1" : "0"}
+          </Button>
+        </div>
       );
     };
 
-    // Create labels for bit ranges
-    const createLabels = (startBit: number, bitsInRow: number) => {
-      const labels = [];
-      const groupSize = 8; // Always group by 8 bits
-      const numGroups = Math.ceil(bitsInRow / groupSize);
-
-      for (let g = 0; g < numGroups; g++) {
-        const groupStart = Math.max(
-          0,
-          startBit - g * groupSize - (groupSize - 1)
-        );
-        const groupEnd = Math.max(0, startBit - g * groupSize);
-        labels.push(
-          <div
-            key={`label-${g}`}
-            className="text-xs text-muted-foreground w-12 text-center"
-          >
-            {groupEnd}-{groupStart}
-          </div>
-        );
+    // Helper function to create 8-bit groups with spacing
+    const createBitGroup = (startBit: number, count: number) => {
+      const bits = [];
+      for (let i = 0; i < count; i++) {
+        const bitPos = startBit - i;
+        if (bitPos >= 0) {
+          bits.push(createBitButton(bitPos));
+        }
       }
-
-      return labels;
+      return (
+        <div key={`group-${startBit}`} className="flex gap-px">
+          {bits}
+        </div>
+      );
     };
 
-    // Create bit groups with spacing
-    const createBitGroups = (bits: React.ReactNode[]) => {
+    // Generate rows: each row shows bitsPerRow bits
+    for (let row = 0; row < numRows; row++) {
+      const highestBitInRow = totalBits - 1 - row * bitsPerRow;
+      const lowestBitInRow = Math.max(0, highestBitInRow - bitsPerRow + 1);
+
       const groups = [];
       const groupSize = 8;
 
-      for (let i = 0; i < bits.length; i += groupSize) {
-        const group = bits.slice(i, i + groupSize);
-        groups.push(
-          <div key={`group-${i}`} className="flex gap-0.5">
-            {group}
-          </div>
+      // Create 8-bit groups within this row
+      for (
+        let groupStart = highestBitInRow;
+        groupStart >= lowestBitInRow;
+        groupStart -= groupSize
+      ) {
+        const actualGroupSize = Math.min(
+          groupSize,
+          groupStart - lowestBitInRow + 1
         );
+        groups.push(createBitGroup(groupStart, actualGroupSize));
 
-        // Add spacer between groups (except for the last group)
-        if (i + groupSize < bits.length) {
-          groups.push(<div key={`spacer-${i}`} className="w-1"></div>);
+        // Add spacer between groups (but not after the last group)
+        if (groupStart - groupSize >= lowestBitInRow) {
+          groups.push(
+            <div key={`spacer-${groupStart}`} className="w-1.5"></div>
+          );
         }
       }
 
-      return groups;
-    };
-
-    // Generate rows from highest bit to lowest
-    for (let row = 0; row < numRows; row++) {
-      const startBit = totalBits - 1 - row * bitsPerRow;
-      const endBit = Math.max(0, startBit - bitsPerRow + 1);
-      const actualBitsInRow = startBit - endBit + 1;
-
-      // Create bits for this row (from high to low)
-      const rowBits = [];
-      for (let bit = startBit; bit >= endBit; bit--) {
-        rowBits.push(createBitButton(bit));
-      }
-
-      // Create labels above bits
-      const labels = createLabels(startBit, actualBitsInRow);
-
       rows.push(
-        <div key={`row-${row}`} className="space-y-1">
-          {/* Labels above bits */}
-          <div className="flex gap-1 justify-start">{labels}</div>
-          {/* Bit buttons with grouping */}
-          <div className="flex gap-1">{createBitGroups(rowBits)}</div>
+        <div key={`row-${row}`} className="mb-2">
+          <div className="flex gap-1 justify-start">{groups}</div>
         </div>
       );
     }
@@ -131,18 +125,21 @@ export function BitVisualization({
   };
 
   return (
-    <div className="border rounded-lg p-3 space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">
+    <div className="space-y-2">
+      {/* Header with bit statistics */}
+      <div className="flex items-center justify-between py-1">
+        <div className="text-sm text-muted-foreground">
           {bitWidth}-bit active • Click to toggle
         </div>
-        <div className="flex gap-4 text-xs text-muted-foreground">
+        <div className="flex gap-3 text-sm text-muted-foreground">
           <span>Set: {activeBits}</span>
           <span>Clear: {clearBits}</span>
           <span>Unused: {unusedBits}</span>
         </div>
       </div>
-      <div className="space-y-2">{renderBitGrid()}</div>
+
+      {/* Bit grid */}
+      <div className="space-y-1">{renderBitGrid()}</div>
     </div>
   );
 }

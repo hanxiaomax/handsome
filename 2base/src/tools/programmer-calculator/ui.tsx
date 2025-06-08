@@ -58,7 +58,7 @@ export default function ProgrammerCalculator() {
   const handleBitToggle = (position: number) => {
     try {
       const decimal = parseValue(state.currentValue || "0", state.base);
-      const newDecimal = toggleBit(decimal, position);
+      const newDecimal = toggleBit(decimal, position, state.bitWidth);
       const newValue = formatForBase(newDecimal.toString(), state.base);
       actions.setCurrentValue(newValue);
     } catch {

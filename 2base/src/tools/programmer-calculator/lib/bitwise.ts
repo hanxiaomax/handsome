@@ -41,16 +41,31 @@ export function rightShift(
   return applyBitWidth(result, bitWidth);
 }
 
-export function setBit(value: number, position: number): number {
-  return value | (1 << position);
+export function setBit(
+  value: number,
+  position: number,
+  bitWidth: BitWidth
+): number {
+  const result = value | (1 << position);
+  return applyBitWidth(result, bitWidth);
 }
 
-export function clearBit(value: number, position: number): number {
-  return value & ~(1 << position);
+export function clearBit(
+  value: number,
+  position: number,
+  bitWidth: BitWidth
+): number {
+  const result = value & ~(1 << position);
+  return applyBitWidth(result, bitWidth);
 }
 
-export function toggleBit(value: number, position: number): number {
-  return value ^ (1 << position);
+export function toggleBit(
+  value: number,
+  position: number,
+  bitWidth: BitWidth
+): number {
+  const result = value ^ (1 << position);
+  return applyBitWidth(result, bitWidth);
 }
 
 export function testBit(value: number, position: number): boolean {
