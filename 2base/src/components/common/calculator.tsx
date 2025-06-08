@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,7 @@ interface CalculatorState {
   previousValue: number | null;
   operation: string | null;
   waitingForNewValue: boolean;
+  expression: string;
 }
 
 /**
@@ -47,11 +48,26 @@ export function Calculator({
     previousValue: null,
     operation: null,
     waitingForNewValue: false,
+    expression: initialValue.toString(),
   });
 
   const [focusedInput, setFocusedInput] = useState<HTMLInputElement | null>(
     null
   );
+
+  // Refs for auto-scrolling to the right
+  const expressionRef = useRef<HTMLDivElement>(null);
+  const displayRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll to right when expression or display changes
+  useEffect(() => {
+    if (expressionRef.current) {
+      expressionRef.current.scrollLeft = expressionRef.current.scrollWidth;
+    }
+    if (displayRef.current) {
+      displayRef.current.scrollLeft = displayRef.current.scrollWidth;
+    }
+  }, [state.expression, state.display]);
 
   // Format display value
   const formatValue = useCallback(
@@ -140,6 +156,22 @@ export function Calculator({
           ? num
           : prevState.display + num;
 
+        // Update expression based on context
+        let newExpression;
+        if (prevState.waitingForNewValue) {
+          // Starting new number after operation
+          newExpression = prevState.expression + num;
+        } else if (prevState.display === "0") {
+          // Replacing initial zero
+          newExpression =
+            prevState.expression === "0"
+              ? num
+              : prevState.expression.slice(0, -1) + num;
+        } else {
+          // Appending to current number
+          newExpression = prevState.expression + num;
+        }
+
         const value = parseFloat(newDisplay);
         if (realTimeBinding && !isNaN(value)) {
           notifyValueChange(value);
@@ -148,6 +180,7 @@ export function Calculator({
         return {
           ...prevState,
           display: newDisplay,
+          expression: newExpression,
           waitingForNewValue: false,
         };
       });
@@ -158,10 +191,14 @@ export function Calculator({
   const inputDecimal = useCallback(() => {
     setState((prevState) => {
       let newDisplay;
+      let newExpression;
+
       if (prevState.waitingForNewValue) {
         newDisplay = "0.";
+        newExpression = prevState.expression + "0.";
       } else if (prevState.display.indexOf(".") === -1) {
         newDisplay = prevState.display + ".";
+        newExpression = prevState.expression + ".";
       } else {
         return prevState; // Already has decimal
       }
@@ -169,6 +206,7 @@ export function Calculator({
       return {
         ...prevState,
         display: newDisplay,
+        expression: newExpression,
         waitingForNewValue: false,
       };
     });
@@ -180,6 +218,7 @@ export function Calculator({
       previousValue: null,
       operation: null,
       waitingForNewValue: false,
+      expression: "0",
     });
   }, []);
 
@@ -191,6 +230,8 @@ export function Calculator({
 
         if (prevState.previousValue === null) {
           newState.previousValue = inputValue;
+          newState.expression =
+            prevState.expression + " " + nextOperation + " ";
         } else if (prevState.operation && nextOperation !== "=") {
           const currentValue = prevState.previousValue || 0;
           let result;
@@ -217,6 +258,8 @@ export function Calculator({
 
           newState.display = String(result);
           newState.previousValue = result;
+          newState.expression =
+            prevState.expression + " " + nextOperation + " ";
 
           // Notify of calculation result
           notifyValueChange(result);
@@ -227,6 +270,7 @@ export function Calculator({
 
         if (nextOperation === "=") {
           newState.previousValue = null;
+          newState.expression = prevState.expression + " = " + newState.display;
         }
 
         return newState;
@@ -270,6 +314,7 @@ export function Calculator({
           previousValue: null,
           operation: null,
           waitingForNewValue: true,
+          expression: prevState.expression + " = " + String(result),
         };
       }
       return prevState;
@@ -281,37 +326,48 @@ export function Calculator({
       setState((prevState) => {
         const value = parseFloat(prevState.display);
         let result;
+        let functionExpression;
 
         switch (func) {
           case "sin":
             result = Math.sin((value * Math.PI) / 180);
+            functionExpression = `sin(${value})`;
             break;
           case "cos":
             result = Math.cos((value * Math.PI) / 180);
+            functionExpression = `cos(${value})`;
             break;
           case "tan":
             result = Math.tan((value * Math.PI) / 180);
+            functionExpression = `tan(${value})`;
             break;
           case "ln":
             result = value > 0 ? Math.log(value) : 0;
+            functionExpression = `ln(${value})`;
             break;
           case "log":
             result = value > 0 ? Math.log10(value) : 0;
+            functionExpression = `log(${value})`;
             break;
           case "√":
             result = value >= 0 ? Math.sqrt(value) : 0;
+            functionExpression = `√(${value})`;
             break;
           case "x²":
             result = value * value;
+            functionExpression = `(${value})²`;
             break;
           case "1/x":
             result = value !== 0 ? 1 / value : 0;
+            functionExpression = `1/(${value})`;
             break;
           case "π":
             result = Math.PI;
+            functionExpression = "π";
             break;
           case "e":
             result = Math.E;
+            functionExpression = "e";
             break;
           default:
             return prevState;
@@ -323,6 +379,7 @@ export function Calculator({
         return {
           ...prevState,
           display: String(result),
+          expression: functionExpression + " = " + String(result),
           waitingForNewValue: true,
         };
       });
@@ -335,8 +392,25 @@ export function Calculator({
       className={cn("bg-background border rounded-lg p-4 space-y-4", className)}
     >
       {/* Display */}
-      <div className="bg-muted p-3 rounded text-right font-mono text-lg min-h-[3rem] flex items-center justify-end border">
-        {state.display}
+      <div className="bg-muted p-3 rounded border space-y-1">
+        {/* Expression line - smaller text with horizontal scroll */}
+        <div className="relative w-full min-h-[1.5rem]">
+          <div
+            ref={expressionRef}
+            className="absolute inset-0 text-right font-mono text-sm text-muted-foreground flex items-center justify-end overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent"
+          >
+            <span className="inline-block">{state.expression || "0"}</span>
+          </div>
+        </div>
+        {/* Current value line - larger text with horizontal scroll */}
+        <div className="relative w-full min-h-[2rem]">
+          <div
+            ref={displayRef}
+            className="absolute inset-0 text-right font-mono text-lg flex items-center justify-end overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent"
+          >
+            <span className="inline-block">{state.display}</span>
+          </div>
+        </div>
       </div>
 
       {/* Scientific Functions */}
@@ -439,10 +513,15 @@ export function Calculator({
           variant="destructive"
           size="sm"
           onClick={() =>
-            setState((prevState) => ({
-              ...prevState,
-              display: prevState.display.slice(0, -1) || "0",
-            }))
+            setState((prevState) => {
+              const newDisplay = prevState.display.slice(0, -1) || "0";
+              const newExpression = prevState.expression.slice(0, -1) || "0";
+              return {
+                ...prevState,
+                display: newDisplay,
+                expression: newExpression,
+              };
+            })
           }
         >
           ⌫
