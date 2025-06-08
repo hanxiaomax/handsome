@@ -20,6 +20,7 @@ interface CalculatorActions {
   setCurrentValue: (value: string) => void;
   setPreviousValue: (value: string) => void;
   setOperation: (operation: CalculatorState["operation"]) => void;
+  setExpression: (expression: string) => void;
   setBase: (base: Base) => void;
   setBitWidth: (bitWidth: BitWidth) => void;
   setMode: (mode: CalculatorMode) => void;
@@ -30,6 +31,52 @@ interface CalculatorActions {
   resetState: () => void;
   clearValues: () => void;
 }
+
+// 辅助函数：格式化操作符用于显示
+const formatOperatorForDisplay = (op: string): string => {
+  switch (op) {
+    case "&":
+      return " & ";
+    case "|":
+      return " | ";
+    case "^":
+      return " ^ ";
+    case "<<":
+      return " << ";
+    case ">>":
+      return " >> ";
+    case "+":
+      return " + ";
+    case "-":
+      return " - ";
+    case "*":
+      return " * ";
+    case "/":
+      return " / ";
+    case "%":
+      return " % ";
+    default:
+      return ` ${op} `;
+  }
+};
+
+// 辅助函数：更新表达式显示
+const updateExpression = (
+  currentValue: string,
+  previousValue: string,
+  operation: string | null,
+  actions: CalculatorActions
+) => {
+  if (!operation) {
+    actions.setExpression(currentValue);
+  } else if (previousValue) {
+    actions.setExpression(
+      `${previousValue}${formatOperatorForDisplay(operation)}${currentValue}`
+    );
+  } else {
+    actions.setExpression(currentValue);
+  }
+};
 
 export function useCalculatorLogic(
   state: CalculatorState,
@@ -42,6 +89,36 @@ export function useCalculatorLogic(
 
         switch (type) {
           case "number": {
+            // Handle special number cases
+            if (value === "00") {
+              // Handle double zero
+              const newValue =
+                state.isNewNumber || state.currentValue === "0"
+                  ? "0"
+                  : state.currentValue + "00";
+
+              try {
+                const numericValue = parseValue(newValue, state.base);
+                if (exceedsMaxValue(numericValue, state.bitWidth)) {
+                  return;
+                }
+                actions.setCurrentValue(newValue);
+                if (state.isNewNumber) {
+                  actions.setIsNewNumber(false);
+                }
+                // 更新表达式显示
+                updateExpression(
+                  newValue,
+                  state.previousValue,
+                  state.operation,
+                  actions
+                );
+              } catch {
+                return;
+              }
+              break;
+            }
+
             // Silently ignore invalid input instead of showing error
             if (!validateInput(value, state.base)) {
               return;
@@ -71,11 +148,19 @@ export function useCalculatorLogic(
             if (state.isNewNumber) {
               actions.setIsNewNumber(false);
             }
+            // 更新表达式显示
+            updateExpression(
+              newValue,
+              state.previousValue,
+              state.operation,
+              actions
+            );
             break;
           }
 
           case "operation":
             if (value === "=") {
+              // 只有在按等号时才计算结果
               if (state.operation && state.previousValue) {
                 const result = performCalculation(
                   state.previousValue,
@@ -84,17 +169,22 @@ export function useCalculatorLogic(
                   state.base,
                   state.bitWidth
                 );
-                actions.setCurrentValue(formatResult(result, state.base));
+                const formattedResult = formatResult(result, state.base);
+                actions.setCurrentValue(formattedResult);
                 actions.setPreviousValue("");
                 actions.setOperation(null);
                 actions.setIsNewNumber(true);
+                // 显示计算结果，清除表达式
+                actions.setExpression(formattedResult);
               }
             } else {
+              // 其他操作符：不立即计算，只更新状态和表达式
               if (
                 state.operation &&
                 state.previousValue &&
                 !state.isNewNumber
               ) {
+                // 如果有待计算的操作，先完成它（连续运算）
                 const result = performCalculation(
                   state.previousValue,
                   state.currentValue,
@@ -102,23 +192,106 @@ export function useCalculatorLogic(
                   state.base,
                   state.bitWidth
                 );
-                actions.setCurrentValue(formatResult(result, state.base));
+                const formattedResult = formatResult(result, state.base);
+                actions.setCurrentValue(formattedResult);
+                actions.setPreviousValue(formattedResult);
+                actions.setOperation(value as CalculatorState["operation"]);
+                actions.setIsNewNumber(true);
+                // 更新表达式显示新的操作
+                actions.setExpression(
+                  `${formattedResult}${formatOperatorForDisplay(value)}`
+                );
+              } else {
+                // 首次输入操作符或新的操作
+                actions.setPreviousValue(state.currentValue);
+                actions.setOperation(value as CalculatorState["operation"]);
+                actions.setIsNewNumber(true);
+                // 显示当前表达式
+                actions.setExpression(
+                  `${state.currentValue}${formatOperatorForDisplay(value)}`
+                );
               }
-              actions.setPreviousValue(state.currentValue);
-              actions.setOperation(value as CalculatorState["operation"]);
-              actions.setIsNewNumber(true);
             }
             break;
 
           case "function": {
-            const result = performScientificFunction(
-              state.currentValue,
-              value,
-              state.base,
-              state.angleUnit
-            );
-            actions.setCurrentValue(formatResult(result, state.base));
-            actions.setIsNewNumber(true);
+            // Handle bitwise operations as unary or binary operations
+            switch (value) {
+              case "~": {
+                // NOT operation (unary) - 立即计算
+                const notResult = performCalculation(
+                  "0",
+                  state.currentValue,
+                  "~",
+                  state.base,
+                  state.bitWidth
+                );
+                const formattedResult = formatResult(notResult, state.base);
+                actions.setCurrentValue(formattedResult);
+                actions.setIsNewNumber(true);
+                // 显示一元操作表达式
+                actions.setExpression(
+                  `~${state.currentValue} = ${formattedResult}`
+                );
+                break;
+              }
+              case "&":
+              case "|":
+              case "^":
+              case "<<":
+              case ">>": {
+                // Binary operations - 准备第二个操作数（不立即计算）
+                if (
+                  state.operation &&
+                  state.previousValue &&
+                  !state.isNewNumber
+                ) {
+                  // Complete previous operation first
+                  const result = performCalculation(
+                    state.previousValue,
+                    state.currentValue,
+                    state.operation,
+                    state.base,
+                    state.bitWidth
+                  );
+                  const formattedResult = formatResult(result, state.base);
+                  actions.setCurrentValue(formattedResult);
+                  actions.setPreviousValue(formattedResult);
+                  actions.setOperation(value as CalculatorState["operation"]);
+                  actions.setIsNewNumber(true);
+                  // 更新表达式显示
+                  actions.setExpression(
+                    `${formattedResult}${formatOperatorForDisplay(value)}`
+                  );
+                } else {
+                  actions.setPreviousValue(state.currentValue);
+                  actions.setOperation(value as CalculatorState["operation"]);
+                  actions.setIsNewNumber(true);
+                  // 显示当前表达式
+                  actions.setExpression(
+                    `${state.currentValue}${formatOperatorForDisplay(value)}`
+                  );
+                }
+                break;
+              }
+              default: {
+                // Handle other scientific functions if needed - 立即计算
+                const result = performScientificFunction(
+                  state.currentValue,
+                  value,
+                  state.base,
+                  state.angleUnit
+                );
+                const formattedResult = formatResult(result, state.base);
+                actions.setCurrentValue(formattedResult);
+                actions.setIsNewNumber(true);
+                // 显示函数表达式
+                actions.setExpression(
+                  `${value}(${state.currentValue}) = ${formattedResult}`
+                );
+                break;
+              }
+            }
             break;
           }
 
@@ -129,11 +302,31 @@ export function useCalculatorLogic(
                 break;
               case "backspace":
                 if (state.currentValue.length > 1) {
-                  actions.setCurrentValue(state.currentValue.slice(0, -1));
+                  const newValue = state.currentValue.slice(0, -1);
+                  actions.setCurrentValue(newValue);
+                  // 更新表达式显示
+                  updateExpression(
+                    newValue,
+                    state.previousValue,
+                    state.operation,
+                    actions
+                  );
                 } else {
                   actions.setCurrentValue("0");
                   actions.setIsNewNumber(true);
+                  // 更新表达式显示
+                  updateExpression(
+                    "0",
+                    state.previousValue,
+                    state.operation,
+                    actions
+                  );
                 }
+                break;
+              case "(":
+              case ")":
+                // Parentheses are not implemented yet
+                // Silently ignore for now
                 break;
               case "memory-add":
                 actions.setMemory(
@@ -145,10 +338,14 @@ export function useCalculatorLogic(
                   state.memory - parseValue(state.currentValue, state.base)
                 );
                 break;
-              case "memory-recall":
-                actions.setCurrentValue(formatResult(state.memory, state.base));
+              case "memory-recall": {
+                const memoryValue = formatResult(state.memory, state.base);
+                actions.setCurrentValue(memoryValue);
                 actions.setIsNewNumber(true);
+                // 显示内存召回
+                actions.setExpression(`MR = ${memoryValue}`);
                 break;
+              }
               case "memory-clear":
                 actions.setMemory(0);
                 break;
@@ -172,14 +369,28 @@ export function useCalculatorLogic(
         actions.setBase(newBase);
         actions.setCurrentValue(newValue);
         actions.setError(null);
+        // 基数改变时更新表达式显示
+        updateExpression(
+          newValue,
+          state.previousValue,
+          state.operation,
+          actions
+        );
       } catch {
         // Silently reset to "0" if base conversion fails
         actions.setBase(newBase);
         actions.setCurrentValue("0");
         actions.setError(null);
+        actions.setExpression("0");
       }
     },
-    [state.currentValue, state.base, actions]
+    [
+      state.currentValue,
+      state.base,
+      state.previousValue,
+      state.operation,
+      actions,
+    ]
   );
 
   const handleBitWidthChange = useCallback(
@@ -208,8 +419,10 @@ export function useCalculatorLogic(
       actions.setCurrentValue(newValue);
       actions.setIsNewNumber(false);
       actions.setError(null);
+      // 位值改变时更新表达式显示
+      updateExpression(newValue, state.previousValue, state.operation, actions);
     },
-    [actions]
+    [state.previousValue, state.operation, actions]
   );
 
   // Handle keyboard input

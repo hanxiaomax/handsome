@@ -28,6 +28,7 @@ export interface CalculatorState {
   currentValue: string;
   previousValue: string;
   operation: Operation;
+  expression: string;
   base: Base;
   bitWidth: BitWidth;
   mode: CalculatorMode;

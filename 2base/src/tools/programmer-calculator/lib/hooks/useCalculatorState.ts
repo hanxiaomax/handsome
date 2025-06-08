@@ -11,6 +11,7 @@ const initialState: CalculatorState = {
   currentValue: "0",
   previousValue: "",
   operation: null,
+  expression: "",
   base: 10,
   bitWidth: 32,
   mode: "programmer",
@@ -39,6 +40,10 @@ export function useCalculatorState() {
 
     setOperation: useCallback((operation: CalculatorState["operation"]) => {
       setState((prev) => ({ ...prev, operation }));
+    }, []),
+
+    setExpression: useCallback((expression: string) => {
+      setState((prev) => ({ ...prev, expression }));
     }, []),
 
     setBase: useCallback((base: Base) => {
@@ -79,6 +84,7 @@ export function useCalculatorState() {
         currentValue: "0",
         previousValue: "",
         operation: null,
+        expression: "",
         memory: 0,
         history: [],
         isNewNumber: true,

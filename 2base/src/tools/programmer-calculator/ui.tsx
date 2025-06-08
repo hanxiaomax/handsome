@@ -92,6 +92,7 @@ export default function ProgrammerCalculator() {
         {/* Main Display Area */}
         <MainDisplayArea
           currentValue={state.currentValue}
+          expression={state.expression}
           base={state.base}
           bitWidth={state.bitWidth}
           error={!!state.error}

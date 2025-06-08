@@ -3,6 +3,7 @@ import { toast } from "sonner";
 
 interface MainDisplayAreaProps {
   currentValue: string;
+  expression: string;
   base: Base;
   bitWidth: number;
   error: boolean;
@@ -11,6 +12,7 @@ interface MainDisplayAreaProps {
 
 export function MainDisplayArea({
   currentValue,
+  expression,
   base,
   bitWidth,
   error,
@@ -29,7 +31,7 @@ export function MainDisplayArea({
     base === 2 ? "BIN" : base === 8 ? "OCT" : base === 10 ? "DEC" : "HEX";
 
   return (
-    <div className="bg-muted/20  p-4 space-y-3">
+    <div className="bg-muted/20 p-4 space-y-3">
       {/* Header - Current Base and Bit Width */}
       <div className="text-right">
         <span className="text-xs text-muted-foreground font-medium">
@@ -37,13 +39,13 @@ export function MainDisplayArea({
         </span>
       </div>
 
-      {/* Main Value Display */}
+      {/* Main Value Display - 显示当前值 */}
       <div className="text-right">
         <div className="text-2xl p-2 border-2 font-mono font-bold min-h-[2.5rem] flex items-center justify-end">
           {error ? (
             <span className="text-destructive">Error</span>
           ) : (
-            <span>{currentValue || "0"}</span>
+            <span>{expression || currentValue || "0"}</span>
           )}
         </div>
       </div>
