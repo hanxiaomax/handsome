@@ -4,7 +4,6 @@
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ToolWrapper } from "@/components/common/tool-wrapper";
-import { Calculator } from "lucide-react";
 
 // Tool Configuration
 import { toolInfo } from "./toolInfo";
@@ -217,14 +216,6 @@ export default function ProgrammerCalculator() {
         id="programmer-calculator-panel"
         className="w-full max-w-3xl mx-auto p-3 space-y-3"
       >
-        {/* Header */}
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2">
-            <Calculator className="h-4 w-4" />
-            <h1 className="text-lg font-bold">Programmer Calculator</h1>
-          </div>
-        </div>
-
         {/* Main Display Area - Following reference image layout */}
         <div className="border rounded-lg p-3 space-y-2">
           {/* Main Value Display */}
