@@ -59,8 +59,8 @@ export function performCalculation(
       result = rightShift(prev, curr, bitWidth);
       break;
     case "~":
-      result = bitwiseNot(prev, bitWidth);
-      break;
+      // bitwiseNot已经处理了位宽约束，不需要再次应用
+      return bitwiseNot(prev, bitWidth);
     default:
       throw new Error(`Unknown operation: ${operation}`);
   }

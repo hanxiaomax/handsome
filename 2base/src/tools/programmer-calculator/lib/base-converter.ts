@@ -103,7 +103,13 @@ export function applyBitWidth(value: number, bitWidth: BitWidth): number {
     }
   }
 
-  // For other bit widths, use traditional approach
+  // For other bit widths, use bitwise operations correctly
+  if (bitWidth === 32) {
+    // Special handling for 32-bit to avoid sign conversion issues
+    return value >>> 0; // Unsigned right shift converts to unsigned 32-bit
+  }
+
+  // For smaller bit widths
   const maxValue = Math.pow(2, bitWidth) - 1;
 
   // Handle negative numbers using two's complement

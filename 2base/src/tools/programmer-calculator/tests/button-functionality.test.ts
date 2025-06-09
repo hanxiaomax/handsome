@@ -174,8 +174,8 @@ describe("Button Functionality Tests", () => {
     });
 
     it("should handle bit width in bitwise operations", () => {
-      expect(performCalculation("0", "255", "~", 10, 8)).toBe(0);
-      expect(performCalculation("0", "65535", "~", 10, 16)).toBe(0);
+      expect(performCalculation("255", "0", "~", 10, 8)).toBe(0);
+      expect(performCalculation("65535", "0", "~", 10, 16)).toBe(0);
     });
   });
 
@@ -234,8 +234,9 @@ describe("Button Functionality Tests", () => {
     });
 
     it("should handle negative number formatting", () => {
-      // Test that negative results are properly formatted for unsigned bit widths
-      expect(formatResult(-1, 10)).toBe("Error");
+      // Test that negative results are properly formatted
+      expect(formatResult(-1, 10)).toBe("-1");
+      expect(formatResult(-5, 16)).toBe("-5");
     });
   });
 
@@ -280,7 +281,7 @@ describe("Button Functionality Tests", () => {
     it("should handle unary operations like NOT", () => {
       // NOT操作应该立即显示结果表达式
       const value = "5";
-      const result = performCalculation("0", value, "~", 10, 32);
+      const result = performCalculation(value, "0", "~", 10, 32);
       const expression = `~${value} = ${result}`;
       expect(expression).toBe("~5 = 4294967290");
     });

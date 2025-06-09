@@ -82,7 +82,7 @@ export function bitwiseXor(a: number, b: number, bitWidth: BitWidth): number {
 export function bitwiseNot(value: number, bitWidth: BitWidth): number {
   const bigValue = numberToBigInt(value);
   const mask = createBitWidthMask(bitWidth);
-  const result = applyBitWidthBigInt(~bigValue & mask, bitWidth);
+  const result = ~bigValue & mask;
   return bigIntToNumber(result, bitWidth);
 }
 
