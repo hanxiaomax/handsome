@@ -5,6 +5,7 @@ import type {
   BitWidth,
   CalculatorMode,
   AngleUnit,
+  CalculationEntry,
 } from "../../types";
 
 const initialState: CalculatorState = {
@@ -20,6 +21,7 @@ const initialState: CalculatorState = {
   history: [],
   isNewNumber: true,
   error: null,
+  isAdvancedMode: false,
 };
 
 export function useCalculatorState() {
@@ -66,6 +68,10 @@ export function useCalculatorState() {
       setState((prev) => ({ ...prev, memory }));
     }, []),
 
+    setHistory: useCallback((history: CalculationEntry[]) => {
+      setState((prev) => ({ ...prev, history }));
+    }, []),
+
     setIsNewNumber: useCallback((isNewNumber: boolean) => {
       setState((prev) => ({ ...prev, isNewNumber }));
     }, []),
@@ -74,8 +80,8 @@ export function useCalculatorState() {
       setState((prev) => ({ ...prev, error }));
     }, []),
 
-    resetState: useCallback(() => {
-      setState(initialState);
+    setAdvancedMode: useCallback((isAdvancedMode: boolean) => {
+      setState((prev) => ({ ...prev, isAdvancedMode }));
     }, []),
 
     clearValues: useCallback(() => {
@@ -85,11 +91,13 @@ export function useCalculatorState() {
         previousValue: "",
         operation: null,
         expression: "",
-        memory: 0,
-        history: [],
         isNewNumber: true,
         error: null,
       }));
+    }, []),
+
+    reset: useCallback(() => {
+      setState(initialState);
     }, []),
   };
 

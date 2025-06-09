@@ -6,6 +6,7 @@ import type {
   BitWidth,
   CalculatorMode,
   AngleUnit,
+  CalculationEntry,
 } from "../../types";
 import {
   performCalculation,
@@ -26,10 +27,12 @@ interface CalculatorActions {
   setMode: (mode: CalculatorMode) => void;
   setAngleUnit: (angleUnit: AngleUnit) => void;
   setMemory: (memory: number) => void;
+  setHistory: (history: CalculationEntry[]) => void;
   setIsNewNumber: (isNewNumber: boolean) => void;
   setError: (error: string | null) => void;
-  resetState: () => void;
+  setAdvancedMode: (isAdvancedMode: boolean) => void;
   clearValues: () => void;
+  reset: () => void;
 }
 
 // 辅助函数：格式化操作符用于显示

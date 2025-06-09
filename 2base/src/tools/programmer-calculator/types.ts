@@ -37,6 +37,7 @@ export interface CalculatorState {
   history: CalculationEntry[];
   isNewNumber: boolean;
   error: string | null;
+  isAdvancedMode: boolean;
 }
 
 export interface ButtonConfig {
