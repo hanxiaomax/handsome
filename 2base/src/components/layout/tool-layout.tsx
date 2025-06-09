@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { GlobalSearch } from "@/components/navigation/global-search";
 import { useNavigate } from "react-router-dom";
 import { Minus, Home, Bookmark, Info } from "lucide-react";
+import React from "react";
 
 interface ToolLayoutProps {
   toolName: string;
@@ -14,6 +15,7 @@ interface ToolLayoutProps {
   onToggleFavorite?: () => void;
   isFavorite?: boolean;
   onShowDocumentation?: () => void;
+  customControls?: React.ReactNode;
 }
 
 interface WindowControlsProps {
@@ -24,6 +26,7 @@ interface WindowControlsProps {
   isFavorite?: boolean;
   toolName: string;
   toolDescription?: string;
+  customControls?: React.ReactNode;
 }
 
 function WindowControls({
@@ -34,6 +37,7 @@ function WindowControls({
   isFavorite = false,
   toolName,
   toolDescription,
+  customControls,
 }: WindowControlsProps) {
   // Function to truncate description to 30 words max
   const truncateDescription = (desc: string): string => {
@@ -44,8 +48,8 @@ function WindowControls({
 
   return (
     <div className="w-full flex items-center justify-between px-4 py-2 bg-background/95 backdrop-blur">
-      {/* Left spacer for balanced layout */}
-      <div className="flex-1"></div>
+      {/* Left - Custom Controls */}
+      <div className="flex-1 flex items-center gap-2">{customControls}</div>
 
       {/* Center - Tool Name */}
       <div className="flex-1 text-center relative group">
@@ -60,7 +64,7 @@ function WindowControls({
         )}
       </div>
 
-      {/* Right - Controls */}
+      {/* Right - Standard Controls */}
       <div className="flex-1 flex items-center gap-1 justify-end">
         {/* Documentation Button */}
         <Button
@@ -128,6 +132,7 @@ export function ToolLayout({
   onToggleFavorite,
   onShowDocumentation,
   isFavorite = false,
+  customControls,
 }: ToolLayoutProps) {
   const navigate = useNavigate();
 
@@ -184,6 +189,7 @@ export function ToolLayout({
               isFavorite={isFavorite}
               toolName={toolName}
               toolDescription={toolDescription}
+              customControls={customControls}
             />
 
             {/* Tool Content - Below Tool Info */}

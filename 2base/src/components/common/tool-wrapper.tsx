@@ -20,6 +20,7 @@ interface ToolWrapperProps {
     | "6xl"
     | "full";
   className?: string;
+  customControls?: React.ReactNode;
 }
 
 /**
@@ -29,9 +30,10 @@ interface ToolWrapperProps {
  * - Minimize with state preservation
  * - Navigation controls
  * - Width constraints
+ * - Custom controls in the tool layout header
  *
  * Usage:
- * <ToolWrapper toolInfo={toolInfo} state={optionalState} maxWidth="4xl">
+ * <ToolWrapper toolInfo={toolInfo} state={optionalState} maxWidth="4xl" customControls={customControls}>
  *   <YourToolContent />
  * </ToolWrapper>
  */
@@ -41,6 +43,7 @@ export function ToolWrapper({
   children,
   maxWidth = "full",
   className,
+  customControls,
 }: ToolWrapperProps) {
   const { toolLayoutProps } = useToolControls({ toolInfo, state });
 
@@ -71,7 +74,7 @@ export function ToolWrapper({
   };
 
   return (
-    <ToolLayout {...toolLayoutProps}>
+    <ToolLayout {...toolLayoutProps} customControls={customControls}>
       <div className={cn("w-full mx-auto", getMaxWidthClass(), className)}>
         {children}
       </div>

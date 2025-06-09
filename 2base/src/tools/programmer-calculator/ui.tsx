@@ -1,6 +1,5 @@
 "use client";
 
-// import { useState } from "react";
 import { ToolWrapper } from "@/components/common/tool-wrapper";
 import { Toaster } from "sonner";
 import {
@@ -9,7 +8,9 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Zap } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 // Tool Configuration
 import { toolInfo } from "./toolInfo";
@@ -86,15 +87,31 @@ export default function ProgrammerCalculator() {
     actions.clearValues();
   };
 
-  // Bitwise Boot 处理函数
-  const handleBitwiseBootClick = () => {
-    actions.setAdvancedMode(!state.isAdvancedMode);
+  // Bitwise Boost 开关切换
+  const handleBitwiseBoostToggle = (checked: boolean) => {
+    actions.setAdvancedMode(checked);
   };
 
   // 退出高级模式
   const handleExitAdvancedMode = () => {
     actions.setAdvancedMode(false);
   };
+
+  // 创建Bitwise Boost开关控制元素
+  const bitwiseBoostControl = (
+    <div className="flex items-center space-x-2">
+      <Zap className="h-4 w-4 text-primary" />
+      <Label htmlFor="bitwise-boost-switch" className="text-sm font-medium">
+        Bitwise Boost
+      </Label>
+      <Switch
+        id="bitwise-boost-switch"
+        checked={state.isAdvancedMode}
+        onCheckedChange={handleBitwiseBoostToggle}
+        className="data-[state=checked]:bg-primary"
+      />
+    </div>
+  );
 
   // 普通计算器组件
   const renderNormalCalculator = () => (
@@ -137,7 +154,6 @@ export default function ProgrammerCalculator() {
           handlers.onButtonClick(value, type)
         }
         onClear={handleClear}
-        onBitwiseBootClick={handleBitwiseBootClick}
       />
 
       {/* Status Bar */}
@@ -195,7 +211,6 @@ export default function ProgrammerCalculator() {
                     handlers.onButtonClick(value, type)
                   }
                   onClear={handleClear}
-                  onBitwiseBootClick={handleBitwiseBootClick}
                 />
 
                 {/* Status Bar */}
@@ -212,6 +227,8 @@ export default function ProgrammerCalculator() {
           <div className="h-full overflow-auto p-4">
             <AdvancedBitwiseVisualization
               currentValue={state.currentValue}
+              previousValue={state.previousValue}
+              operation={state.operation}
               base={state.base}
               bitWidth={state.bitWidth}
               onValueChange={(value: string) => {
@@ -229,6 +246,7 @@ export default function ProgrammerCalculator() {
       toolInfo={toolInfo}
       state={{ calculatorState: state }}
       maxWidth="full"
+      customControls={bitwiseBoostControl}
     >
       {state.isAdvancedMode ? renderAdvancedMode() : renderNormalCalculator()}
       <Toaster />

@@ -4,12 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
-import type { Base, BitWidth } from "../types";
+import type { Base, BitWidth, Operation } from "../types";
 import { parseValue, formatForBase } from "../lib/base-converter";
 import { toggleBit } from "../lib/bitwise";
+import { performCalculation } from "../lib/calculator";
 
 interface AdvancedBitwiseVisualizationProps {
   currentValue: string;
+  previousValue: string;
+  operation: Operation;
   base: Base;
   bitWidth: BitWidth;
   onValueChange: (value: string) => void;
@@ -17,22 +20,46 @@ interface AdvancedBitwiseVisualizationProps {
 
 export function AdvancedBitwiseVisualization({
   currentValue,
+  previousValue,
+  operation,
   base,
   bitWidth,
   onValueChange,
 }: AdvancedBitwiseVisualizationProps) {
-  const [hoveredBit, setHoveredBit] = useState<number | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
-  // 解析当前值
-  const parseCurrentValue = () => {
+  // 解析数值
+  const parseValueSafe = (value: string, fallback: number = 0): number => {
     try {
-      return parseValue(currentValue || "0", base, bitWidth);
+      return parseValue(value || "0", base, bitWidth);
+    } catch {
+      return fallback;
+    }
+  };
+
+  const currentDecimal = parseValueSafe(currentValue);
+  const previousDecimal = parseValueSafe(previousValue);
+
+  // 计算结果
+  const getCalculationResult = (): number => {
+    if (!operation || !previousValue) {
+      return currentDecimal;
+    }
+
+    try {
+      return performCalculation(
+        previousValue,
+        currentValue,
+        operation,
+        base,
+        bitWidth
+      );
     } catch {
       return 0;
     }
   };
 
-  const decimal = parseCurrentValue();
+  const resultDecimal = getCalculationResult();
 
   // 格式化不同进制的值
   const formatValue = (value: number, targetBase: Base): string => {
@@ -54,165 +81,184 @@ export function AdvancedBitwiseVisualization({
   };
 
   // 位点击处理
-  const handleBitClick = (position: number) => {
-    const newValue = toggleBit(decimal, position, bitWidth);
-    const formattedValue = formatForBase(newValue.toString(), base);
-    onValueChange(formattedValue);
+  const handleBitClick = (value: number, rowType: "current" | "previous") => {
+    return (position: number) => {
+      const newValue = toggleBit(value, position, bitWidth);
+      const formattedValue = formatForBase(newValue.toString(), base);
+
+      if (rowType === "current") {
+        onValueChange(formattedValue);
+      }
+      // 对于 previous 值，我们需要其他方式来更新，这里暂时只处理 current
+    };
   };
 
-  // 渲染位组（4位一组）
-  const renderBitGroups = () => {
-    const bits = [];
-    for (let i = 0; i < bitWidth; i++) {
-      const position = bitWidth - 1 - i;
-      const bitValue = (decimal >> position) & 1;
-      bits.push({ position, value: bitValue });
-    }
-
-    const groups = [];
-    for (let i = 0; i < bits.length; i += 4) {
-      groups.push(bits.slice(i, i + 4));
-    }
+  // 渲染单行位表示
+  const renderBitRow = (
+    label: string,
+    value: number,
+    color: string = "default",
+    clickable: boolean = false,
+    rowType?: "current" | "previous"
+  ) => {
+    const binary = formatValue(value, 2).padStart(bitWidth, "0");
+    const hex = formatValue(value, 16);
+    const isSigned = value < 0 || value >= Math.pow(2, bitWidth - 1);
 
     return (
-      <div className="space-y-2">
-        {groups.map((group, groupIndex) => (
-          <div key={groupIndex} className="flex items-center gap-1">
-            <div className="w-8 text-xs text-muted-foreground text-right">
-              {group[0].position}
-            </div>
-            <div className="flex gap-1">
-              {group.map((bit) => (
-                <Button
-                  key={bit.position}
-                  variant={bit.value ? "default" : "outline"}
-                  size="sm"
-                  className={`w-8 h-8 p-0 text-xs font-mono transition-all ${
-                    hoveredBit === bit.position ? "ring-2 ring-primary" : ""
-                  }`}
-                  onClick={() => handleBitClick(bit.position)}
-                  onMouseEnter={() => setHoveredBit(bit.position)}
-                  onMouseLeave={() => setHoveredBit(null)}
-                >
-                  {bit.value}
-                </Button>
-              ))}
-            </div>
-            <div className="text-xs text-muted-foreground ml-2">
-              0x{group[0].position.toString(16).toUpperCase()}
-            </div>
-          </div>
-        ))}
+      <div
+        className={`flex items-center gap-2 py-2 px-3 rounded ${
+          hoveredRow === label ? "bg-muted/50" : ""
+        }`}
+        onMouseEnter={() => setHoveredRow(label)}
+        onMouseLeave={() => setHoveredRow(null)}
+      >
+        {/* 标签和十进制值 */}
+        <div className="w-12 text-right font-mono text-sm font-medium">
+          {label}
+        </div>
+        <div className="w-16 text-right font-mono text-sm">{value}</div>
+
+        {/* 位表示 */}
+        <div className="flex gap-1">
+          {binary.split("").map((bit, index) => {
+            const position = bitWidth - 1 - index;
+
+            return (
+              <span
+                key={position}
+                className={`w-6 h-6 flex items-center justify-center text-xs font-mono ${
+                  bit === "1"
+                    ? color === "primary"
+                      ? "text-primary font-bold"
+                      : color === "secondary"
+                      ? "text-secondary font-bold"
+                      : "text-accent-foreground font-bold"
+                    : "text-muted-foreground"
+                } ${
+                  clickable
+                    ? "cursor-pointer hover:bg-accent/20 rounded"
+                    : "cursor-default"
+                } ${index % 4 === 0 && index > 0 ? "ml-1" : ""}`}
+                onClick={
+                  clickable
+                    ? () => handleBitClick(value, rowType!)(position)
+                    : undefined
+                }
+              >
+                {bit}
+              </span>
+            );
+          })}
+        </div>
+
+        {/* 十六进制值和类型信息 */}
+        <div className="flex items-center gap-2 ml-4">
+          <span className="font-mono text-sm">0x{hex}</span>
+          <Badge variant="outline" className="text-xs">
+            {bitWidth}-bit {isSigned ? "signed" : "unsigned"}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => copyToClipboard(`0x${hex}`, "Hexadecimal")}
+            className="h-6 w-6 p-0"
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
     );
   };
 
-  return (
-    <div className="space-y-4">
-      {/* 数值概览 */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            Value Overview
-            <Badge variant="outline">{bitWidth}-bit</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* 多进制显示 */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">DEC:</span>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-lg">{decimal}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(decimal.toString(), "Decimal")}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">HEX:</span>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-lg">
-                  0x{formatValue(decimal, 16)}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    copyToClipboard(
-                      `0x${formatValue(decimal, 16)}`,
-                      "Hexadecimal"
-                    )
-                  }
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">BIN:</span>
-              <div className="flex items-center gap-2">
-                <span className="font-mono">0b{formatValue(decimal, 2)}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    copyToClipboard(`0b${formatValue(decimal, 2)}`, "Binary")
-                  }
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">OCT:</span>
-              <div className="flex items-center gap-2">
-                <span className="font-mono">0o{formatValue(decimal, 8)}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    copyToClipboard(`0o${formatValue(decimal, 8)}`, "Octal")
-                  }
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+  // 获取操作符显示
+  const getOperationDisplay = () => {
+    if (!operation) return null;
 
-      {/* 位可视化 */}
+    const opMap: Record<string, string> = {
+      "+": "+",
+      "-": "-",
+      "*": "*",
+      "/": "/",
+      "%": "mod",
+      "&": "&",
+      "|": "|",
+      "^": "^",
+      "<<": "<<",
+      ">>": ">>",
+      "~": "~",
+    };
+
+    return opMap[operation] || operation;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* 位运算可视化 */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">
-            Interactive Bit Visualization
+            Bitwise Operation Visualization
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {/* 位信息提示 */}
-            {hoveredBit !== null && (
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <div className="text-sm">
-                  <strong>Bit {hoveredBit}</strong>: Weight = 2^{hoveredBit} ={" "}
-                  {Math.pow(2, hoveredBit).toLocaleString()}
+          <div className="space-y-1">
+            {/* 操作数1 (previous value) */}
+            {previousValue &&
+              operation &&
+              renderBitRow(
+                previousDecimal.toString(),
+                previousDecimal,
+                "default",
+                false
+              )}
+
+            {/* 操作符行 */}
+            {operation && (
+              <div className="flex items-center gap-2 py-1 px-3">
+                <div className="w-12 text-right font-mono text-sm font-bold text-primary">
+                  {getOperationDisplay()}
+                </div>
+                <div className="w-16"></div>
+                <div className="text-sm text-muted-foreground">
+                  {operation === "~"
+                    ? "Bitwise NOT"
+                    : operation === "&"
+                    ? "Bitwise AND"
+                    : operation === "|"
+                    ? "Bitwise OR"
+                    : operation === "^"
+                    ? "Bitwise XOR"
+                    : operation === "<<"
+                    ? "Left Shift"
+                    : operation === ">>"
+                    ? "Right Shift"
+                    : `${operation} operation`}
                 </div>
               </div>
             )}
 
-            {/* 位组显示 */}
-            {renderBitGroups()}
+            {/* 操作数2 (current value) */}
+            {currentValue &&
+              renderBitRow(
+                currentDecimal.toString(),
+                currentDecimal,
+                "primary",
+                true,
+                "current"
+              )}
 
-            {/* 操作说明 */}
-            <div className="text-xs text-muted-foreground">
-              Click any bit to toggle its value. Hover for weight information.
-            </div>
+            {operation && <div className="border-t border-dashed my-2"></div>}
+
+            {operation
+              ? renderBitRow("=", resultDecimal, "secondary", false)
+              : renderBitRow(
+                  currentDecimal.toString(),
+                  currentDecimal,
+                  "primary",
+                  true,
+                  "current"
+                )}
           </div>
         </CardContent>
       </Card>

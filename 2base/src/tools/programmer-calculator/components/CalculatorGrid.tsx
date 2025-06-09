@@ -17,14 +17,12 @@ interface CalculatorGridProps {
     type: "number" | "operation" | "function" | "special"
   ) => void;
   onClear: () => void;
-  onBitwiseBootClick?: () => void;
 }
 
 export function CalculatorGrid({
   base,
   onButtonClick,
   onClear,
-  onBitwiseBootClick,
 }: CalculatorGridProps) {
   // Calculator button grid - organized by function
   const buttonGrid: CalculatorButton[][] = [
@@ -78,7 +76,7 @@ export function CalculatorGrid({
       { label: "0", value: "0", type: "number" as const },
       { label: "00", value: "00", type: "number" as const },
       { label: "mod", value: "%", type: "operation" as const },
-      { label: "Boot", value: "bitwise-boot", type: "special" as const },
+      { label: "", value: "", type: "special" as const }, // Empty space
       { label: "", value: "", type: "special" as const }, // Empty space
     ],
   ];
@@ -91,17 +89,12 @@ export function CalculatorGrid({
     if (value === "=") {
       return "bg-primary text-primary-foreground hover:bg-primary/90";
     }
-    if (value === "bitwise-boot") {
-      return "bg-secondary text-secondary-foreground hover:bg-secondary/80";
-    }
     return "bg-background hover:bg-accent";
   };
 
   const handleButtonClick = (value: string, type: string) => {
     if (value === "clear") {
       onClear();
-    } else if (value === "bitwise-boot" && onBitwiseBootClick) {
-      onBitwiseBootClick();
     } else {
       onButtonClick(
         value,
