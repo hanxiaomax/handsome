@@ -92,11 +92,6 @@ export default function ProgrammerCalculator() {
     actions.setAdvancedMode(checked);
   };
 
-  // 退出高级模式
-  const handleExitAdvancedMode = () => {
-    actions.setAdvancedMode(false);
-  };
-
   // 创建Bitwise Boost开关控制元素
   const bitwiseBoostControl = (
     <div className="flex items-center space-x-2">
@@ -168,19 +163,6 @@ export default function ProgrammerCalculator() {
         {/* Left Panel - Calculator */}
         <ResizablePanel defaultSize={40} minSize={30} maxSize={60}>
           <div className="h-full flex flex-col">
-            {/* 返回按钮 */}
-            <div className="p-3 border-b bg-background">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExitAdvancedMode}
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Exit Advanced Mode
-              </Button>
-            </div>
-
             {/* 计算器内容 */}
             <div className="flex-1 overflow-auto p-3">
               <div className="space-y-2">

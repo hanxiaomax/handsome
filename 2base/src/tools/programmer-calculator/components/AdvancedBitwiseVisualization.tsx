@@ -113,11 +113,8 @@ export function AdvancedBitwiseVisualization({
         onMouseEnter={() => setHoveredRow(label)}
         onMouseLeave={() => setHoveredRow(null)}
       >
-        {/* 标签和十进制值 */}
-        <div className="w-12 text-right font-mono text-sm font-medium">
-          {label}
-        </div>
-        <div className="w-16 text-right font-mono text-sm">{value}</div>
+        {/* 十进制值 */}
+        <div className="w-16 text-right font-mono text-sm mr-5">{value}</div>
 
         {/* 位表示 */}
         <div className="flex gap-1">
@@ -127,7 +124,7 @@ export function AdvancedBitwiseVisualization({
             return (
               <span
                 key={position}
-                className={`w-6 h-6 flex items-center justify-center text-xs font-mono ${
+                className={`w-3 h-3 flex items-center justify-center text-xs font-mono ${
                   bit === "1"
                     ? color === "primary"
                       ? "text-primary font-bold"
@@ -152,7 +149,6 @@ export function AdvancedBitwiseVisualization({
           })}
         </div>
 
-        {/* 十六进制值和类型信息 */}
         <div className="flex items-center gap-2 ml-4">
           <span className="font-mono text-sm">0x{hex}</span>
           <Badge variant="outline" className="text-xs">
@@ -248,6 +244,7 @@ export function AdvancedBitwiseVisualization({
                 "current"
               )}
 
+            {/* 分隔线 */}
             {operation && <div className="border-t border-dashed my-2"></div>}
 
             {operation
