@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
-import { toast } from "sonner";
 import type { Base, BitWidth, Operation } from "../types";
 import { parseValue, formatForBase } from "../lib/base-converter";
 import { toggleBit } from "../lib/bitwise";
@@ -12,7 +9,7 @@ import { performCalculation } from "../lib/calculator";
 interface AdvancedBitwiseVisualizationProps {
   currentValue: string;
   previousValue: string;
-  operation: Operation;
+  operation: Operation | null;
   base: Base;
   bitWidth: BitWidth;
   onValueChange: (value: string) => void;
@@ -70,16 +67,6 @@ export function AdvancedBitwiseVisualization({
     }
   };
 
-  // 复制到剪贴板
-  const copyToClipboard = async (text: string, format: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(`Copied ${format}: ${text}`);
-    } catch {
-      toast.error("Failed to copy to clipboard");
-    }
-  };
-
   // 位点击处理
   const handleBitClick = (value: number, rowType: "current" | "previous") => {
     return (position: number) => {
@@ -99,7 +86,8 @@ export function AdvancedBitwiseVisualization({
     value: number,
     color: string = "default",
     clickable: boolean = false,
-    rowType?: "current" | "previous"
+    rowType?: "current" | "previous",
+    prefix?: string
   ) => {
     const binary = formatValue(value, 2).padStart(bitWidth, "0");
     const hex = formatValue(value, 16);
@@ -107,61 +95,74 @@ export function AdvancedBitwiseVisualization({
 
     return (
       <div
-        className={`flex items-center gap-2 py-2 px-3 rounded ${
+        className={`flex items-center py-2 px-3 rounded ${
           hoveredRow === label ? "bg-muted/50" : ""
         }`}
         onMouseEnter={() => setHoveredRow(label)}
         onMouseLeave={() => setHoveredRow(null)}
       >
-        {/* 十进制值 */}
-        <div className="w-16 text-right font-mono text-sm mr-5">{value}</div>
+        {/* 左侧区域：运算符和数值 */}
+        <div className="flex items-center w-[120px] border-r border-border pr-3">
+          {/* 操作符前缀（如果有）- 固定8px宽度槽位 */}
+          <div className="w-8 text-center font-mono text-sm font-bold text-primary">
+            {prefix || ""}
+          </div>
 
-        {/* 位表示 */}
-        <div className="flex gap-1">
-          {binary.split("").map((bit, index) => {
-            const position = bitWidth - 1 - index;
-
-            return (
-              <span
-                key={position}
-                className={`w-3 h-3 flex items-center justify-center text-xs font-mono ${
-                  bit === "1"
-                    ? color === "primary"
-                      ? "text-primary font-bold"
-                      : color === "secondary"
-                      ? "text-secondary font-bold"
-                      : "text-accent-foreground font-bold"
-                    : "text-muted-foreground"
-                } ${
-                  clickable
-                    ? "cursor-pointer hover:bg-accent/20 rounded"
-                    : "cursor-default"
-                } ${index % 4 === 0 && index > 0 ? "ml-1" : ""}`}
-                onClick={
-                  clickable
-                    ? () => handleBitClick(value, rowType!)(position)
-                    : undefined
-                }
-              >
-                {bit}
-              </span>
-            );
-          })}
+          {/* 十进制值 - 固定宽度确保对齐 */}
+          <div className="w-20 text-right font-mono text-sm">{value}</div>
         </div>
 
-        <div className="flex items-center gap-2 ml-4">
-          <span className="font-mono text-sm">0x{hex}</span>
-          <Badge variant="outline" className="text-xs">
-            {bitWidth}-bit {isSigned ? "signed" : "unsigned"}
-          </Badge>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => copyToClipboard(`0x${hex}`, "Hexadecimal")}
-            className="h-6 w-6 p-0"
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
+        {/* 中间区域：位序列 */}
+        <div className="flex-1 px-4 border-r border-border">
+          <div className="flex gap-1">
+            {binary.split("").map((bit, index) => {
+              const position = bitWidth - 1 - index;
+
+              return (
+                <span
+                  key={position}
+                  className={`w-4 h-4 flex items-center justify-center text-xs font-mono ${
+                    bit === "1"
+                      ? color === "primary"
+                        ? "text-primary font-bold"
+                        : color === "secondary"
+                        ? "text-secondary font-bold"
+                        : "text-accent-foreground font-bold"
+                      : "text-muted-foreground"
+                  } ${
+                    clickable
+                      ? "cursor-pointer hover:bg-accent/20 rounded"
+                      : "cursor-default"
+                  } ${index % 4 === 0 && index > 0 ? "ml-1" : ""} ${
+                    index % 8 === 0 && index > 0 ? "ml-2" : ""
+                  }`}
+                  onClick={
+                    clickable
+                      ? () => handleBitClick(value, rowType!)(position)
+                      : undefined
+                  }
+                >
+                  {bit}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 右侧区域：十六进制和类型信息 */}
+        <div className="flex items-center w-[240px] pl-3">
+          {/* 十六进制值 - 固定宽度列 */}
+          <div className="w-20 text-left font-mono text-sm text-muted-foreground">
+            0x{hex}
+          </div>
+
+          {/* 类型信息 - 固定宽度列 */}
+          <div className="w-28 flex justify-start">
+            <Badge variant="outline" className="text-xs">
+              {isSigned ? "S" : "U"}
+              {bitWidth}
+            </Badge>
+          </div>
         </div>
       </div>
     );
@@ -209,39 +210,15 @@ export function AdvancedBitwiseVisualization({
                 false
               )}
 
-            {/* 操作符行 */}
-            {operation && (
-              <div className="flex items-center gap-2 py-1 px-3">
-                <div className="w-12 text-right font-mono text-sm font-bold text-primary">
-                  {getOperationDisplay()}
-                </div>
-                <div className="w-16"></div>
-                <div className="text-sm text-muted-foreground">
-                  {operation === "~"
-                    ? "Bitwise NOT"
-                    : operation === "&"
-                    ? "Bitwise AND"
-                    : operation === "|"
-                    ? "Bitwise OR"
-                    : operation === "^"
-                    ? "Bitwise XOR"
-                    : operation === "<<"
-                    ? "Left Shift"
-                    : operation === ">>"
-                    ? "Right Shift"
-                    : `${operation} operation`}
-                </div>
-              </div>
-            )}
-
-            {/* 操作数2 (current value) */}
+            {/* 操作数2 (current value) 带运算符前缀 */}
             {currentValue &&
               renderBitRow(
                 currentDecimal.toString(),
                 currentDecimal,
                 "primary",
                 true,
-                "current"
+                "current",
+                operation ? getOperationDisplay() || undefined : undefined
               )}
 
             {/* 分隔线 */}

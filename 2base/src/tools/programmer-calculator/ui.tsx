@@ -1,98 +1,90 @@
 "use client";
 
-import { ToolWrapper } from "@/components/common/tool-wrapper";
-import { Toaster } from "sonner";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, Zap } from "lucide-react";
+import { useState } from "react";
+import { Zap } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-
-// Tool Configuration
-import { toolInfo } from "./toolInfo";
-import type { Base, BitWidth } from "./types";
-
-// Business Logic
-import { useCalculatorState } from "./lib/hooks/useCalculatorState";
-import { useCalculatorLogic } from "./lib/hooks/useCalculatorLogic";
-import { parseValue, formatForBase } from "./lib/base-converter";
-import { toggleBit } from "./lib/bitwise";
-
-// Tool-specific Components
-import {
-  MainDisplayArea,
-  BitVisualization,
-  ControlBar,
-  CalculatorGrid,
-  StatusBar,
-} from "./components";
+import { ToolWrapper } from "@/components/common/tool-wrapper";
+import { ProgrammerCal } from "@/components/common/programmer-cal";
 import { AdvancedBitwiseVisualization } from "./components/AdvancedBitwiseVisualization";
+import { toolInfo } from "./toolInfo";
+import type { Base, BitWidth, Operation } from "./types";
 
 export default function ProgrammerCalculator() {
-  // State Management
-  const { state, actions } = useCalculatorState();
-  const { handlers } = useCalculatorLogic(state, actions);
+  // Bitwise Boost 模式状态
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
 
-  // Helper functions
-  const convertAndDisplay = (
-    value: string,
-    fromBase: Base,
-    toBase: Base
-  ): string => {
-    try {
-      if (!value || value === "0") return "0";
-      const decimal = parseValue(value, fromBase, state.bitWidth);
-      return formatForBase(decimal.toString(), toBase);
-    } catch {
-      return "Error";
-    }
-  };
+  // 共享的计算器状态
+  const [sharedState, setSharedState] = useState({
+    currentValue: "0",
+    previousValue: "",
+    operation: null as Operation | null,
+    base: 10 as Base,
+    bitWidth: 32 as BitWidth,
+  });
 
-  const handleBaseSelect = (base: Base) => {
-    try {
-      const decimal = parseValue(
-        state.currentValue || "0",
-        state.base,
-        state.bitWidth
-      );
-      const newValue = formatForBase(decimal.toString(), base);
-      actions.setBase(base);
-      actions.setCurrentValue(newValue);
-    } catch {
-      actions.setBase(base);
-      actions.setCurrentValue("0");
-    }
-  };
-
-  const handleBitToggle = (position: number) => {
-    try {
-      const decimal = parseValue(
-        state.currentValue || "0",
-        state.base,
-        state.bitWidth
-      );
-      const newDecimal = toggleBit(decimal, position, state.bitWidth);
-      const newValue = formatForBase(newDecimal.toString(), state.base);
-      actions.setCurrentValue(newValue);
-    } catch {
-      // Handle error silently
-    }
-  };
-
-  const handleClear = () => {
-    actions.clearValues();
-  };
-
-  // Bitwise Boost 开关切换
+  // Bitwise Boost 切换处理
   const handleBitwiseBoostToggle = (checked: boolean) => {
-    actions.setAdvancedMode(checked);
+    setIsAdvancedMode(checked);
   };
 
-  // 创建Bitwise Boost开关控制元素
+  // 处理值变化（从计算器组件）
+  const handleValueChange = (value: string, base: Base) => {
+    setSharedState((prev) => ({
+      ...prev,
+      currentValue: value,
+      base: base,
+    }));
+  };
+
+  // 处理进制变化
+  const handleBaseChange = (base: Base) => {
+    setSharedState((prev) => ({
+      ...prev,
+      base: base,
+    }));
+  };
+
+  // 处理位宽变化
+  const handleBitWidthChange = (bitWidth: BitWidth) => {
+    setSharedState((prev) => ({
+      ...prev,
+      bitWidth: bitWidth,
+    }));
+  };
+
+  // 处理完整状态变化（从计算器组件）
+  const handleStateChange = (state: {
+    currentValue: string;
+    previousValue: string;
+    operation: Operation | null;
+    base: Base;
+    bitWidth: BitWidth;
+  }) => {
+    // 只有当状态实际发生变化时才更新，避免无限循环
+    setSharedState((prev) => {
+      if (
+        prev.currentValue === state.currentValue &&
+        prev.previousValue === state.previousValue &&
+        prev.operation === state.operation &&
+        prev.base === state.base &&
+        prev.bitWidth === state.bitWidth
+      ) {
+        return prev; // 状态相同，不更新
+      }
+      return state; // 状态不同，执行更新
+    });
+  };
+
+  // 处理来自高级可视化的值变化
+  const handleVisualizationValueChange = (value: string) => {
+    setSharedState((prev) => ({
+      ...prev,
+      currentValue: value,
+    }));
+  };
+
+  // Bitwise Boost 控制组件
   const bitwiseBoostControl = (
     <div className="flex items-center space-x-2">
       <Zap className="h-4 w-4 text-primary" />
@@ -101,137 +93,64 @@ export default function ProgrammerCalculator() {
       </Label>
       <Switch
         id="bitwise-boost-switch"
-        checked={state.isAdvancedMode}
+        checked={isAdvancedMode}
         onCheckedChange={handleBitwiseBoostToggle}
         className="data-[state=checked]:bg-primary"
       />
     </div>
   );
 
-  // 普通计算器组件
-  const renderNormalCalculator = () => (
-    <div
-      id="programmer-calculator-panel"
-      className="w-full mt-5 max-w-3xl mx-auto border rounded-lg p-3 space-y-2"
-    >
-      {/* Main Display Area */}
-      <MainDisplayArea
-        currentValue={state.currentValue}
-        expression={state.expression}
-        base={state.base}
-        bitWidth={state.bitWidth}
-        error={!!state.error}
-        convertAndDisplay={convertAndDisplay}
-      />
-      <div className="border rounded-lg p-2">
-        {/* Bit Visualization */}
-        <BitVisualization
-          currentValue={state.currentValue || "0"}
-          base={state.base}
-          bitWidth={state.bitWidth}
-          bitsPerRow={32}
-          onBitToggle={handleBitToggle}
-        />
-      </div>
-
-      {/* Control Bar */}
-      <ControlBar
-        bitWidth={state.bitWidth}
-        base={state.base}
-        onBitWidthChange={(width: BitWidth) => handlers.onBitWidthChange(width)}
-        onBaseChange={(base: Base) => handleBaseSelect(base)}
-      />
-
-      {/* Calculator Button Grid */}
-      <CalculatorGrid
-        base={state.base}
-        onButtonClick={(value: string, type) =>
-          handlers.onButtonClick(value, type)
-        }
-        onClear={handleClear}
-      />
-
-      {/* Status Bar */}
-      <StatusBar base={state.base} bitWidth={state.bitWidth} />
-    </div>
-  );
-
-  // 高级模式双栏布局
-  const renderAdvancedMode = () => (
-    <div className="h-[calc(100vh-8rem)] mt-5">
-      <ResizablePanelGroup direction="horizontal" className="h-full">
-        {/* Left Panel - Calculator */}
-        <ResizablePanel defaultSize={40} minSize={30} maxSize={60}>
-          <div className="h-full flex flex-col">
-            {/* 计算器内容 */}
-            <div className="flex-1 overflow-auto p-3">
-              <div className="space-y-2">
-                {/* Main Display Area */}
-                <MainDisplayArea
-                  currentValue={state.currentValue}
-                  expression={state.expression}
-                  base={state.base}
-                  bitWidth={state.bitWidth}
-                  error={!!state.error}
-                  convertAndDisplay={convertAndDisplay}
-                />
-
-                {/* Control Bar */}
-                <ControlBar
-                  bitWidth={state.bitWidth}
-                  base={state.base}
-                  onBitWidthChange={(width: BitWidth) =>
-                    handlers.onBitWidthChange(width)
-                  }
-                  onBaseChange={(base: Base) => handleBaseSelect(base)}
-                />
-
-                {/* Calculator Button Grid */}
-                <CalculatorGrid
-                  base={state.base}
-                  onButtonClick={(value: string, type) =>
-                    handlers.onButtonClick(value, type)
-                  }
-                  onClear={handleClear}
-                />
-
-                {/* Status Bar */}
-                <StatusBar base={state.base} bitWidth={state.bitWidth} />
-              </div>
-            </div>
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        {/* Right Panel - Advanced Visualization */}
-        <ResizablePanel defaultSize={60} minSize={40}>
-          <div className="h-full overflow-auto p-4">
-            <AdvancedBitwiseVisualization
-              currentValue={state.currentValue}
-              previousValue={state.previousValue}
-              operation={state.operation}
-              base={state.base}
-              bitWidth={state.bitWidth}
-              onValueChange={(value: string) => {
-                actions.setCurrentValue(value);
-              }}
+  if (isAdvancedMode) {
+    // 高级模式：双面板布局，通过状态回调同步
+    return (
+      <ToolWrapper
+        toolInfo={toolInfo}
+        maxWidth="full"
+        customControls={bitwiseBoostControl}
+      >
+        <div className="mt-5 flex gap-4">
+          {/* 左面板：计算器（非受控，仅通过回调同步状态） */}
+          <div className="w-96 flex-shrink-0">
+            <ProgrammerCal
+              controlled={false}
+              onStateChange={handleStateChange}
             />
           </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    </div>
-  );
 
+          {/* 右面板：高级位运算可视化，同步状态 */}
+          <div className="flex-1 min-w-0">
+            <AdvancedBitwiseVisualization
+              currentValue={sharedState.currentValue}
+              previousValue={sharedState.previousValue}
+              operation={sharedState.operation}
+              base={sharedState.base}
+              bitWidth={sharedState.bitWidth}
+              onValueChange={handleVisualizationValueChange}
+            />
+          </div>
+        </div>
+      </ToolWrapper>
+    );
+  }
+
+  // 普通模式：非受控计算器
   return (
     <ToolWrapper
       toolInfo={toolInfo}
-      state={{ calculatorState: state }}
       maxWidth="full"
       customControls={bitwiseBoostControl}
     >
-      {state.isAdvancedMode ? renderAdvancedMode() : renderNormalCalculator()}
-      <Toaster />
+      <ProgrammerCal
+        controlled={false}
+        initialBase={sharedState.base}
+        initialBitWidth={sharedState.bitWidth}
+        initialValue={sharedState.currentValue}
+        maxWidth="full"
+        showToaster={true}
+        onValueChange={handleValueChange}
+        onBaseChange={handleBaseChange}
+        onBitWidthChange={handleBitWidthChange}
+      />
     </ToolWrapper>
   );
 }
