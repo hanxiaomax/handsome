@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
-
+import { useCallback, useEffect, useRef } from "react";
 import { Toaster } from "sonner";
 
 // Types and Logic from programmer-calculator
@@ -44,6 +43,11 @@ interface ProgrammerCalProps {
   bitWidth?: BitWidth;
   previousValue?: string;
   operation?: Operation | null;
+
+  // External value sync (for uncontrolled mode)
+  externalValue?: string;
+  externalBase?: Base;
+  externalBitWidth?: BitWidth;
 
   // Initial values (for uncontrolled mode)
   initialBase?: Base;
@@ -105,6 +109,10 @@ export function ProgrammerCal({
   bitWidth,
   previousValue,
   operation,
+  // External value sync (for uncontrolled mode)
+  externalValue,
+  externalBase,
+  externalBitWidth,
   // Uncontrolled mode props
   initialBase = 10,
   initialBitWidth = 32,
@@ -122,6 +130,9 @@ export function ProgrammerCal({
   // State Management
   const { state, actions } = useCalculatorState();
   const { handlers } = useCalculatorLogic(state, actions);
+
+  // Track external updates to avoid triggering callbacks
+  const isExternalUpdate = useRef(false);
 
   // Initialize state for uncontrolled mode
   useEffect(() => {
@@ -173,6 +184,48 @@ export function ProgrammerCal({
     previousValue,
     operation,
     state,
+    actions,
+  ]);
+
+  // Sync external values for uncontrolled mode (for external updates like bit clicks)
+  useEffect(() => {
+    if (!controlled) {
+      let hasExternalUpdate = false;
+
+      if (externalValue !== undefined && externalValue !== state.currentValue) {
+        isExternalUpdate.current = true;
+        actions.setCurrentValue(externalValue);
+        hasExternalUpdate = true;
+      }
+      if (externalBase !== undefined && externalBase !== state.base) {
+        isExternalUpdate.current = true;
+        actions.setBase(externalBase);
+        hasExternalUpdate = true;
+      }
+      if (
+        externalBitWidth !== undefined &&
+        externalBitWidth !== state.bitWidth
+      ) {
+        isExternalUpdate.current = true;
+        actions.setBitWidth(externalBitWidth);
+        hasExternalUpdate = true;
+      }
+
+      // Reset flag after external update
+      if (hasExternalUpdate) {
+        setTimeout(() => {
+          isExternalUpdate.current = false;
+        }, 0);
+      }
+    }
+  }, [
+    controlled,
+    externalValue,
+    externalBase,
+    externalBitWidth,
+    state.currentValue,
+    state.base,
+    state.bitWidth,
     actions,
   ]);
 
@@ -326,13 +379,16 @@ export function ProgrammerCal({
 
   // State change notification
   const notifyStateChange = useCallback(() => {
-    onStateChange?.({
-      currentValue: currentValue,
-      previousValue: currentPreviousValue,
-      operation: currentOperation ?? null,
-      base: currentBase,
-      bitWidth: currentBitWidth,
-    });
+    // Only notify if it's not an external update
+    if (!isExternalUpdate.current) {
+      onStateChange?.({
+        currentValue: currentValue,
+        previousValue: currentPreviousValue,
+        operation: currentOperation ?? null,
+        base: currentBase,
+        bitWidth: currentBitWidth,
+      });
+    }
   }, [
     currentValue,
     currentPreviousValue,

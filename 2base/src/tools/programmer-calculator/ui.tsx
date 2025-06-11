@@ -6,82 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToolWrapper } from "@/components/common/tool-wrapper";
 import { ProgrammerCal } from "@/components/common/programmer-cal";
+import { ProgrammerCalWithStore } from "./components/ProgrammerCalWithStore";
 import { AdvancedBitwiseVisualization } from "./components/AdvancedBitwiseVisualization";
 import { toolInfo } from "./toolInfo";
-import type { Base, BitWidth, Operation } from "./types";
 
 export default function ProgrammerCalculator() {
   // Bitwise Boost 模式状态
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
 
-  // 共享的计算器状态
-  const [sharedState, setSharedState] = useState({
-    currentValue: "0",
-    previousValue: "",
-    operation: null as Operation | null,
-    base: 10 as Base,
-    bitWidth: 32 as BitWidth,
-  });
-
   // Bitwise Boost 切换处理
   const handleBitwiseBoostToggle = (checked: boolean) => {
     setIsAdvancedMode(checked);
-  };
-
-  // 处理值变化（从计算器组件）
-  const handleValueChange = (value: string, base: Base) => {
-    setSharedState((prev) => ({
-      ...prev,
-      currentValue: value,
-      base: base,
-    }));
-  };
-
-  // 处理进制变化
-  const handleBaseChange = (base: Base) => {
-    setSharedState((prev) => ({
-      ...prev,
-      base: base,
-    }));
-  };
-
-  // 处理位宽变化
-  const handleBitWidthChange = (bitWidth: BitWidth) => {
-    setSharedState((prev) => ({
-      ...prev,
-      bitWidth: bitWidth,
-    }));
-  };
-
-  // 处理完整状态变化（从计算器组件）
-  const handleStateChange = (state: {
-    currentValue: string;
-    previousValue: string;
-    operation: Operation | null;
-    base: Base;
-    bitWidth: BitWidth;
-  }) => {
-    // 只有当状态实际发生变化时才更新，避免无限循环
-    setSharedState((prev) => {
-      if (
-        prev.currentValue === state.currentValue &&
-        prev.previousValue === state.previousValue &&
-        prev.operation === state.operation &&
-        prev.base === state.base &&
-        prev.bitWidth === state.bitWidth
-      ) {
-        return prev; // 状态相同，不更新
-      }
-      return state; // 状态不同，执行更新
-    });
-  };
-
-  // 处理来自高级可视化的值变化
-  const handleVisualizationValueChange = (value: string) => {
-    setSharedState((prev) => ({
-      ...prev,
-      currentValue: value,
-    }));
   };
 
   // Bitwise Boost 控制组件
@@ -101,7 +36,7 @@ export default function ProgrammerCalculator() {
   );
 
   if (isAdvancedMode) {
-    // 高级模式：双面板布局，通过状态回调同步
+    // 高级模式：双面板布局，使用 Zustand store 管理状态
     return (
       <ToolWrapper
         toolInfo={toolInfo}
@@ -109,48 +44,28 @@ export default function ProgrammerCalculator() {
         customControls={bitwiseBoostControl}
       >
         <div className="mt-5 flex gap-4">
-          {/* 左面板：计算器（非受控，仅通过回调同步状态） */}
+          {/* 左面板：计算器（使用 store） */}
           <div className="w-96 flex-shrink-0">
-            <ProgrammerCal
-              controlled={false}
-              onStateChange={handleStateChange}
-            />
+            <ProgrammerCalWithStore />
           </div>
 
-          {/* 右面板：高级位运算可视化，同步状态 */}
+          {/* 右面板：高级位运算可视化（使用 store） */}
           <div className="flex-1 min-w-0">
-            <AdvancedBitwiseVisualization
-              currentValue={sharedState.currentValue}
-              previousValue={sharedState.previousValue}
-              operation={sharedState.operation}
-              base={sharedState.base}
-              bitWidth={sharedState.bitWidth}
-              onValueChange={handleVisualizationValueChange}
-            />
+            <AdvancedBitwiseVisualization />
           </div>
         </div>
       </ToolWrapper>
     );
   }
 
-  // 普通模式：非受控计算器
+  // 普通模式：独立计算器（不使用 store）
   return (
     <ToolWrapper
       toolInfo={toolInfo}
       maxWidth="full"
       customControls={bitwiseBoostControl}
     >
-      <ProgrammerCal
-        controlled={false}
-        initialBase={sharedState.base}
-        initialBitWidth={sharedState.bitWidth}
-        initialValue={sharedState.currentValue}
-        maxWidth="full"
-        showToaster={true}
-        onValueChange={handleValueChange}
-        onBaseChange={handleBaseChange}
-        onBitWidthChange={handleBitWidthChange}
-      />
+      <ProgrammerCal controlled={false} maxWidth="full" showToaster={true} />
     </ToolWrapper>
   );
 }

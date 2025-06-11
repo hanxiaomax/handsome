@@ -1,44 +1,37 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Base, BitWidth, Operation } from "../types";
+import type { Base } from "../types";
 import { parseValue, formatForBase } from "../lib/base-converter";
 import { toggleBit } from "../lib/bitwise";
 import { performCalculation } from "../lib/calculator";
+import { useCalculatorSnapshot, useCalculatorActions } from "../lib/store";
 
-interface AdvancedBitwiseVisualizationProps {
-  currentValue: string;
-  previousValue: string;
-  operation: Operation | null;
-  base: Base;
-  bitWidth: BitWidth;
-  onValueChange: (value: string) => void;
-}
-
-export function AdvancedBitwiseVisualization({
-  currentValue,
-  previousValue,
-  operation,
-  base,
-  bitWidth,
-  onValueChange,
-}: AdvancedBitwiseVisualizationProps) {
+export function AdvancedBitwiseVisualization() {
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
+  // 从 store 获取状态
+  const { currentValue, previousValue, operation, base, bitWidth } =
+    useCalculatorSnapshot();
+  const actions = useCalculatorActions();
+
   // 解析数值
-  const parseValueSafe = (value: string, fallback: number = 0): number => {
-    try {
-      return parseValue(value || "0", base, bitWidth);
-    } catch {
-      return fallback;
-    }
-  };
+  const parseValueSafe = useCallback(
+    (value: string, fallback: number = 0): number => {
+      try {
+        return parseValue(value || "0", base, bitWidth);
+      } catch {
+        return fallback;
+      }
+    },
+    [base, bitWidth]
+  );
 
   const currentDecimal = parseValueSafe(currentValue);
   const previousDecimal = parseValueSafe(previousValue);
 
   // 计算结果
-  const getCalculationResult = (): number => {
+  const getCalculationResult = useCallback((): number => {
     if (!operation || !previousValue) {
       return currentDecimal;
     }
@@ -54,31 +47,35 @@ export function AdvancedBitwiseVisualization({
     } catch {
       return 0;
     }
-  };
+  }, [operation, previousValue, currentValue, currentDecimal, base, bitWidth]);
 
   const resultDecimal = getCalculationResult();
 
   // 格式化不同进制的值
-  const formatValue = (value: number, targetBase: Base): string => {
+  const formatValue = useCallback((value: number, targetBase: Base): string => {
     try {
       return formatForBase(value.toString(), targetBase).toUpperCase();
     } catch {
       return "0";
     }
-  };
+  }, []);
 
-  // 位点击处理
-  const handleBitClick = (value: number, rowType: "current" | "previous") => {
-    return (position: number) => {
-      const newValue = toggleBit(value, position, bitWidth);
-      const formattedValue = formatForBase(newValue.toString(), base);
+  // 位点击处理 - 直接更新 store
+  const handleBitClick = useCallback(
+    (value: number, rowType: "current" | "previous") => {
+      return (position: number) => {
+        const newValue = toggleBit(value, position, bitWidth);
+        const formattedValue = formatForBase(newValue.toString(), base);
 
-      if (rowType === "current") {
-        onValueChange(formattedValue);
-      }
-      // 对于 previous 值，我们需要其他方式来更新，这里暂时只处理 current
-    };
-  };
+        if (rowType === "current") {
+          // 通过 store 更新，标记来源为 visualization
+          actions.setValue(formattedValue, "visualization");
+        }
+        // 对于 previous 值，暂时只处理 current
+      };
+    },
+    [bitWidth, base, actions]
+  );
 
   // 渲染单行位表示
   const renderBitRow = (
