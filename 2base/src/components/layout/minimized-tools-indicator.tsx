@@ -1,10 +1,10 @@
 import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useMinimizedTools } from "@/contexts/minimized-tools-context";
+import { useMinimizedToolsList } from "@/stores/minimized-tools-store";
 import { MinimizedToolsDrawer } from "./minimized-tools-drawer";
 
 export function MinimizedToolsIndicator() {
-  const { minimizedTools } = useMinimizedTools();
+  const minimizedTools = useMinimizedToolsList();
 
   if (minimizedTools.length === 0) {
     return null;

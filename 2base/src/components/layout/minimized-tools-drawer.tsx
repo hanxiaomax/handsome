@@ -9,7 +9,10 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { X, ChevronDown } from "lucide-react";
-import { useMinimizedTools } from "@/contexts/minimized-tools-context";
+import {
+  useMinimizedToolsList,
+  useMinimizedToolsActions,
+} from "@/stores/minimized-tools-store";
 
 interface MinimizedToolsDrawerProps {
   children: React.ReactNode;
@@ -17,10 +20,13 @@ interface MinimizedToolsDrawerProps {
 
 export function MinimizedToolsDrawer({ children }: MinimizedToolsDrawerProps) {
   const navigate = useNavigate();
-  const { minimizedTools, closeTool, clearAllMinimized } = useMinimizedTools();
+  const minimizedTools = useMinimizedToolsList();
+  const { restoreTool, closeTool, clearAllMinimized } =
+    useMinimizedToolsActions();
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleRestoreTool = (_toolId: string, toolPath: string) => {
+  const handleRestoreTool = (toolId: string, toolPath: string) => {
+    restoreTool(toolId);
     setIsOpen(false);
     navigate(toolPath);
   };

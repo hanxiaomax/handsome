@@ -15,13 +15,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { tools } from "@/data/tools";
-import { useFavorites } from "@/contexts/favorites-context";
+import { useFavoritesList } from "@/stores/favorites-store";
 import { Link } from "react-router-dom";
 
 function FavoritesContent() {
   const navigate = useNavigate();
   const { isMobile, setOpenMobile } = useSidebar();
-  const { favorites } = useFavorites();
+  const favorites = useFavoritesList();
 
   const handleUseTool = (toolId: string) => {
     const tool = tools.find((t) => t.id === toolId);

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, ExternalLink } from "lucide-react";
-import { useFavorites } from "@/contexts/favorites-context";
+import { useIsFavorite, useFavoriteActions } from "@/stores/favorites-store";
 import type { ToolInfo } from "@/types/tool";
 import { getToolVersionInfo } from "@/lib/tool-utils";
 
@@ -21,7 +21,8 @@ export function ToolInfoCard({
   showFavoriteButton = true,
   compact = false,
 }: ToolInfoCardProps) {
-  const { toggleFavorite, isFavorite } = useFavorites();
+  const isFavorite = useIsFavorite(tool.id);
+  const { toggleFavorite } = useFavoriteActions();
   const versionInfo = getToolVersionInfo(tool);
 
   const handleCardClick = () => {
@@ -109,7 +110,7 @@ export function ToolInfoCard({
             >
               <Heart
                 className={`${compact ? "h-3 w-3" : "h-4 w-4"} ${
-                  isFavorite(tool.id) ? "fill-current text-destructive" : ""
+                  isFavorite ? "fill-current text-destructive" : ""
                 }`}
               />
             </Button>

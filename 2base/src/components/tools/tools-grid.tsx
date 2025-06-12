@@ -23,7 +23,7 @@ import { tools, categories } from "@/data/tools";
 import { useToolSearch } from "@/hooks/use-tool-search";
 import type { ToolInfo } from "@/types/tool";
 import { getToolVersionInfo } from "@/lib/tool-utils";
-import { useFavorites } from "@/contexts/favorites-context";
+import { useFavoritesList, useFavoriteActions } from "@/stores/favorites-store";
 
 interface ToolsGridProps {
   onUseTool: (toolId: string) => void;
@@ -38,7 +38,8 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
     null
   );
 
-  const { favorites, toggleFavorite } = useFavorites();
+  const favorites = useFavoritesList();
+  const { toggleFavorite } = useFavoriteActions();
 
   const {
     results: filteredTools,

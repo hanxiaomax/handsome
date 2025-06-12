@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { tools } from "@/data/tools";
 import { getToolVersionInfo } from "@/lib/tool-utils";
-import { useFavorites } from "@/contexts/favorites-context";
+import { useFavoritesList } from "@/stores/favorites-store";
 
 interface AppSidebarProps {
   selectedTool: string | null;
@@ -26,7 +26,7 @@ interface AppSidebarProps {
 export function AppSidebar({ selectedTool }: AppSidebarProps) {
   const navigate = useNavigate();
   const { isMobile, setOpenMobile } = useSidebar();
-  const { favorites } = useFavorites();
+  const favorites = useFavoritesList();
 
   // Get favorite tools
   const favoriteTools = tools.filter((tool) => favorites.includes(tool.id));

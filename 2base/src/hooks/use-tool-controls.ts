@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useFavorites } from "@/contexts/favorites-context";
-import { useMinimizedTools } from "@/contexts/minimized-tools-context";
+import { useIsFavorite, useFavoriteActions } from "@/stores/favorites-store";
+import { useMinimizedToolsActions } from "@/stores/minimized-tools-store";
 import type { ToolInfo } from "@/types/tool";
 
 interface UseToolControlsOptions {
@@ -43,11 +43,9 @@ export function useToolControls({
   state,
 }: UseToolControlsOptions): ToolControlsResult {
   const navigate = useNavigate();
-  const { favorites, toggleFavorite } = useFavorites();
-  const { minimizeTool } = useMinimizedTools();
-
-  // Favorite functionality
-  const isFavorite = favorites.includes(toolInfo.id);
+  const isFavorite = useIsFavorite(toolInfo.id);
+  const { toggleFavorite } = useFavoriteActions();
+  const { minimizeTool } = useMinimizedToolsActions();
 
   const handleToggleFavorite = useCallback(() => {
     toggleFavorite(toolInfo.id);
@@ -60,10 +58,10 @@ export function useToolControls({
 
   // Minimize functionality with optional state preservation
   const handleMinimize = useCallback(() => {
-    if (state) {
-      minimizeTool(toolInfo, state);
-    }
-    navigate("/");
+    // Always minimize the tool, with or without state
+    minimizeTool(toolInfo, state);
+    // Navigate to tools page, not landing page
+    navigate("/tools");
   }, [minimizeTool, toolInfo, state, navigate]);
 
   // Complete props for ToolLayout

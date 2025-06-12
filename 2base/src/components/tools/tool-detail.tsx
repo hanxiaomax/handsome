@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Play, Info, Star } from "lucide-react";
-import { useFavorites } from "@/contexts/favorites-context";
+import { useIsFavorite, useFavoriteActions } from "@/stores/favorites-store";
 import type { ToolInfo } from "@/types/tool";
 import { getToolVersionInfo } from "@/lib/tool-utils";
 
@@ -12,7 +12,8 @@ interface ToolDetailProps {
 }
 
 export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
-  const { toggleFavorite, isFavorite } = useFavorites();
+  const isFavorite = useIsFavorite(tool.id);
+  const { toggleFavorite } = useFavoriteActions();
   const versionInfo = getToolVersionInfo(tool);
 
   const handleToggleFavorite = () => {
@@ -74,10 +75,10 @@ export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
         >
           <Star
             className={`h-4 w-4 ${
-              isFavorite(tool.id) ? "fill-current text-yellow-500" : ""
+              isFavorite ? "fill-current text-yellow-500" : ""
             }`}
           />
-          {isFavorite(tool.id) ? "Remove from Favorites" : "Add to Favorites"}
+          {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
         </Button>
         <Button variant="outline" size="lg" className="flex items-center gap-2">
           <Info className="h-4 w-4" />
