@@ -184,17 +184,11 @@ export function GlobalSearch({
         style={customStyle}
         onClick={() => setOpen(true)}
       >
-        <Search className="mr-2 h-4 w-4" />
-        <span
-          className={`${
-            size === "lg" ? "inline-flex" : "hidden lg:inline-flex"
-          }`}
-        >
-          {dynamicPlaceholder}
+        <Search className="mr-2 h-4 w-4 flex-shrink-0" />
+        <span className="truncate">
+          <span className="hidden sm:inline">{dynamicPlaceholder}</span>
+          <span className="inline sm:hidden">Search</span>
         </span>
-        {size !== "lg" && (
-          <span className="inline-flex lg:hidden">Search...</span>
-        )}
         {showShortcut && (
           <kbd className="pointer-events-none absolute right-1.5 top-1/2 transform -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
             <span className="text-xs">⌘</span>K

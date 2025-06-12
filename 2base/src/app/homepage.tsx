@@ -78,8 +78,13 @@ function HomepageContent() {
               )}
             </div>
             {/* Global Search - 全局搜索框 */}
-            <div className="hidden sm:block">
-              <GlobalSearch />
+            <div className="flex-1 max-w-md">
+              <GlobalSearch
+                width="full"
+                size="sm"
+                className="w-full"
+                showShortcut={false}
+              />
             </div>
             <ThemeToggle />
           </div>
