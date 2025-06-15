@@ -5,8 +5,7 @@ import { Zap } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToolWrapper } from "@/components/common/tool-wrapper";
-import { ProgrammerCal } from "@/tools/programmer-calculator/components/programmer-cal";
-import { ProgrammerCalWithStore } from "./components/ProgrammerCalWithStore";
+import { ProgrammerCal } from "./components/programmer-cal";
 import { AdvancedBitwiseVisualization } from "./components/AdvancedBitwiseVisualization";
 import { toolInfo } from "./toolInfo";
 
@@ -44,9 +43,9 @@ export default function ProgrammerCalculator() {
         customControls={bitwiseBoostControl}
       >
         <div className="mt-5 flex gap-4">
-          {/* 左面板：计算器（使用 store） */}
+          {/* 左面板：计算器（强制使用 store） */}
           <div className="w-96 flex-shrink-0">
-            <ProgrammerCalWithStore />
+            <ProgrammerCal forceStoreState={true} />
           </div>
 
           {/* 右面板：高级位运算可视化（使用 store） */}
@@ -64,7 +63,12 @@ export default function ProgrammerCalculator() {
       maxWidth="3xl"
       customControls={bitwiseBoostControl}
     >
-      <ProgrammerCal controlled={false} maxWidth="full" showToaster={true} />
+      {/* 基础模式：单面板布局，使用本地状态 */}
+      <ProgrammerCal
+        forceLocalState={true}
+        maxWidth="full"
+        showToaster={true}
+      />
     </ToolWrapper>
   );
 }

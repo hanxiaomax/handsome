@@ -17,6 +17,12 @@ import {
 } from "@/tools/programmer-calculator/lib/base-converter";
 import { toggleBit } from "@/tools/programmer-calculator/lib/bitwise";
 
+// Store hooks (always called)
+import {
+  useCalculatorSnapshot,
+  useCalculatorActions,
+} from "@/tools/programmer-calculator/lib/store";
+
 // Components from programmer-calculator
 import {
   MainDisplayArea,
@@ -34,7 +40,11 @@ interface ProgrammerCalProps {
   // Feature toggles
   showToaster?: boolean;
 
-  // Controlled/Uncontrolled mode
+  // Force mode selection (optional)
+  forceLocalState?: boolean; // 强制使用本地状态
+  forceStoreState?: boolean; // 强制使用store状态
+
+  // Controlled/Uncontrolled mode (legacy support)
   controlled?: boolean;
 
   // Controlled mode props - external state
@@ -77,31 +87,30 @@ interface ProgrammerCalProps {
 }
 
 /**
- * ProgrammerCal - Comprehensive Programmer Calculator Component
+ * ProgrammerCal - Unified Programmer Calculator Component
  *
- * A fully-featured programmer calculator with multi-base support, bitwise operations,
- * and advanced visualization capabilities. Supports both controlled and uncontrolled modes.
+ * Automatically detects and uses the appropriate state management:
+ * - If Zustand store is available and not forced to local state -> uses store
+ * - Otherwise -> uses local state management
  *
  * @example
- * // Uncontrolled mode (default)
+ * // Auto-detection mode (recommended)
  * <ProgrammerCal />
  *
  * @example
- * // Controlled mode with external state binding
- * <ProgrammerCal
- *   controlled={true}
- *   value={sharedValue}
- *   base={sharedBase}
- *   bitWidth={sharedBitWidth}
- *   onValueChange={(value, base) => setSharedValue(value)}
- *   onBaseChange={(base) => setSharedBase(base)}
- *   onBitWidthChange={(bitWidth) => setSharedBitWidth(bitWidth)}
- * />
+ * // Force local state
+ * <ProgrammerCal forceLocalState={true} />
+ *
+ * @example
+ * // Force store state
+ * <ProgrammerCal forceStoreState={true} />
  */
 export function ProgrammerCal({
   className = "",
   maxWidth = "full",
   showToaster = true,
+  forceLocalState = false,
+  forceStoreState = false,
   controlled = false,
   // Controlled mode props
   value,
@@ -127,53 +136,125 @@ export function ProgrammerCal({
   compact = false,
   borderless = false,
 }: ProgrammerCalProps) {
-  // State Management
-  const { state, actions } = useCalculatorState();
-  const { handlers } = useCalculatorLogic(state, actions);
+  // Always call all hooks (React rules)
+  const { state: localState, actions: localActions } = useCalculatorState();
+  const { handlers: localHandlers } = useCalculatorLogic(
+    localState,
+    localActions
+  );
+
+  // Always call store hooks, but handle errors gracefully
+  let storeSnapshot = null;
+  let storeActions = null;
+  let storeAvailable = false;
+
+  // Always call hooks, but catch errors
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    storeSnapshot = useCalculatorSnapshot();
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    storeActions = useCalculatorActions();
+    storeAvailable = !!(storeSnapshot && storeActions);
+  } catch {
+    // Store not available, will use local state
+    storeAvailable = false;
+  }
+
+  // Determine which state management to use
+  const shouldUseStore = useCallback(() => {
+    if (forceLocalState) return false;
+    if (forceStoreState) return true;
+    if (controlled) return false; // 受控模式使用本地状态
+    return storeAvailable;
+  }, [forceLocalState, forceStoreState, controlled, storeAvailable]);
+
+  const usingStore = shouldUseStore();
 
   // Track external updates to avoid triggering callbacks
   const isExternalUpdate = useRef(false);
 
+  // Determine which state and actions to use
+  const currentState =
+    usingStore && storeSnapshot
+      ? {
+          currentValue: storeSnapshot.currentValue,
+          previousValue: storeSnapshot.previousValue,
+          operation: storeSnapshot.operation,
+          base: storeSnapshot.base,
+          bitWidth: storeSnapshot.bitWidth,
+          expression: "", // Store doesn't have expression, use empty
+          mode: "programmer" as const,
+          angleUnit: "deg" as const,
+          memory: 0,
+          history: [],
+          isNewNumber: true,
+          error: null,
+          isAdvancedMode: false,
+        }
+      : localState;
+
+  const currentActions =
+    usingStore && storeActions
+      ? {
+          setCurrentValue: (value: string) =>
+            storeActions.setValue(value, "calculator"),
+          setBase: (base: Base) => storeActions.setBase(base, "calculator"),
+          setBitWidth: (bitWidth: BitWidth) =>
+            storeActions.setBitWidth(bitWidth, "calculator"),
+          setPreviousValue: (value: string) =>
+            storeActions.setPreviousValue(value, "calculator"),
+          setOperation: (operation: Operation | null) =>
+            storeActions.setOperation(operation, "calculator"),
+          clearValues: () => {
+            storeActions.setValue("0", "calculator");
+            storeActions.setPreviousValue("", "calculator");
+            storeActions.setOperation(null, "calculator");
+          },
+        }
+      : localActions;
+
   // Initialize state for uncontrolled mode
   useEffect(() => {
-    if (!controlled) {
-      if (initialBase !== 10 && state.base === 10) actions.setBase(initialBase);
-      if (initialBitWidth !== 32 && state.bitWidth === 32)
-        actions.setBitWidth(initialBitWidth);
-      if (initialValue !== "0" && state.currentValue === "0")
-        actions.setCurrentValue(initialValue);
+    if (!controlled && !usingStore) {
+      if (initialBase !== 10 && currentState.base === 10)
+        currentActions.setBase(initialBase);
+      if (initialBitWidth !== 32 && currentState.bitWidth === 32)
+        currentActions.setBitWidth(initialBitWidth);
+      if (initialValue !== "0" && currentState.currentValue === "0")
+        currentActions.setCurrentValue(initialValue);
     }
   }, [
     controlled,
+    usingStore,
     initialBase,
     initialBitWidth,
     initialValue,
-    actions,
-    state.base,
-    state.bitWidth,
-    state.currentValue,
+    currentActions,
+    currentState.base,
+    currentState.bitWidth,
+    currentState.currentValue,
   ]);
 
   // Sync external state for controlled mode
   useEffect(() => {
     if (controlled) {
-      if (value !== undefined && value !== state.currentValue) {
-        actions.setCurrentValue(value);
+      if (value !== undefined && value !== currentState.currentValue) {
+        currentActions.setCurrentValue(value);
       }
-      if (base !== undefined && base !== state.base) {
-        actions.setBase(base);
+      if (base !== undefined && base !== currentState.base) {
+        currentActions.setBase(base);
       }
-      if (bitWidth !== undefined && bitWidth !== state.bitWidth) {
-        actions.setBitWidth(bitWidth);
+      if (bitWidth !== undefined && bitWidth !== currentState.bitWidth) {
+        currentActions.setBitWidth(bitWidth);
       }
       if (
         previousValue !== undefined &&
-        previousValue !== state.previousValue
+        previousValue !== currentState.previousValue
       ) {
-        actions.setPreviousValue(previousValue);
+        currentActions.setPreviousValue(previousValue);
       }
-      if (operation !== undefined && operation !== state.operation) {
-        actions.setOperation(operation);
+      if (operation !== undefined && operation !== currentState.operation) {
+        currentActions.setOperation(operation);
       }
     }
   }, [
@@ -183,31 +264,34 @@ export function ProgrammerCal({
     bitWidth,
     previousValue,
     operation,
-    state,
-    actions,
+    currentState,
+    currentActions,
   ]);
 
   // Sync external values for uncontrolled mode (for external updates like bit clicks)
   useEffect(() => {
-    if (!controlled) {
+    if (!controlled && !usingStore) {
       let hasExternalUpdate = false;
 
-      if (externalValue !== undefined && externalValue !== state.currentValue) {
+      if (
+        externalValue !== undefined &&
+        externalValue !== currentState.currentValue
+      ) {
         isExternalUpdate.current = true;
-        actions.setCurrentValue(externalValue);
+        currentActions.setCurrentValue(externalValue);
         hasExternalUpdate = true;
       }
-      if (externalBase !== undefined && externalBase !== state.base) {
+      if (externalBase !== undefined && externalBase !== currentState.base) {
         isExternalUpdate.current = true;
-        actions.setBase(externalBase);
+        currentActions.setBase(externalBase);
         hasExternalUpdate = true;
       }
       if (
         externalBitWidth !== undefined &&
-        externalBitWidth !== state.bitWidth
+        externalBitWidth !== currentState.bitWidth
       ) {
         isExternalUpdate.current = true;
-        actions.setBitWidth(externalBitWidth);
+        currentActions.setBitWidth(externalBitWidth);
         hasExternalUpdate = true;
       }
 
@@ -220,33 +304,34 @@ export function ProgrammerCal({
     }
   }, [
     controlled,
+    usingStore,
     externalValue,
     externalBase,
     externalBitWidth,
-    state.currentValue,
-    state.base,
-    state.bitWidth,
-    actions,
+    currentState.currentValue,
+    currentState.base,
+    currentState.bitWidth,
+    currentActions,
   ]);
 
   // Get current effective values (controlled or internal state)
-  const currentValue = controlled ? value || "0" : state.currentValue;
-  const currentBase = controlled ? base || 10 : state.base;
-  const currentBitWidth = controlled ? bitWidth || 32 : state.bitWidth;
+  const currentValue = controlled ? value || "0" : currentState.currentValue;
+  const currentBase = controlled ? base || 10 : currentState.base;
+  const currentBitWidth = controlled ? bitWidth || 32 : currentState.bitWidth;
   const currentPreviousValue = controlled
     ? previousValue || ""
-    : state.previousValue;
-  const currentOperation = controlled ? operation : state.operation;
+    : currentState.previousValue;
+  const currentOperation = controlled ? operation : currentState.operation;
 
   // Enhanced event handlers with callbacks
   const handleValueChange = useCallback(
     (newValue: string) => {
       if (!controlled) {
-        actions.setCurrentValue(newValue);
+        currentActions.setCurrentValue(newValue);
       }
       onValueChange?.(newValue, currentBase);
     },
-    [controlled, actions, onValueChange, currentBase]
+    [controlled, currentActions, onValueChange, currentBase]
   );
 
   const handleBaseChange = useCallback(
@@ -260,16 +345,16 @@ export function ProgrammerCal({
         const newValue = formatForBase(decimal.toString(), newBase);
 
         if (!controlled) {
-          actions.setBase(newBase);
-          actions.setCurrentValue(newValue);
+          currentActions.setBase(newBase);
+          currentActions.setCurrentValue(newValue);
         }
 
         onBaseChange?.(newBase);
         onValueChange?.(newValue, newBase);
       } catch {
         if (!controlled) {
-          actions.setBase(newBase);
-          actions.setCurrentValue("0");
+          currentActions.setBase(newBase);
+          currentActions.setCurrentValue("0");
         }
         onBaseChange?.(newBase);
         onValueChange?.("0", newBase);
@@ -280,7 +365,7 @@ export function ProgrammerCal({
       currentValue,
       currentBase,
       currentBitWidth,
-      actions,
+      currentActions,
       onBaseChange,
       onValueChange,
     ]
@@ -289,11 +374,11 @@ export function ProgrammerCal({
   const handleBitWidthChange = useCallback(
     (newBitWidth: BitWidth) => {
       if (!controlled) {
-        actions.setBitWidth(newBitWidth);
+        currentActions.setBitWidth(newBitWidth);
       }
       onBitWidthChange?.(newBitWidth);
     },
-    [controlled, actions, onBitWidthChange]
+    [controlled, currentActions, onBitWidthChange]
   );
 
   const handleButtonClick = useCallback(
@@ -301,9 +386,36 @@ export function ProgrammerCal({
       if (controlled) {
         // In controlled mode, delegate to external handler
         onButtonClick?.(value, type);
+      } else if (usingStore && storeActions) {
+        // In store mode, use simplified button handling
+        if (type === "number") {
+          const newValue =
+            currentState.currentValue === "0"
+              ? value
+              : currentState.currentValue + value;
+          storeActions.setValue(newValue, "calculator");
+        } else if (type === "operation") {
+          if (value === "=") {
+            // Handle equals - could implement calculation logic here
+            console.log("Equals pressed in store mode");
+          } else {
+            storeActions.setOperation(value as Operation, "calculator");
+            storeActions.setPreviousValue(
+              currentState.currentValue,
+              "calculator"
+            );
+            storeActions.setValue("0", "calculator");
+          }
+        } else if (type === "special") {
+          if (value === "clear") {
+            storeActions.setValue("0", "calculator");
+            storeActions.setPreviousValue("", "calculator");
+            storeActions.setOperation(null, "calculator");
+          }
+        }
       } else {
-        // In uncontrolled mode, use internal handler
-        handlers.onButtonClick(value, type);
+        // In local state mode, use full handler
+        localHandlers.onButtonClick(value, type);
       }
 
       // Trigger operation complete callback for equals
@@ -317,8 +429,11 @@ export function ProgrammerCal({
     },
     [
       controlled,
+      usingStore,
+      storeActions,
       onButtonClick,
-      handlers,
+      localHandlers,
+      currentState,
       onOperationComplete,
       currentOperation,
       currentPreviousValue,
@@ -360,10 +475,10 @@ export function ProgrammerCal({
 
   const handleClear = useCallback(() => {
     if (!controlled) {
-      actions.clearValues();
+      currentActions.clearValues();
     }
     onValueChange?.("0", currentBase);
-  }, [controlled, actions, onValueChange, currentBase]);
+  }, [controlled, currentActions, onValueChange, currentBase]);
 
   // Container styling
   const containerClass = `
@@ -411,10 +526,11 @@ export function ProgrammerCal({
   ]);
 
   // Build expression for display
-  const expression =
-    currentPreviousValue && currentOperation
+  const expression = usingStore
+    ? currentPreviousValue && currentOperation
       ? `${currentPreviousValue} ${currentOperation}`
-      : "";
+      : ""
+    : currentState.expression;
 
   // Normal calculator layout
   const renderNormalCalculator = () => (
@@ -425,7 +541,7 @@ export function ProgrammerCal({
         expression={expression}
         base={currentBase}
         bitWidth={currentBitWidth}
-        error={!!state.error}
+        error={!!currentState.error}
         convertAndDisplay={convertAndDisplay}
       />
 
@@ -469,6 +585,15 @@ export function ProgrammerCal({
 
       {/* Toast Notifications */}
       {showToaster && <Toaster />}
+
+      {/* Debug info (development only) */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          State: {usingStore ? "Store" : "Local"} | Mode:{" "}
+          {controlled ? "Controlled" : "Uncontrolled"} | Store Available:{" "}
+          {storeAvailable ? "Yes" : "No"}
+        </div>
+      )}
     </div>
   );
 }
