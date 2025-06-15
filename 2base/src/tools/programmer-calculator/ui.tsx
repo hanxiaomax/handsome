@@ -58,11 +58,10 @@ export default function ProgrammerCalculator() {
     );
   }
 
-  // 普通模式：独立计算器（不使用 store）
   return (
     <ToolWrapper
       toolInfo={toolInfo}
-      maxWidth="full"
+      maxWidth="3xl"
       customControls={bitwiseBoostControl}
     >
       <ProgrammerCal controlled={false} maxWidth="full" showToaster={true} />
