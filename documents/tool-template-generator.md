@@ -367,4 +367,36 @@ export { ResultsDisplay } from "./ResultsDisplay";
 
 ## 示例工具
 
-参考已重构的 `xml-parser` 工具，它完整展示了新架构的实现方式。 
+参考已重构的 `xml-parser` 工具，它完整展示了新架构的实现方式。
+
+### 使用 zustand 进行状态管理（可选）
+
+如需更强大或多组件共享的状态管理，推荐在 lib/store.ts 中使用 zustand：
+
+```typescript
+import { create } from 'zustand'
+
+interface ToolState {
+  input: string
+  result: string
+  setInput: (input: string) => void
+  setResult: (result: string) => void
+}
+
+export const useToolStore = create<ToolState>((set) => ({
+  input: '',
+  result: '',
+  setInput: (input) => set({ input }),
+  setResult: (result) => set({ result }),
+}))
+```
+
+在组件中直接使用：
+
+```typescript
+import { useToolStore } from './lib/store'
+
+const { input, result, setInput, setResult } = useToolStore()
+```
+
+复杂用法可参考 programmer-calculator 的 lib/store.ts。 

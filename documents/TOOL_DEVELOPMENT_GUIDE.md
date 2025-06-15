@@ -2165,3 +2165,52 @@ console.log('Tool state:', { input, result, loading })
 ---
 
 *本指南会随着项目发展持续更新。如有问题或建议，请创建issue或提交PR。* 
+
+### 推荐使用 zustand 进行状态管理
+
+对于中等及以上复杂度的工具，推荐使用 zustand 进行状态管理。每个工具应有独立的 store 文件（如 lib/store.ts），并通过 TypeScript 明确类型定义。
+
+#### 目录结构示例
+```
+src/tools/your-tool-name/
+├── lib/
+│   └── store.ts
+```
+
+#### store 示例
+```typescript
+import { create } from 'zustand'
+
+interface ToolState {
+  input: string
+  result: string
+  setInput: (input: string) => void
+  setResult: (result: string) => void
+}
+
+export const useToolStore = create<ToolState>((set) => ({
+  input: '',
+  result: '',
+  setInput: (input) => set({ input }),
+  setResult: (result) => set({ result }),
+}))
+```
+
+#### 组件中使用
+```typescript
+import { useToolStore } from './lib/store'
+
+export default function ToolComponent() {
+  const { input, result, setInput, setResult } = useToolStore()
+  // ...
+}
+```
+
+#### 进阶用法
+可参考 programmer-calculator 的 `lib/store.ts`，实现批量更新、选择性订阅等高级状态管理。
+
+#### 状态管理原则
+- store 只负责状态和操作，UI 组件只负责渲染和交互。
+- 所有状态和操作均需定义 TypeScript 类型。
+- 每个工具的 store 仅服务于本工具，不做全局导出。
+- 推荐使用 zustand 的选择性订阅减少无关渲染。

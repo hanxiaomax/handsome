@@ -199,6 +199,61 @@ export function formatOutput(data: any): string {
 }
 ```
 
+## 状态管理（推荐 zustand）
+
+### 推荐场景
+- 工具状态较复杂、涉及多组件共享、或需要解耦 UI 与状态逻辑时，推荐使用 zustand。
+- 每个工具应有独立的 zustand store，避免全局状态污染。
+
+### 目录结构建议
+
+```
+tools/[tool-name]/
+├── lib/
+│   └── store.ts      # 状态管理（推荐命名）
+```
+
+### 状态类型与 store 创建
+
+```typescript
+import { create } from 'zustand'
+
+interface ToolState {
+  input: string
+  result: string
+  setInput: (input: string) => void
+  setResult: (result: string) => void
+}
+
+export const useToolStore = create<ToolState>((set) => ({
+  input: '',
+  result: '',
+  setInput: (input) => set({ input }),
+  setResult: (result) => set({ result }),
+}))
+```
+
+### 组件中使用 store
+
+```typescript
+import { useToolStore } from './lib/store'
+
+export default function ToolComponent() {
+  const { input, result, setInput, setResult } = useToolStore()
+  // ...
+}
+```
+
+### 进阶示例
+
+详见 programmer-calculator 的 `lib/store.ts`，支持批量更新、选择性订阅、原子操作等高级用法。
+
+### 状态管理原则
+- store 只负责状态和操作，UI 组件只负责渲染和交互。
+- 所有状态和操作均需定义 TypeScript 类型。
+- 每个工具的 store 仅服务于本工具，不做全局导出。
+- 可使用 zustand 的选择性订阅减少无关渲染。
+
 ## 组件层 (components/) 标准
 
 ### 组件设计原则
