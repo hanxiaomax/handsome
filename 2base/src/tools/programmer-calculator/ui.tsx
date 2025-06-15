@@ -5,7 +5,7 @@ import { Zap } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ToolWrapper } from "@/components/common/tool-wrapper";
-import { ProgrammerCal } from "@/components/common/programmer-cal";
+import { ProgrammerCal } from "@/tools/programmer-calculator/components/programmer-cal";
 import { ProgrammerCalWithStore } from "./components/ProgrammerCalWithStore";
 import { AdvancedBitwiseVisualization } from "./components/AdvancedBitwiseVisualization";
 import { toolInfo } from "./toolInfo";

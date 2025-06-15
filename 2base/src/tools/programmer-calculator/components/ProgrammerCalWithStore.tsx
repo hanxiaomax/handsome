@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { ProgrammerCal } from "@/components/common/programmer-cal";
+import { ProgrammerCal } from "@/tools/programmer-calculator/components/programmer-cal";
 import { useCalculatorSnapshot, useCalculatorActions } from "../lib/store";
 import type { Base, BitWidth, Operation } from "../types";
 
