@@ -1,12 +1,15 @@
 import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "react-router-dom";
 import { useMinimizedToolsList } from "@/stores/minimized-tools-store";
 import { MinimizedToolsDrawer } from "./minimized-tools-drawer";
 
 export function MinimizedToolsIndicator() {
+  const location = useLocation();
   const minimizedTools = useMinimizedToolsList();
 
-  if (minimizedTools.length === 0) {
+  // Don't show on landing page
+  if (location.pathname === "/" || minimizedTools.length === 0) {
     return null;
   }
 

@@ -112,9 +112,14 @@ export function MinimizedToolsDrawer({ children }: MinimizedToolsDrawerProps) {
                     {/* Tool Header - 图标和关闭按钮 */}
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        {IconComponent && (
+                        {IconComponent &&
+                        typeof IconComponent === "function" ? (
                           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
                             <IconComponent className="h-4 w-4" />
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-muted">
+                            <div className="h-4 w-4 bg-muted-foreground/20 rounded" />
                           </div>
                         )}
                       </div>

@@ -367,7 +367,7 @@ export { ResultsDisplay } from "./ResultsDisplay";
 
 ## 示例工具
 
-参考已重构的 `xml-parser` 工具，它完整展示了新架构的实现方式。
+参考已重构的 `xml-parser` 工具，它完整展示了新架构的实现方式。 
 
 ### 使用 zustand 进行状态管理（可选）
 

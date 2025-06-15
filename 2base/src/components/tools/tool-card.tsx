@@ -37,7 +37,11 @@ export function ToolCard({ tool, onUse, onInfo }: ToolCardProps) {
       {/* Tool Icon */}
       <div className="flex items-center justify-between mb-4">
         <div className="p-3 bg-primary/10 rounded-lg">
-          <IconComponent className="h-6 w-6 text-primary" />
+          {IconComponent && typeof IconComponent === "function" ? (
+            <IconComponent className="h-6 w-6 text-primary" />
+          ) : (
+            <div className="h-6 w-6 bg-muted rounded" />
+          )}
         </div>
         <TooltipProvider>
           <Tooltip>

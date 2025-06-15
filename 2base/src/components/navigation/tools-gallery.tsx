@@ -101,7 +101,11 @@ export function ToolsGallery({
                 className="flex items-start gap-4 p-4 rounded-lg border"
               >
                 <div className="p-2 bg-primary/10 rounded-lg">
-                  <tool.icon className="h-6 w-6 text-primary" />
+                  {tool.icon && typeof tool.icon === "function" ? (
+                    <tool.icon className="h-6 w-6 text-primary" />
+                  ) : (
+                    <div className="h-6 w-6 bg-muted rounded" />
+                  )}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
