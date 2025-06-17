@@ -3,149 +3,188 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import type { Base } from "../types";
-import { parseValue, formatForBase } from "../lib/base-converter";
-import { toggleBit } from "../lib/bitwise";
-import { useCalculatorSnapshot, useCalculatorActions } from "../lib/store";
-import {
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import type { Base, BitWidth } from "../types";
+import { formatForBase } from "../lib/base-converter";
+import { 
+  processExpression, 
   getExpressionExamples,
   type ParsedExpression,
-  type ExpressionResult,
+  type ExpressionResult 
 } from "../lib/expression-parser";
 
-export function AdvancedBitwiseVisualization() {
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
-  const [expression, setExpression] = useState("");
+interface BitwiseVisualizationProps {
+  initialExpression?: string;
+  onExpressionChange?: (expression: string, result: number | null) => void;
+}
+
+export function AdvancedBitwiseVisualization({ 
+  initialExpression = "", 
+  onExpressionChange 
+}: BitwiseVisualizationProps) {
+  // Component state - completely independent
+  const [expression, setExpression] = useState(initialExpression);
+  const [base, setBase] = useState<Base>(10);
+  const [bitWidth, setBitWidth] = useState<BitWidth>(32);
   const [evaluationResult, setEvaluationResult] = useState<{
     parsed: ParsedExpression;
     result: ExpressionResult;
   } | null>(null);
-
-  // Get state from store
-  const { currentValue, base, bitWidth } = useCalculatorSnapshot();
-  const actions = useCalculatorActions();
-
-  // Parse values safely
-  const parseValueSafe = useCallback(
-    (value: string, fallback: number = 0): number => {
-      try {
-        return parseValue(value || "0", base, bitWidth);
-      } catch {
-        return fallback;
-      }
-    },
-    [base, bitWidth]
-  );
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
   // Format values for different bases
   const formatValue = useCallback((value: number, targetBase: Base): string => {
     try {
-      return formatForBase(value.toString(), targetBase).toUpperCase();
+      // Handle negative numbers and overflow
+      const maskedValue = targetBase === 2 ? 
+        (value >>> 0) : // Unsigned 32-bit for binary display
+        value;
+      return formatForBase(maskedValue.toString(), targetBase).toUpperCase();
     } catch {
       return "0";
     }
   }, []);
 
-  // Handle bit click - update store directly
-  const handleBitClick = useCallback(
-    (value: number) => {
-      return (position: number) => {
-        const newValue = toggleBit(value, position, bitWidth);
-        const formattedValue = formatForBase(newValue.toString(), base);
-        actions.setValue(formattedValue, "visualization");
-      };
-    },
-    [bitWidth, base, actions]
-  );
-
-  // Process expression when currentValue changes
-  useEffect(() => {
-    if (currentValue && currentValue !== "0") {
-      // Try to process as simple value first
-      const numericValue = parseValueSafe(currentValue);
-      if (numericValue !== 0) {
-        setExpression(currentValue);
-        setEvaluationResult({
-          parsed: {
-            tokens: [{ type: "operand", value: currentValue, numericValue }],
-            isValid: true,
-            operationType: "none",
-          },
-          result: {
-            steps: [],
-            finalResult: numericValue,
-            isValid: true,
-          },
-        });
-      }
+  // Process expression
+  const processExpressionInput = useCallback(async (expr: string) => {
+    if (!expr.trim()) {
+      setEvaluationResult(null);
+      onExpressionChange?.(expr, null);
+      return;
     }
-  }, [currentValue, parseValueSafe]);
 
+    setIsProcessing(true);
+    
+    try {
+      // Add small delay to show processing state
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const result = processExpression(expr, base, bitWidth);
+      setEvaluationResult(result);
+      
+      // Notify parent of result
+      const finalResult = result.result.isValid ? result.result.finalResult : null;
+      onExpressionChange?.(expr, finalResult);
+      
+    } catch (error) {
+      console.error("Expression processing error:", error);
+      setEvaluationResult({
+        parsed: {
+          tokens: [],
+          isValid: false,
+          error: "Processing error",
+          operationType: "none",
+        },
+        result: {
+          steps: [],
+          finalResult: 0,
+          isValid: false,
+          error: "Processing error",
+        },
+      });
+      onExpressionChange?.(expr, null);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [base, bitWidth, onExpressionChange]);
 
+  // Handle expression input change
+  const handleExpressionChange = (value: string) => {
+    setExpression(value);
+  };
 
-  // Render single bit row
+  // Handle expression submission
+  const handleExpressionSubmit = () => {
+    processExpressionInput(expression);
+  };
+
+  // Handle key press
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleExpressionSubmit();
+    }
+  };
+
+  // Clear result when expression changes but don't auto-calculate
+  useEffect(() => {
+    if (!expression.trim()) {
+      setEvaluationResult(null);
+    }
+    // Remove auto-processing - user must click Calculate or press Enter
+  }, [expression]);
+
+  // Handle initial expression
+  useEffect(() => {
+    if (initialExpression && initialExpression !== expression) {
+      setExpression(initialExpression);
+    }
+  }, [initialExpression]);
+
+  // Render single bit row with proper styling
   const renderBitRow = (
-    label: string,
     value: number,
-    color: string = "default",
-    clickable: boolean = false,
-    prefix?: string,
-    isResult: boolean = false
+    operator?: string,
+    isResult: boolean = false,
+    stepIndex?: number
   ) => {
     const binary = formatValue(value, 2).padStart(bitWidth, "0");
     const hex = formatValue(value, 16);
-    const isSigned = value < 0 || value >= Math.pow(2, bitWidth - 1);
+    const decimal = value;
+    const rowKey = `row-${stepIndex}-${operator || 'value'}-${value}`;
+
+    // Color coding for different types
+    const getValueColor = () => {
+      if (isResult) return "text-green-600 font-bold";
+      if (operator) return "text-blue-600 font-semibold";
+      return "text-foreground";
+    };
+
+    const getBitColor = (bit: string) => {
+      if (bit === "1") {
+        if (isResult) return "text-green-600 font-bold bg-green-50 dark:bg-green-950";
+        if (operator) return "text-blue-600 font-semibold bg-blue-50 dark:bg-blue-950";
+        return "text-accent-foreground font-semibold bg-accent/10";
+      }
+      return "text-muted-foreground";
+    };
 
     return (
       <div
+        key={rowKey}
         className={`flex items-center py-2 px-3 rounded transition-colors ${
-          hoveredRow === label ? "bg-muted/50" : ""
-        } ${isResult ? "bg-accent/20" : ""}`}
-        onMouseEnter={() => setHoveredRow(label)}
+          hoveredRow === rowKey ? "bg-muted/30" : ""
+        } ${isResult ? "bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800" : ""}`}
+        onMouseEnter={() => setHoveredRow(rowKey)}
         onMouseLeave={() => setHoveredRow(null)}
       >
-        {/* Left area: operator and value */}
-        <div className="flex items-center w-[140px] border-r border-border pr-3">
-          {/* Operator prefix - fixed 16px width slot */}
-          <div className="w-16 text-center font-mono text-sm font-bold text-primary">
-            {prefix || ""}
+        {/* Left: Operator and decimal value */}
+        <div className="flex items-center w-[160px] border-r border-border pr-4">
+          {/* Operator symbol */}
+          <div className="w-8 text-center font-mono text-sm font-bold text-primary">
+            {operator || (isResult ? "=" : "")}
           </div>
-
-          {/* Decimal value - fixed width for alignment */}
-          <div className="w-24 text-right font-mono text-sm">{value}</div>
+          
+          {/* Decimal value */}
+          <div className={`flex-1 text-right font-mono text-sm ${getValueColor()}`}>
+            {decimal}
+          </div>
         </div>
 
-        {/* Middle area: bit sequence */}
+        {/* Middle: Bit visualization */}
         <div className="flex-1 px-4 border-r border-border">
-          <div className="flex gap-1">
+          <div className="flex gap-1 justify-center">
             {binary.split("").map((bit, index) => {
               const position = bitWidth - 1 - index;
-
               return (
                 <span
-                  key={position}
-                  className={`w-4 h-4 flex items-center justify-center text-xs font-mono ${
-                    bit === "1"
-                      ? color === "primary"
-                        ? "text-primary font-bold"
-                        : color === "secondary"
-                        ? "text-secondary font-bold"
-                        : color === "result"
-                        ? "text-green-600 font-bold"
-                        : "text-accent-foreground font-bold"
-                      : "text-muted-foreground"
-                  } ${
-                    clickable
-                      ? "cursor-pointer hover:bg-accent/20 rounded"
-                      : "cursor-default"
-                  } ${index % 4 === 0 && index > 0 ? "ml-1" : ""} ${
-                    index % 8 === 0 && index > 0 ? "ml-2" : ""
-                  }`}
-                  onClick={
-                    clickable
-                      ? () => handleBitClick(value)(position)
-                      : undefined
-                  }
+                  key={`${rowKey}-bit-${position}`}
+                  className={`w-6 h-6 flex items-center justify-center text-xs font-mono rounded transition-colors ${getBitColor(bit)} ${
+                    index % 4 === 0 && index > 0 ? "ml-1" : ""
+                  } ${index % 8 === 0 && index > 0 ? "ml-2" : ""}`}
                 >
                   {bit}
                 </span>
@@ -154,21 +193,14 @@ export function AdvancedBitwiseVisualization() {
           </div>
         </div>
 
-        {/* Right area: hex and type info */}
-        <div className="flex items-center w-[240px] pl-3">
-          {/* Hex value - fixed width column */}
-          <div className="w-20 text-left font-mono text-sm text-muted-foreground">
+        {/* Right: Hex and info */}
+        <div className="flex items-center w-[200px] pl-4">
+          <div className="w-24 text-left font-mono text-sm text-muted-foreground">
             0x{hex}
           </div>
-
-          {/* Type info - fixed width column */}
-          <div className="w-28 flex justify-start">
-            <Badge
-              variant={isResult ? "default" : "outline"}
-              className="text-xs"
-            >
-              {isSigned ? "S" : "U"}
-              {bitWidth}
+          <div className="flex-1 flex justify-end">
+            <Badge variant={isResult ? "default" : "outline"} className="text-xs">
+              {bitWidth}bit
             </Badge>
           </div>
         </div>
@@ -176,178 +208,218 @@ export function AdvancedBitwiseVisualization() {
     );
   };
 
-  // Render expression visualization
-  const renderExpressionVisualization = () => {
-    if (!evaluationResult || !evaluationResult.parsed.isValid) {
-      // Show error or help
-      if (evaluationResult?.parsed.error === "Help requested") {
-        return (
-          <div className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                <div className="space-y-2">
-                  <p>
-                    <strong>Expression Examples:</strong>
-                  </p>
-                  {getExpressionExamples().map((example, index) => (
-                    <div
-                      key={index}
-                      className="font-mono text-sm bg-muted/50 p-2 rounded"
-                    >
-                      {example}
-                    </div>
-                  ))}
-                </div>
-              </AlertDescription>
-            </Alert>
-          </div>
-        );
-      }
-
-      if (evaluationResult?.parsed.error) {
-        return (
-          <Alert variant="destructive">
-            <AlertDescription>{evaluationResult.parsed.error}</AlertDescription>
-          </Alert>
-        );
-      }
-
-      // Default state - show placeholder
-      return (
-        <div className="text-center py-8 text-muted-foreground">
-          <p>Enter an expression to see bitwise visualization</p>
-          <p className="text-sm mt-2">
-            Examples: <code>15 & 7</code>, <code>23 | 45</code>,{" "}
-            <code>~42</code>
-          </p>
-        </div>
-      );
+  // Render expression steps
+  const renderExpressionSteps = () => {
+    if (!evaluationResult?.result.isValid || !evaluationResult.result.steps.length) {
+      return null;
     }
 
-    const { parsed, result } = evaluationResult;
-
-    // Single operand case
-    if (parsed.tokens.length === 1) {
-      const operand = parsed.tokens[0];
-      return (
-        <div className="space-y-1">
-          {renderBitRow(
-            "value",
-            operand.numericValue!,
-            "primary",
-            true,
-            undefined,
-            false
-          )}
-        </div>
-      );
-    }
-
-    // Multi-step expression case
-    if (result.steps.length > 0) {
-      return (
-        <div className="space-y-1">
-          {/* Show each step */}
-          {result.steps.map((step, index) => {
-            const isFirstStep = index === 0;
-            const isLastStep = index === result.steps.length - 1;
-
-            return (
-              <div key={index} className="space-y-1">
-                {/* Show operands for first step */}
-                {isFirstStep && (
-                  <>
-                    {renderBitRow(
-                      `operand1-${index}`,
-                      step.operand1,
-                      "default",
-                      false,
-                      undefined,
-                      false
-                    )}
-                    {step.operand2 !== undefined &&
-                      renderBitRow(
-                        `operand2-${index}`,
-                        step.operand2,
-                        "default",
-                        false,
-                        step.operator,
-                        false
-                      )}
-                  </>
-                )}
-
-                {/* Show intermediate result */}
-                {!isFirstStep &&
-                  renderBitRow(
-                    `intermediate-${index}`,
-                    step.operand1,
-                    "default",
-                    false,
-                    undefined,
-                    false
-                  )}
-
-                {/* Show current operation operand */}
-                {!isFirstStep &&
-                  step.operand2 !== undefined &&
-                  renderBitRow(
-                    `operand-${index}`,
-                    step.operand2,
-                    "default",
-                    false,
-                    step.operator,
-                    false
-                  )}
-
-                {/* Separator */}
-                <div className="border-t border-dashed my-2"></div>
-
-                {/* Show step result */}
-                {renderBitRow(
-                  `result-${index}`,
-                  step.result,
-                  "result",
-                  isLastStep,
-                  "=",
-                  true
-                )}
-
-                {/* Add spacing between steps */}
-                {!isLastStep && (
-                  <div className="my-4">
-                    <Separator />
-                  </div>
-                )}
+    const steps = evaluationResult.result.steps;
+    
+    return (
+      <div className="space-y-4">
+        {steps.map((step, stepIndex) => (
+          <div key={`step-${stepIndex}`} className="space-y-1">
+            {/* Step header */}
+            <div className="text-sm font-medium text-muted-foreground">
+              Step {stepIndex + 1}: {step.expression}
+            </div>
+            
+            {/* Operand 1 */}
+            {renderBitRow(step.operand1, undefined, false, stepIndex)}
+            
+            {/* Operand 2 (if exists) */}
+            {step.operand2 !== undefined && 
+              renderBitRow(step.operand2, step.operator, false, stepIndex)
+            }
+            
+            {/* Separator line */}
+            <div className="flex items-center px-3">
+              <div className="w-[160px] pr-4"></div>
+              <div className="flex-1 px-4">
+                <div className="border-t border-border"></div>
               </div>
-            );
-          })}
-        </div>
-      );
-    }
+              <div className="w-[200px] pl-4"></div>
+            </div>
+            
+            {/* Result */}
+            {renderBitRow(step.result, undefined, true, stepIndex)}
+            
+            {/* Spacing between steps */}
+            {stepIndex < steps.length - 1 && <div className="h-4"></div>}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
-    return null;
+  // Render single value (when no complex expression)
+  const renderSingleValue = () => {
+    if (!evaluationResult?.result.isValid) return null;
+    
+    const value = evaluationResult.result.finalResult;
+    return (
+      <div className="space-y-1">
+        <div className="text-sm font-medium text-muted-foreground">
+          Value: {expression}
+        </div>
+        {renderBitRow(value, undefined, true)}
+      </div>
+    );
+  };
+
+  // Render error state
+  const renderError = () => {
+    const error = evaluationResult?.parsed.error || evaluationResult?.result.error;
+    if (!error) return null;
+
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          <div className="space-y-2">
+            <p><strong>Error:</strong> {error}</p>
+            <p className="text-sm">
+              Try examples like: <code>15 & 7</code>, <code>23 | 45</code>, <code>~42</code>, <code>8 &lt;&lt; 2</code>
+            </p>
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  };
+
+  // Render help examples
+  const renderHelp = () => {
+    return (
+      <Alert>
+        <AlertDescription>
+          <div className="space-y-2">
+            <p><strong>Expression Examples:</strong></p>
+            {getExpressionExamples().map((example, index) => (
+              <div
+                key={index}
+                className="font-mono text-sm bg-muted/50 p-2 rounded cursor-pointer hover:bg-muted/70"
+                onClick={() => setExpression(example)}
+              >
+                {example}
+              </div>
+            ))}
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
   };
 
   return (
-    <div className="space-y-6">
-      {/* Bitwise Operation Visualization */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">
-            Bitwise Operation Visualization
-          </CardTitle>
-          {expression && (
-            <div className="text-sm text-muted-foreground">
-              Expression:{" "}
-              <code className="bg-muted/50 px-2 py-1 rounded">
-                {expression}
-              </code>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Bitwise Operation Visualization</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Controls */}
+        <div className="space-y-4">
+          {/* Expression input */}
+          <div className="space-y-2">
+            <Label htmlFor="expression">Expression</Label>
+            <div className="flex gap-2">
+              <Input
+                id="expression"
+                placeholder="Enter expression like '15 & 7 | 3' and press Enter or click Calculate"
+                value={expression}
+                onChange={(e) => handleExpressionChange(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="font-mono"
+                disabled={isProcessing}
+              />
+              <Button 
+                onClick={handleExpressionSubmit}
+                disabled={!expression.trim() || isProcessing}
+              >
+                {isProcessing ? "Processing..." : "Calculate"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Settings */}
+          <div className="flex gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="base">Base</Label>
+              <Select value={base.toString()} onValueChange={(value) => setBase(parseInt(value) as Base)}>
+                <SelectTrigger id="base" className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2">Bin</SelectItem>
+                  <SelectItem value="8">Oct</SelectItem>
+                  <SelectItem value="10">Dec</SelectItem>
+                  <SelectItem value="16">Hex</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="bitwidth">Bit Width</Label>
+              <Select value={bitWidth.toString()} onValueChange={(value) => setBitWidth(parseInt(value) as BitWidth)}>
+                <SelectTrigger id="bitwidth" className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="8">8</SelectItem>
+                  <SelectItem value="16">16</SelectItem>
+                  <SelectItem value="32">32</SelectItem>
+                  <SelectItem value="64">64</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Visualization */}
+        <div className="space-y-4">
+          {/* Error display */}
+          {evaluationResult && !evaluationResult.parsed.isValid && renderError()}
+          
+          {/* Help display */}
+          {expression.toLowerCase().trim() === "help" && renderHelp()}
+          
+          {/* Results display */}
+          {evaluationResult?.result.isValid && (
+            <div className="space-y-4">
+              {/* Expression header */}
+              <div className="text-lg font-semibold">
+                Expression: <code className="text-primary">{expression}</code>
+              </div>
+              
+              {/* Steps or single value */}
+              {evaluationResult.result.steps.length > 0 ? (
+                renderExpressionSteps()
+              ) : (
+                renderSingleValue()
+              )}
+              
+              {/* Final result summary */}
+              {evaluationResult.result.steps.length > 0 && (
+                <div className="pt-4 border-t">
+                  <div className="text-lg font-semibold text-green-600">
+                    Final Result: {evaluationResult.result.finalResult}
+                  </div>
+                </div>
+              )}
             </div>
           )}
-        </CardHeader>
-        <CardContent>{renderExpressionVisualization()}</CardContent>
-      </Card>
-    </div>
+          
+          {/* Empty state */}
+          {!expression.trim() && (
+            <div className="text-center text-muted-foreground py-8">
+              <p>Enter an expression above and press Enter or click Calculate</p>
+              <p className="text-sm mt-2">
+                Try: <code className="cursor-pointer hover:text-primary" onClick={() => setExpression("15 & 7")}>15 & 7</code> or type <code>help</code> for examples
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
