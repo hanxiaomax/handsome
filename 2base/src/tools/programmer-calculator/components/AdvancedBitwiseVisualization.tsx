@@ -208,65 +208,63 @@ export function AdvancedBitwiseVisualization({
     );
   };
 
-  // Render expression steps
-  const renderExpressionSteps = () => {
-    if (!evaluationResult?.result.isValid || !evaluationResult.result.steps.length) {
-      return null;
+  // Render compact expression visualization (like the image)
+  const renderCompactExpression = () => {
+    if (!evaluationResult?.result.isValid) return null;
+
+    // For single value expressions
+    if (!evaluationResult.result.steps.length) {
+      const value = evaluationResult.result.finalResult;
+      return (
+        <div className="space-y-1">
+          {renderBitRow(value, undefined, true)}
+        </div>
+      );
     }
 
+    // For multi-operand expressions - show all operands and operators in sequence
     const steps = evaluationResult.result.steps;
+    const allOperands: Array<{ value: number; operator?: string }> = [];
     
+    // Collect all operands and operators from steps
+    if (steps.length > 0) {
+      // First operand
+      allOperands.push({ value: steps[0].operand1 });
+      
+      // Add subsequent operands with their operators
+      steps.forEach(step => {
+        if (step.operand2 !== undefined) {
+          allOperands.push({ 
+            value: step.operand2, 
+            operator: step.operator 
+          });
+        }
+      });
+    }
+
     return (
-      <div className="space-y-4">
-        {steps.map((step, stepIndex) => (
-          <div key={`step-${stepIndex}`} className="space-y-1">
-            {/* Step header */}
-            <div className="text-sm font-medium text-muted-foreground">
-              Step {stepIndex + 1}: {step.expression}
-            </div>
-            
-            {/* Operand 1 */}
-            {renderBitRow(step.operand1, undefined, false, stepIndex)}
-            
-            {/* Operand 2 (if exists) */}
-            {step.operand2 !== undefined && 
-              renderBitRow(step.operand2, step.operator, false, stepIndex)
-            }
-            
-            {/* Separator line */}
-            <div className="flex items-center px-3">
-              <div className="w-[160px] pr-4"></div>
-              <div className="flex-1 px-4">
-                <div className="border-t border-border"></div>
-              </div>
-              <div className="w-[200px] pl-4"></div>
-            </div>
-            
-            {/* Result */}
-            {renderBitRow(step.result, undefined, true, stepIndex)}
-            
-            {/* Spacing between steps */}
-            {stepIndex < steps.length - 1 && <div className="h-4"></div>}
+      <div className="space-y-1">
+        {/* Show all operands with operators */}
+        {allOperands.map((item, index) => 
+          renderBitRow(item.value, item.operator, false, index)
+        )}
+        
+        {/* Separator line */}
+        <div className="flex items-center px-3">
+          <div className="w-[160px] pr-4"></div>
+          <div className="flex-1 px-4">
+            <div className="border-t border-border border-dashed"></div>
           </div>
-        ))}
+          <div className="w-[200px] pl-4"></div>
+        </div>
+        
+        {/* Final result */}
+        {renderBitRow(evaluationResult.result.finalResult, "=", true)}
       </div>
     );
   };
 
-  // Render single value (when no complex expression)
-  const renderSingleValue = () => {
-    if (!evaluationResult?.result.isValid) return null;
-    
-    const value = evaluationResult.result.finalResult;
-    return (
-      <div className="space-y-1">
-        <div className="text-sm font-medium text-muted-foreground">
-          Value: {expression}
-        </div>
-        {renderBitRow(value, undefined, true)}
-      </div>
-    );
-  };
+
 
   // Render error state
   const renderError = () => {
@@ -391,21 +389,8 @@ export function AdvancedBitwiseVisualization({
                 Expression: <code className="text-primary">{expression}</code>
               </div>
               
-              {/* Steps or single value */}
-              {evaluationResult.result.steps.length > 0 ? (
-                renderExpressionSteps()
-              ) : (
-                renderSingleValue()
-              )}
-              
-              {/* Final result summary */}
-              {evaluationResult.result.steps.length > 0 && (
-                <div className="pt-4 border-t">
-                  <div className="text-lg font-semibold text-green-600">
-                    Final Result: {evaluationResult.result.finalResult}
-                  </div>
-                </div>
-              )}
+              {/* Compact expression visualization */}
+              {renderCompactExpression()}
             </div>
           )}
           
