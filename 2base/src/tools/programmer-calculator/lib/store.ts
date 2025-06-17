@@ -15,6 +15,9 @@ interface CalculatorState {
   base: Base;
   bitWidth: BitWidth;
 
+  // 表达式构建支持
+  expression: string;
+
   // 防循环机制
   lastUpdateSource: UpdateSource;
   updateCounter: number;
@@ -26,6 +29,7 @@ interface CalculatorState {
   setBitWidth: (bitWidth: BitWidth, source: UpdateSource) => void;
   setOperation: (operation: Operation | null, source: UpdateSource) => void;
   setPreviousValue: (value: string, source: UpdateSource) => void;
+  setExpression: (expression: string, source: UpdateSource) => void;
 
   // 批量更新（原子操作）
   batchUpdate: (
@@ -59,6 +63,7 @@ const defaultState = {
   operation: null as Operation | null,
   base: 10 as Base,
   bitWidth: 32 as BitWidth,
+  expression: "",
   lastUpdateSource: "init" as UpdateSource,
   updateCounter: 0,
   isUpdating: false,
@@ -174,6 +179,24 @@ export const useCalculatorStore = create<CalculatorState>()(
       });
     },
 
+    // 设置表达式
+    setExpression: (expression, source) => {
+      const state = get();
+
+      if (
+        state.lastUpdateSource === source &&
+        state.expression === expression
+      ) {
+        return;
+      }
+
+      set({
+        expression,
+        lastUpdateSource: source,
+        updateCounter: state.updateCounter + 1,
+      });
+    },
+
     // 批量更新（原子操作，避免多次渲染）
     batchUpdate: (updates, source) => {
       const state = get();
@@ -236,6 +259,8 @@ export const useOperation = () =>
   useCalculatorStore((state) => state.operation);
 export const useBase = () => useCalculatorStore((state) => state.base);
 export const useBitWidth = () => useCalculatorStore((state) => state.bitWidth);
+export const useExpression = () =>
+  useCalculatorStore((state) => state.expression);
 export const useLastUpdateSource = () =>
   useCalculatorStore((state) => state.lastUpdateSource);
 
@@ -269,6 +294,7 @@ export const useCalculatorActions = () => {
   const setPreviousValue = useCalculatorStore(
     (state) => state.setPreviousValue
   );
+  const setExpression = useCalculatorStore((state) => state.setExpression);
   const batchUpdate = useCalculatorStore((state) => state.batchUpdate);
   const reset = useCalculatorStore((state) => state.reset);
   const getSnapshot = useCalculatorStore((state) => state.getSnapshot);
@@ -280,6 +306,7 @@ export const useCalculatorActions = () => {
       setBitWidth,
       setOperation,
       setPreviousValue,
+      setExpression,
       batchUpdate,
       reset,
       getSnapshot,
@@ -290,6 +317,7 @@ export const useCalculatorActions = () => {
       setBitWidth,
       setOperation,
       setPreviousValue,
+      setExpression,
       batchUpdate,
       reset,
       getSnapshot,

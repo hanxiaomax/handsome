@@ -1,21 +1,31 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 import type { Base } from "../types";
 import { parseValue, formatForBase } from "../lib/base-converter";
 import { toggleBit } from "../lib/bitwise";
-import { performCalculation } from "../lib/calculator";
 import { useCalculatorSnapshot, useCalculatorActions } from "../lib/store";
+import {
+  getExpressionExamples,
+  type ParsedExpression,
+  type ExpressionResult,
+} from "../lib/expression-parser";
 
 export function AdvancedBitwiseVisualization() {
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [expression, setExpression] = useState("");
+  const [evaluationResult, setEvaluationResult] = useState<{
+    parsed: ParsedExpression;
+    result: ExpressionResult;
+  } | null>(null);
 
-  // 从 store 获取状态
-  const { currentValue, previousValue, operation, base, bitWidth } =
-    useCalculatorSnapshot();
+  // Get state from store
+  const { currentValue, base, bitWidth } = useCalculatorSnapshot();
   const actions = useCalculatorActions();
 
-  // 解析数值
+  // Parse values safely
   const parseValueSafe = useCallback(
     (value: string, fallback: number = 0): number => {
       try {
@@ -27,31 +37,7 @@ export function AdvancedBitwiseVisualization() {
     [base, bitWidth]
   );
 
-  const currentDecimal = parseValueSafe(currentValue);
-  const previousDecimal = parseValueSafe(previousValue);
-
-  // 计算结果
-  const getCalculationResult = useCallback((): number => {
-    if (!operation || !previousValue) {
-      return currentDecimal;
-    }
-
-    try {
-      return performCalculation(
-        previousValue,
-        currentValue,
-        operation,
-        base,
-        bitWidth
-      );
-    } catch {
-      return 0;
-    }
-  }, [operation, previousValue, currentValue, currentDecimal, base, bitWidth]);
-
-  const resultDecimal = getCalculationResult();
-
-  // 格式化不同进制的值
+  // Format values for different bases
   const formatValue = useCallback((value: number, targetBase: Base): string => {
     try {
       return formatForBase(value.toString(), targetBase).toUpperCase();
@@ -60,31 +46,51 @@ export function AdvancedBitwiseVisualization() {
     }
   }, []);
 
-  // 位点击处理 - 直接更新 store
+  // Handle bit click - update store directly
   const handleBitClick = useCallback(
-    (value: number, rowType: "current" | "previous") => {
+    (value: number) => {
       return (position: number) => {
         const newValue = toggleBit(value, position, bitWidth);
         const formattedValue = formatForBase(newValue.toString(), base);
-
-        if (rowType === "current") {
-          // 通过 store 更新，标记来源为 visualization
-          actions.setValue(formattedValue, "visualization");
-        }
-        // 对于 previous 值，暂时只处理 current
+        actions.setValue(formattedValue, "visualization");
       };
     },
     [bitWidth, base, actions]
   );
 
-  // 渲染单行位表示
+  // Process expression when currentValue changes
+  useEffect(() => {
+    if (currentValue && currentValue !== "0") {
+      // Try to process as simple value first
+      const numericValue = parseValueSafe(currentValue);
+      if (numericValue !== 0) {
+        setExpression(currentValue);
+        setEvaluationResult({
+          parsed: {
+            tokens: [{ type: "operand", value: currentValue, numericValue }],
+            isValid: true,
+            operationType: "none",
+          },
+          result: {
+            steps: [],
+            finalResult: numericValue,
+            isValid: true,
+          },
+        });
+      }
+    }
+  }, [currentValue, parseValueSafe]);
+
+
+
+  // Render single bit row
   const renderBitRow = (
     label: string,
     value: number,
     color: string = "default",
     clickable: boolean = false,
-    rowType?: "current" | "previous",
-    prefix?: string
+    prefix?: string,
+    isResult: boolean = false
   ) => {
     const binary = formatValue(value, 2).padStart(bitWidth, "0");
     const hex = formatValue(value, 16);
@@ -92,24 +98,24 @@ export function AdvancedBitwiseVisualization() {
 
     return (
       <div
-        className={`flex items-center py-2 px-3 rounded ${
+        className={`flex items-center py-2 px-3 rounded transition-colors ${
           hoveredRow === label ? "bg-muted/50" : ""
-        }`}
+        } ${isResult ? "bg-accent/20" : ""}`}
         onMouseEnter={() => setHoveredRow(label)}
         onMouseLeave={() => setHoveredRow(null)}
       >
-        {/* 左侧区域：运算符和数值 */}
-        <div className="flex items-center w-[120px] border-r border-border pr-3">
-          {/* 操作符前缀（如果有）- 固定8px宽度槽位 */}
-          <div className="w-8 text-center font-mono text-sm font-bold text-primary">
+        {/* Left area: operator and value */}
+        <div className="flex items-center w-[140px] border-r border-border pr-3">
+          {/* Operator prefix - fixed 16px width slot */}
+          <div className="w-16 text-center font-mono text-sm font-bold text-primary">
             {prefix || ""}
           </div>
 
-          {/* 十进制值 - 固定宽度确保对齐 */}
-          <div className="w-20 text-right font-mono text-sm">{value}</div>
+          {/* Decimal value - fixed width for alignment */}
+          <div className="w-24 text-right font-mono text-sm">{value}</div>
         </div>
 
-        {/* 中间区域：位序列 */}
+        {/* Middle area: bit sequence */}
         <div className="flex-1 px-4 border-r border-border">
           <div className="flex gap-1">
             {binary.split("").map((bit, index) => {
@@ -124,6 +130,8 @@ export function AdvancedBitwiseVisualization() {
                         ? "text-primary font-bold"
                         : color === "secondary"
                         ? "text-secondary font-bold"
+                        : color === "result"
+                        ? "text-green-600 font-bold"
                         : "text-accent-foreground font-bold"
                       : "text-muted-foreground"
                   } ${
@@ -135,7 +143,7 @@ export function AdvancedBitwiseVisualization() {
                   }`}
                   onClick={
                     clickable
-                      ? () => handleBitClick(value, rowType!)(position)
+                      ? () => handleBitClick(value)(position)
                       : undefined
                   }
                 >
@@ -146,16 +154,19 @@ export function AdvancedBitwiseVisualization() {
           </div>
         </div>
 
-        {/* 右侧区域：十六进制和类型信息 */}
+        {/* Right area: hex and type info */}
         <div className="flex items-center w-[240px] pl-3">
-          {/* 十六进制值 - 固定宽度列 */}
+          {/* Hex value - fixed width column */}
           <div className="w-20 text-left font-mono text-sm text-muted-foreground">
             0x{hex}
           </div>
 
-          {/* 类型信息 - 固定宽度列 */}
+          {/* Type info - fixed width column */}
           <div className="w-28 flex justify-start">
-            <Badge variant="outline" className="text-xs">
+            <Badge
+              variant={isResult ? "default" : "outline"}
+              className="text-xs"
+            >
               {isSigned ? "S" : "U"}
               {bitWidth}
             </Badge>
@@ -165,73 +176,177 @@ export function AdvancedBitwiseVisualization() {
     );
   };
 
-  // 获取操作符显示
-  const getOperationDisplay = () => {
-    if (!operation) return null;
+  // Render expression visualization
+  const renderExpressionVisualization = () => {
+    if (!evaluationResult || !evaluationResult.parsed.isValid) {
+      // Show error or help
+      if (evaluationResult?.parsed.error === "Help requested") {
+        return (
+          <div className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p>
+                    <strong>Expression Examples:</strong>
+                  </p>
+                  {getExpressionExamples().map((example, index) => (
+                    <div
+                      key={index}
+                      className="font-mono text-sm bg-muted/50 p-2 rounded"
+                    >
+                      {example}
+                    </div>
+                  ))}
+                </div>
+              </AlertDescription>
+            </Alert>
+          </div>
+        );
+      }
 
-    const opMap: Record<string, string> = {
-      "+": "+",
-      "-": "-",
-      "*": "*",
-      "/": "/",
-      "%": "mod",
-      "&": "&",
-      "|": "|",
-      "^": "^",
-      "<<": "<<",
-      ">>": ">>",
-      "~": "~",
-    };
+      if (evaluationResult?.parsed.error) {
+        return (
+          <Alert variant="destructive">
+            <AlertDescription>{evaluationResult.parsed.error}</AlertDescription>
+          </Alert>
+        );
+      }
 
-    return opMap[operation] || operation;
+      // Default state - show placeholder
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>Enter an expression to see bitwise visualization</p>
+          <p className="text-sm mt-2">
+            Examples: <code>15 & 7</code>, <code>23 | 45</code>,{" "}
+            <code>~42</code>
+          </p>
+        </div>
+      );
+    }
+
+    const { parsed, result } = evaluationResult;
+
+    // Single operand case
+    if (parsed.tokens.length === 1) {
+      const operand = parsed.tokens[0];
+      return (
+        <div className="space-y-1">
+          {renderBitRow(
+            "value",
+            operand.numericValue!,
+            "primary",
+            true,
+            undefined,
+            false
+          )}
+        </div>
+      );
+    }
+
+    // Multi-step expression case
+    if (result.steps.length > 0) {
+      return (
+        <div className="space-y-1">
+          {/* Show each step */}
+          {result.steps.map((step, index) => {
+            const isFirstStep = index === 0;
+            const isLastStep = index === result.steps.length - 1;
+
+            return (
+              <div key={index} className="space-y-1">
+                {/* Show operands for first step */}
+                {isFirstStep && (
+                  <>
+                    {renderBitRow(
+                      `operand1-${index}`,
+                      step.operand1,
+                      "default",
+                      false,
+                      undefined,
+                      false
+                    )}
+                    {step.operand2 !== undefined &&
+                      renderBitRow(
+                        `operand2-${index}`,
+                        step.operand2,
+                        "default",
+                        false,
+                        step.operator,
+                        false
+                      )}
+                  </>
+                )}
+
+                {/* Show intermediate result */}
+                {!isFirstStep &&
+                  renderBitRow(
+                    `intermediate-${index}`,
+                    step.operand1,
+                    "default",
+                    false,
+                    undefined,
+                    false
+                  )}
+
+                {/* Show current operation operand */}
+                {!isFirstStep &&
+                  step.operand2 !== undefined &&
+                  renderBitRow(
+                    `operand-${index}`,
+                    step.operand2,
+                    "default",
+                    false,
+                    step.operator,
+                    false
+                  )}
+
+                {/* Separator */}
+                <div className="border-t border-dashed my-2"></div>
+
+                {/* Show step result */}
+                {renderBitRow(
+                  `result-${index}`,
+                  step.result,
+                  "result",
+                  isLastStep,
+                  "=",
+                  true
+                )}
+
+                {/* Add spacing between steps */}
+                {!isLastStep && (
+                  <div className="my-4">
+                    <Separator />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
     <div className="space-y-6">
-      {/* 位运算可视化 */}
+      {/* Bitwise Operation Visualization */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">
             Bitwise Operation Visualization
           </CardTitle>
+          {expression && (
+            <div className="text-sm text-muted-foreground">
+              Expression:{" "}
+              <code className="bg-muted/50 px-2 py-1 rounded">
+                {expression}
+              </code>
+            </div>
+          )}
         </CardHeader>
-        <CardContent>
-          <div className="space-y-1">
-            {/* 操作数1 (previous value) */}
-            {previousValue &&
-              operation &&
-              renderBitRow(
-                previousDecimal.toString(),
-                previousDecimal,
-                "default",
-                false
-              )}
-
-            {/* 操作数2 (current value) 带运算符前缀 */}
-            {currentValue &&
-              renderBitRow(
-                currentDecimal.toString(),
-                currentDecimal,
-                "primary",
-                true,
-                "current",
-                operation ? getOperationDisplay() || undefined : undefined
-              )}
-
-            {/* 分隔线 */}
-            {operation && <div className="border-t border-dashed my-2"></div>}
-
-            {operation
-              ? renderBitRow("=", resultDecimal, "secondary", false)
-              : renderBitRow(
-                  currentDecimal.toString(),
-                  currentDecimal,
-                  "primary",
-                  true,
-                  "current"
-                )}
-          </div>
-        </CardContent>
+        <CardContent>{renderExpressionVisualization()}</CardContent>
       </Card>
     </div>
   );

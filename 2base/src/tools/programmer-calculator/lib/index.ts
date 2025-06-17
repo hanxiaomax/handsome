@@ -10,6 +10,7 @@ export * from "./calculator";
 export * from "./base-converter";
 export * from "./bitwise";
 export * from "./formatter";
+export * from "./expression-parser";
 
 // Re-export hooks
 export * from "./hooks";

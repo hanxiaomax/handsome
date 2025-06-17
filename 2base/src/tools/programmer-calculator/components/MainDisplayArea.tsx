@@ -39,7 +39,7 @@ export function MainDisplayArea({
         </span>
       </div>
 
-      {/* Main Value Display - 显示当前值 */}
+      {/* Main Value Display - Show expression when available, otherwise current value */}
       <div className="text-right">
         <div className="text-2xl p-2 border-2 font-mono font-bold min-h-[2.5rem] flex items-center justify-end">
           {error ? (

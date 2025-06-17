@@ -22,7 +22,7 @@ A comprehensive calculator designed for developers featuring number base convers
 
 ### Number Base Conversion
 - **Binary (BIN)**: Base-2 representation with bit grouping and interactive manipulation
-- **Octal (OCT)**: Base-8 representation 
+- **Octal (OCT)**: Base-8 representation
 - **Decimal (DEC)**: Standard base-10 representation
 - **Hexadecimal (HEX)**: Base-16 representation with A-F letters
 - **Real-time conversion**: Automatic display updates across all bases

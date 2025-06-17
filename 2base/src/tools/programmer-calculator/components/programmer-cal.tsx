@@ -16,11 +16,13 @@ import {
   formatForBase,
 } from "@/tools/programmer-calculator/lib/base-converter";
 import { toggleBit } from "@/tools/programmer-calculator/lib/bitwise";
+import { performCalculation } from "@/tools/programmer-calculator/lib/calculator";
 
 // Store hooks (always called)
 import {
   useCalculatorSnapshot,
   useCalculatorActions,
+  useExpression,
 } from "@/tools/programmer-calculator/lib/store";
 
 // Components from programmer-calculator
@@ -383,6 +385,9 @@ export function ProgrammerCal({
     [controlled, currentActions, onBitWidthChange]
   );
 
+  // Get expression from store when using store mode
+  const storeExpression = useExpression();
+
   const handleButtonClick = useCallback(
     (value: string, type: "number" | "operation" | "function" | "special") => {
       if (controlled) {
@@ -391,28 +396,128 @@ export function ProgrammerCal({
       } else if (usingStore && storeActions) {
         // In store mode, use simplified button handling
         if (type === "number") {
+          // If we just selected an operation and currentValue equals previousValue,
+          // start fresh with the new number
+          const shouldStartFresh =
+            currentState.operation &&
+            currentState.previousValue &&
+            currentState.currentValue === currentState.previousValue;
+
           const newValue =
-            currentState.currentValue === "0"
+            shouldStartFresh || currentState.currentValue === "0"
               ? value
               : currentState.currentValue + value;
           storeActions.setValue(newValue, "calculator");
+
+          // Update expression if we're building one
+          if (storeExpression && currentState.operation) {
+            // Replace the last number in the expression with the new value
+            const parts = storeExpression.split(" ");
+            if (parts.length > 0) {
+              parts[parts.length - 1] = newValue;
+              const updatedExpression = parts.join(" ");
+              storeActions.setExpression(updatedExpression, "calculator");
+            }
+          }
         } else if (type === "operation") {
           if (value === "=") {
-            // Handle equals - could implement calculation logic here
-            console.log("Equals pressed in store mode");
+            // Handle equals - perform calculation and show result
+            if (currentState.operation && currentState.previousValue) {
+              try {
+                const result = performCalculation(
+                  currentState.previousValue,
+                  currentState.currentValue,
+                  currentState.operation,
+                  currentState.base,
+                  currentState.bitWidth
+                );
+                const formattedResult = formatForBase(
+                  result.toString(),
+                  currentState.base
+                );
+                storeActions.setValue(formattedResult, "calculator");
+                storeActions.setPreviousValue("", "calculator");
+                storeActions.setOperation(null, "calculator");
+                storeActions.setExpression("", "calculator");
+              } catch (error) {
+                console.error("Calculation error:", error);
+                storeActions.setValue("Error", "calculator");
+              }
+            }
           } else {
+            // Check for operation type compatibility
+            const isArithmetic = ["+", "-", "*", "/", "%"].includes(value);
+            const currentOpIsArithmetic = currentState.operation
+              ? ["+", "-", "*", "/", "%"].includes(currentState.operation)
+              : true;
+
+            // Don't allow mixing arithmetic and bitwise operations
+            if (
+              currentState.operation &&
+              isArithmetic !== currentOpIsArithmetic
+            ) {
+              console.warn("Cannot mix arithmetic and bitwise operations");
+              return;
+            }
+
+            // If we already have an operation and previous value, this means
+            // we're chaining operations (like 3+3+6)
+            if (currentState.operation && currentState.previousValue) {
+              // Build the continuous expression
+              const currentExpression =
+                storeExpression ||
+                `${currentState.previousValue} ${currentState.operation}`;
+              const newExpression = `${currentExpression} ${currentState.currentValue} ${value}`;
+              storeActions.setExpression(newExpression, "calculator");
+              storeActions.setOperation(value as Operation, "calculator");
+            } else {
+              // First operation - start building the expression
+              const newExpression = `${currentState.currentValue} ${value}`;
+              storeActions.setExpression(newExpression, "calculator");
+              storeActions.setOperation(value as Operation, "calculator");
+              storeActions.setPreviousValue(
+                currentState.currentValue,
+                "calculator"
+              );
+            }
+          }
+        } else if (type === "function") {
+          // Check for operation type compatibility
+          const currentOpIsArithmetic = currentState.operation
+            ? ["+", "-", "*", "/", "%"].includes(currentState.operation)
+            : false;
+
+          // Don't allow mixing arithmetic and bitwise operations
+          if (currentState.operation && currentOpIsArithmetic) {
+            console.warn("Cannot mix arithmetic and bitwise operations");
+            return;
+          }
+
+          // Handle bitwise operations similar to arithmetic
+          if (currentState.operation && currentState.previousValue) {
+            // Build the continuous expression
+            const currentExpression =
+              storeExpression ||
+              `${currentState.previousValue} ${currentState.operation}`;
+            const newExpression = `${currentExpression} ${currentState.currentValue} ${value}`;
+            storeActions.setExpression(newExpression, "calculator");
+            storeActions.setOperation(value as Operation, "calculator");
+          } else {
+            // First operation - start building the expression
+            const newExpression = `${currentState.currentValue} ${value}`;
+            storeActions.setExpression(newExpression, "calculator");
             storeActions.setOperation(value as Operation, "calculator");
             storeActions.setPreviousValue(
               currentState.currentValue,
               "calculator"
             );
-            storeActions.setValue("0", "calculator");
           }
         } else if (type === "special") {
           if (value === "clear") {
             storeActions.setValue("0", "calculator");
             storeActions.setPreviousValue("", "calculator");
             storeActions.setOperation(null, "calculator");
+            storeActions.setExpression("", "calculator");
           }
         }
       } else {
@@ -440,6 +545,7 @@ export function ProgrammerCal({
       currentOperation,
       currentPreviousValue,
       currentValue,
+      storeExpression,
     ]
   );
 
@@ -528,11 +634,7 @@ export function ProgrammerCal({
   ]);
 
   // Build expression for display
-  const expression = usingStore
-    ? currentPreviousValue && currentOperation
-      ? `${currentPreviousValue} ${currentOperation}`
-      : ""
-    : currentState.expression;
+  const expression = usingStore ? storeExpression : currentState.expression;
 
   // Normal calculator layout
   const renderNormalCalculator = () => (
