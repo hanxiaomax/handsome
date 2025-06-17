@@ -39,6 +39,7 @@ interface ProgrammerCalProps {
 
   // Feature toggles
   showToaster?: boolean;
+  hideBitVisualization?: boolean; // 隐藏位可视化组件
 
   // Force mode selection (optional)
   forceLocalState?: boolean; // 强制使用本地状态
@@ -109,6 +110,7 @@ export function ProgrammerCal({
   className = "",
   maxWidth = "full",
   showToaster = true,
+  hideBitVisualization = false,
   forceLocalState = false,
   forceStoreState = false,
   controlled = false,
@@ -546,7 +548,7 @@ export function ProgrammerCal({
       />
 
       {/* Bit Visualization */}
-      {!compact && (
+      {!hideBitVisualization && !compact && (
         <div className="border rounded-lg p-2">
           <BitVisualization
             currentValue={currentValue || "0"}

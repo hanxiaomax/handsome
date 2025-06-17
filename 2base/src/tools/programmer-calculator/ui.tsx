@@ -43,9 +43,12 @@ export default function ProgrammerCalculator() {
         customControls={bitwiseBoostControl}
       >
         <div className="mt-5 flex gap-4">
-          {/* 左面板：计算器（强制使用 store） */}
-          <div className="w-96 flex-shrink-0">
-            <ProgrammerCal forceStoreState={true} />
+          <div className="flex-shrink-0">
+            <ProgrammerCal
+              forceStoreState={true}
+              hideBitVisualization={true}
+              maxWidth="md"
+            />
           </div>
 
           {/* 右面板：高级位运算可视化（使用 store） */}
