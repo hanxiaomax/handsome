@@ -208,7 +208,7 @@ export function AdvancedBitwiseVisualization({
     );
   };
 
-  // Render compact expression visualization (like the image)
+  // Render compact expression visualization with intermediate results
   const renderCompactExpression = () => {
     if (!evaluationResult?.result.isValid) return null;
 
@@ -222,44 +222,41 @@ export function AdvancedBitwiseVisualization({
       );
     }
 
-    // For multi-operand expressions - show all operands and operators in sequence
+    // For multi-operand expressions - show operands, operators and intermediate results compactly
     const steps = evaluationResult.result.steps;
-    const allOperands: Array<{ value: number; operator?: string }> = [];
     
-    // Collect all operands and operators from steps
-    if (steps.length > 0) {
-      // First operand
-      allOperands.push({ value: steps[0].operand1 });
-      
-      // Add subsequent operands with their operators
-      steps.forEach(step => {
-        if (step.operand2 !== undefined) {
-          allOperands.push({ 
-            value: step.operand2, 
-            operator: step.operator 
-          });
-        }
-      });
-    }
-
     return (
       <div className="space-y-1">
-        {/* Show all operands with operators */}
-        {allOperands.map((item, index) => 
-          renderBitRow(item.value, item.operator, false, index)
-        )}
-        
-        {/* Separator line */}
-        <div className="flex items-center px-3">
-          <div className="w-[160px] pr-4"></div>
-          <div className="flex-1 px-4">
-            <div className="border-t border-border border-dashed"></div>
+        {steps.map((step, stepIndex) => (
+          <div key={`step-${stepIndex}`} className="space-y-1">
+            {/* For first step, show both operands */}
+            {stepIndex === 0 && (
+              <>
+                {renderBitRow(step.operand1, undefined, false, stepIndex * 100)}
+                {step.operand2 !== undefined && 
+                  renderBitRow(step.operand2, step.operator, false, stepIndex * 100 + 1)
+                }
+              </>
+            )}
+            
+            {/* For subsequent steps, only show the new operand */}
+            {stepIndex > 0 && step.operand2 !== undefined && 
+              renderBitRow(step.operand2, step.operator, false, stepIndex * 100)
+            }
+            
+            {/* Separator line */}
+            <div className="flex items-center px-3">
+              <div className="w-[160px] pr-4"></div>
+              <div className="flex-1 px-4">
+                <div className="border-t border-border border-dashed"></div>
+              </div>
+              <div className="w-[200px] pl-4"></div>
+            </div>
+            
+            {/* Result */}
+            {renderBitRow(step.result, "=", true, stepIndex * 100 + 2)}
           </div>
-          <div className="w-[200px] pl-4"></div>
-        </div>
-        
-        {/* Final result */}
-        {renderBitRow(evaluationResult.result.finalResult, "=", true)}
+        ))}
       </div>
     );
   };
