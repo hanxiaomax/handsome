@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, startTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -48,6 +48,7 @@ export function AdvancedBitwiseVisualization({
   } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [hoveredBit, setHoveredBit] = useState<string | null>(null);
+  const [clickedBit, setClickedBit] = useState<string | null>(null);
   const [operandSigns, setOperandSigns] = useState<OperandSignState>({});
 
   // Format values for different bases with sign support
@@ -118,9 +119,16 @@ export function AdvancedBitwiseVisualization({
     return operands;
   }, []);
 
-  // Handle bit click with improved operand matching and sign state preservation
-  const handleBitClick = useCallback(async (clickedValue: number, bitPosition: number, operandKey: string) => {
+  // Handle bit click with smooth, immediate updates
+  const handleBitClick = useCallback((clickedValue: number, bitPosition: number, operandKey: string) => {
     if (!evaluationResult?.parsed.isValid) return;
+    
+    // Add immediate visual feedback
+    const bitKey = `${clickedValue}-bit-${bitPosition}`;
+    setClickedBit(bitKey);
+    
+    // Clear the clicked state after animation
+    setTimeout(() => setClickedBit(null), 200);
     
     // Calculate new value with flipped bit
     const mask = 1 << bitPosition;
@@ -156,9 +164,6 @@ export function AdvancedBitwiseVisualization({
                          newValue.toString() + 
                          expression.substring(targetOperand.endIndex);
     
-    // Update expression
-    setExpression(newExpression);
-    
     // Preserve sign type state by updating operandSigns for the new value
     // Parse the operandKey to extract position information
     const keyParts = operandKey.split('_');
@@ -179,20 +184,25 @@ export function AdvancedBitwiseVisualization({
       });
     }
     
+    // Immediate synchronous update for smooth experience
     try {
-      setIsProcessing(true);
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
       const result = processExpression(newExpression, base, bitWidth);
-      setEvaluationResult(result);
       
-      const finalResult = result.result.isValid ? result.result.finalResult : null;
-      onExpressionChange?.(newExpression, finalResult);
+      // Use startTransition for smooth updates without blocking UI
+      startTransition(() => {
+        setExpression(newExpression);
+        setEvaluationResult(result);
+        
+        const finalResult = result.result.isValid ? result.result.finalResult : null;
+        onExpressionChange?.(newExpression, finalResult);
+      });
       
     } catch (error) {
       console.error("Expression processing error:", error);
-    } finally {
-      setIsProcessing(false);
+      // Fallback: revert to original expression if processing fails
+      startTransition(() => {
+        setExpression(expression);
+      });
     }
   }, [evaluationResult, expression, base, bitWidth, onExpressionChange, extractOperands, operandSigns]);
 
@@ -265,13 +275,17 @@ export function AdvancedBitwiseVisualization({
     const getBitColor = (bit: string, bitIndex: number) => {
       const bitKey = `${value}-bit-${bitIndex}`;
       const isHovered = hoveredBit === bitKey;
+      const isClicked = clickedBit === bitKey;
+      
+      // Add click animation effect
+      const clickEffect = isClicked ? 'scale-125 ring-2 ring-primary/50' : '';
       
       if (bit === "1") {
-        if (isResult) return `text-primary font-bold bg-primary/10 ${isHovered ? 'bg-primary/20' : ''}`;
-        if (operator) return `text-secondary-foreground font-semibold bg-secondary/20 ${isHovered ? 'bg-secondary/30' : ''}`;
-        return `text-accent-foreground font-semibold bg-accent/10 ${isHovered ? 'bg-accent/20' : ''}`;
+        if (isResult) return `text-primary font-bold bg-primary/10 ${isHovered ? 'bg-primary/20' : ''} ${clickEffect}`;
+        if (operator) return `text-secondary-foreground font-semibold bg-secondary/20 ${isHovered ? 'bg-secondary/30' : ''} ${clickEffect}`;
+        return `text-accent-foreground font-semibold bg-accent/10 ${isHovered ? 'bg-accent/20' : ''} ${clickEffect}`;
       }
-      return `text-muted-foreground ${isHovered ? 'bg-muted/20' : ''}`;
+      return `text-muted-foreground ${isHovered ? 'bg-muted/20' : ''} ${clickEffect}`;
     };
 
     return (
