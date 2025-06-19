@@ -118,7 +118,7 @@ export function AdvancedBitwiseVisualization({
     return operands;
   }, []);
 
-  // Handle bit click with improved operand matching
+  // Handle bit click with improved operand matching and sign state preservation
   const handleBitClick = useCallback(async (clickedValue: number, bitPosition: number, operandKey: string) => {
     if (!evaluationResult?.parsed.isValid) return;
     
@@ -156,8 +156,28 @@ export function AdvancedBitwiseVisualization({
                          newValue.toString() + 
                          expression.substring(targetOperand.endIndex);
     
-    // Update expression and recalculate
+    // Update expression
     setExpression(newExpression);
+    
+    // Preserve sign type state by updating operandSigns for the new value
+    // Parse the operandKey to extract position information
+    const keyParts = operandKey.split('_');
+    if (keyParts.length >= 2) {
+      const stepIndex = keyParts[1];
+      const operandIndex = keyParts.length > 2 ? keyParts[2] : '0';
+      const newOperandKey = `${newValue}_${stepIndex}_${operandIndex}`;
+      
+      // Transfer the sign type from old key to new key
+      setOperandSigns(prev => {
+        const newSigns = { ...prev };
+        if (prev[operandKey]) {
+          newSigns[newOperandKey] = prev[operandKey];
+          // Remove the old key to keep state clean
+          delete newSigns[operandKey];
+        }
+        return newSigns;
+      });
+    }
     
     try {
       setIsProcessing(true);
