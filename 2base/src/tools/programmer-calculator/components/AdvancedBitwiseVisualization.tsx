@@ -21,11 +21,24 @@ interface BitwiseVisualizationProps {
   onExpressionChange?: (expression: string, result: number | null) => void;
 }
 
+interface OperandInfo {
+  value: number;
+  originalText: string;
+  startIndex: number;
+  endIndex: number;
+}
+
+type SignType = 'signed' | 'unsigned';
+
+interface OperandSignState {
+  [key: string]: SignType; // key: "value_index" format
+}
+
 export function AdvancedBitwiseVisualization({ 
   initialExpression = "", 
   onExpressionChange 
 }: BitwiseVisualizationProps) {
-  // Component state - completely independent
+  // Component state
   const [expression, setExpression] = useState(initialExpression);
   const [base, setBase] = useState<Base>(10);
   const [bitWidth, setBitWidth] = useState<BitWidth>(32);
@@ -34,16 +47,18 @@ export function AdvancedBitwiseVisualization({
     result: ExpressionResult;
   } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const [hoveredBit, setHoveredBit] = useState<string | null>(null);
+  const [operandSigns, setOperandSigns] = useState<OperandSignState>({});
 
-  // Format values for different bases
-  const formatValue = useCallback((value: number, targetBase: Base): string => {
+  // Format values for different bases with sign support
+  const formatValue = useCallback((value: number, targetBase: Base, isSigned: boolean = true): string => {
     try {
-      // Handle negative numbers and overflow
-      const maskedValue = targetBase === 2 ? 
-        (value >>> 0) : // Unsigned 32-bit for binary display
-        value;
-      return formatForBase(maskedValue.toString(), targetBase).toUpperCase();
+      let displayValue = value;
+      if (!isSigned && value < 0) {
+        // Convert to unsigned representation
+        displayValue = value >>> 0;
+      }
+      return formatForBase(displayValue.toString(), targetBase).toUpperCase();
     } catch {
       return "0";
     }
@@ -60,37 +75,114 @@ export function AdvancedBitwiseVisualization({
     setIsProcessing(true);
     
     try {
-      // Add small delay to show processing state
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 50));
       
       const result = processExpression(expr, base, bitWidth);
       setEvaluationResult(result);
       
-      // Notify parent of result
       const finalResult = result.result.isValid ? result.result.finalResult : null;
       onExpressionChange?.(expr, finalResult);
       
     } catch (error) {
       console.error("Expression processing error:", error);
       setEvaluationResult({
-        parsed: {
-          tokens: [],
-          isValid: false,
-          error: "Processing error",
-          operationType: "none",
-        },
-        result: {
-          steps: [],
-          finalResult: 0,
-          isValid: false,
-          error: "Processing error",
-        },
+        parsed: { tokens: [], isValid: false, error: "Processing error", operationType: "none" },
+        result: { steps: [], finalResult: 0, isValid: false, error: "Processing error" },
       });
       onExpressionChange?.(expr, null);
     } finally {
       setIsProcessing(false);
     }
   }, [base, bitWidth, onExpressionChange]);
+
+  // Extract operand information from expression with better negative number support
+  const extractOperands = useCallback((expr: string): OperandInfo[] => {
+    const operands: OperandInfo[] = [];
+    // Enhanced regex to handle negative numbers properly
+    const numberRegex = /(?:^|[^a-zA-Z0-9])(-?\d+)(?=[^a-zA-Z0-9]|$)/g;
+    let match;
+    
+    while ((match = numberRegex.exec(expr)) !== null) {
+      const fullMatch = match[0];
+      const numberPart = match[1];
+      const actualStartIndex = match.index + (fullMatch.length - numberPart.length);
+      
+      operands.push({
+        value: parseInt(numberPart),
+        originalText: numberPart,
+        startIndex: actualStartIndex,
+        endIndex: actualStartIndex + numberPart.length
+      });
+    }
+    
+    return operands;
+  }, []);
+
+  // Handle bit click with improved operand matching
+  const handleBitClick = useCallback(async (clickedValue: number, bitPosition: number, operandKey: string) => {
+    if (!evaluationResult?.parsed.isValid) return;
+    
+    // Calculate new value with flipped bit
+    const mask = 1 << bitPosition;
+    let newValue = clickedValue ^ mask;
+    
+    // Apply sign interpretation based on operand sign setting
+    const signType = operandSigns[operandKey] || 'signed';
+    if (signType === 'unsigned' && newValue < 0) {
+      newValue = newValue >>> 0; // Convert to unsigned
+    }
+    
+    // Find and replace the operand in expression
+    const operands = extractOperands(expression);
+    
+    // Try to find exact match first
+    let targetOperand = operands.find(op => op.value === clickedValue);
+    
+    // If not found and we have negative numbers, try alternative matching
+    if (!targetOperand && clickedValue < 0) {
+      // Try to find by string representation
+      const clickedStr = clickedValue.toString();
+      targetOperand = operands.find(op => op.originalText === clickedStr);
+    }
+    
+    if (!targetOperand) {
+      console.log("Target operand not found for value:", clickedValue);
+      console.log("Available operands:", operands);
+      return;
+    }
+    
+    // Replace the operand in expression
+    const newExpression = expression.substring(0, targetOperand.startIndex) + 
+                         newValue.toString() + 
+                         expression.substring(targetOperand.endIndex);
+    
+    // Update expression and recalculate
+    setExpression(newExpression);
+    
+    try {
+      setIsProcessing(true);
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const result = processExpression(newExpression, base, bitWidth);
+      setEvaluationResult(result);
+      
+      const finalResult = result.result.isValid ? result.result.finalResult : null;
+      onExpressionChange?.(newExpression, finalResult);
+      
+    } catch (error) {
+      console.error("Expression processing error:", error);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [evaluationResult, expression, base, bitWidth, onExpressionChange, extractOperands, operandSigns]);
+
+  // Toggle operand sign type
+  const toggleOperandSign = useCallback((operandKey: string) => {
+    setOperandSigns(prev => ({
+      ...prev,
+      [operandKey]: prev[operandKey] === 'unsigned' ? 'signed' : 'unsigned'
+    }));
+  }, []);
 
   // Handle expression input change
   const handleExpressionChange = (value: string) => {
@@ -109,12 +201,11 @@ export function AdvancedBitwiseVisualization({
     }
   };
 
-  // Clear result when expression changes but don't auto-calculate
+  // Clear result when expression changes
   useEffect(() => {
     if (!expression.trim()) {
       setEvaluationResult(null);
     }
-    // Remove auto-processing - user must click Calculate or press Enter
   }, [expression]);
 
   // Handle initial expression
@@ -124,67 +215,80 @@ export function AdvancedBitwiseVisualization({
     }
   }, [initialExpression]);
 
-  // Render single bit row with proper styling
+  // Render single bit row with sign type support
   const renderBitRow = (
     value: number,
     operator?: string,
     isResult: boolean = false,
-    stepIndex?: number
+    isClickable: boolean = false,
+    operandKey?: string
   ) => {
-    const binary = formatValue(value, 2).padStart(bitWidth, "0");
-    const hex = formatValue(value, 16);
-    const decimal = value;
-    const rowKey = `row-${stepIndex}-${operator || 'value'}-${value}`;
+    const signType = operandKey ? (operandSigns[operandKey] || 'signed') : 'signed';
+    const isSigned = signType === 'signed';
+    
+    // Handle display value based on sign type
+    let displayValue = value;
+    if (!isSigned && value < 0) {
+      displayValue = value >>> 0; // Convert to unsigned for display
+    }
+    
+    const binary = formatValue(displayValue, 2, isSigned).padStart(bitWidth, "0");
+    const hex = formatValue(displayValue, 16, isSigned);
+    const decimal = displayValue;
 
-    // Color coding for different types
     const getValueColor = () => {
-      if (isResult) return "text-green-600 font-bold";
-      if (operator) return "text-blue-600 font-semibold";
+      if (isResult) return "text-primary font-bold";
+      if (operator) return "text-secondary-foreground font-semibold";
       return "text-foreground";
     };
 
-    const getBitColor = (bit: string) => {
+    const getBitColor = (bit: string, bitIndex: number) => {
+      const bitKey = `${value}-bit-${bitIndex}`;
+      const isHovered = hoveredBit === bitKey;
+      
       if (bit === "1") {
-        if (isResult) return "text-green-600 font-bold bg-green-50 dark:bg-green-950";
-        if (operator) return "text-blue-600 font-semibold bg-blue-50 dark:bg-blue-950";
-        return "text-accent-foreground font-semibold bg-accent/10";
+        if (isResult) return `text-primary font-bold bg-primary/10 ${isHovered ? 'bg-primary/20' : ''}`;
+        if (operator) return `text-secondary-foreground font-semibold bg-secondary/20 ${isHovered ? 'bg-secondary/30' : ''}`;
+        return `text-accent-foreground font-semibold bg-accent/10 ${isHovered ? 'bg-accent/20' : ''}`;
       }
-      return "text-muted-foreground";
+      return `text-muted-foreground ${isHovered ? 'bg-muted/20' : ''}`;
     };
 
     return (
-      <div
-        key={rowKey}
-        className={`flex items-center py-2 px-3 rounded transition-colors ${
-          hoveredRow === rowKey ? "bg-muted/30" : ""
-        } ${isResult ? "bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800" : ""}`}
-        onMouseEnter={() => setHoveredRow(rowKey)}
-        onMouseLeave={() => setHoveredRow(null)}
-      >
-        {/* Left: Operator and decimal value */}
-        <div className="flex items-center w-[160px] border-r border-border pr-4">
-          {/* Operator symbol */}
-          <div className="w-8 text-center font-mono text-sm font-bold text-primary">
+      <div className={`flex items-center py-2 px-3 rounded transition-colors ${
+        isResult ? "bg-primary/5 border border-primary/20" : ""
+      }`}>
+        {/* Left: Operator and decimal value - fixed 180px */}
+        <div className="flex items-center w-[180px] border-r border-border pr-4 flex-shrink-0">
+          <div className="w-8 text-center font-mono text-sm font-bold text-primary flex-shrink-0">
             {operator || (isResult ? "=" : "")}
           </div>
-          
-          {/* Decimal value */}
-          <div className={`flex-1 text-right font-mono text-sm ${getValueColor()}`}>
-            {decimal}
+          <div className={`w-[140px] text-right font-mono text-sm ${getValueColor()} flex-shrink-0`}>
+            {decimal.toLocaleString()}
           </div>
         </div>
 
-        {/* Middle: Bit visualization */}
-        <div className="flex-1 px-4 border-r border-border">
-          <div className="flex gap-1 justify-center">
+        {/* Middle: Bit visualization - optimized width with 4-bit spacing */}
+        <div className="w-[360px] px-4 border-r border-border flex-shrink-0">
+          <div className="flex justify-center">
+            {/* Render bits with spacing every 4 bits */}
             {binary.split("").map((bit, index) => {
               const position = bitWidth - 1 - index;
+              const bitKey = `${value}-bit-${position}`;
+              const needsSpacing = index > 0 && index % 4 === 0;
+              
               return (
                 <span
-                  key={`${rowKey}-bit-${position}`}
-                  className={`w-6 h-6 flex items-center justify-center text-xs font-mono rounded transition-colors ${getBitColor(bit)} ${
-                    index % 4 === 0 && index > 0 ? "ml-1" : ""
-                  } ${index % 8 === 0 && index > 0 ? "ml-2" : ""}`}
+                  key={bitKey}
+                  className={`w-5 h-5 flex items-center justify-center text-xs font-mono rounded transition-all duration-200 ${getBitColor(bit, position)} ${
+                    needsSpacing ? "ml-1" : ""
+                  } ${
+                    isClickable ? "cursor-pointer hover:scale-110 hover:shadow-sm" : ""
+                  }`}
+                  onClick={isClickable && operandKey ? () => handleBitClick(value, position, operandKey) : undefined}
+                  onMouseEnter={() => isClickable && setHoveredBit(bitKey)}
+                  onMouseLeave={() => isClickable && setHoveredBit(null)}
+                  title={isClickable ? `Click to flip bit ${position} (${bit} → ${bit === '1' ? '0' : '1'})` : undefined}
                 >
                   {bit}
                 </span>
@@ -193,12 +297,23 @@ export function AdvancedBitwiseVisualization({
           </div>
         </div>
 
-        {/* Right: Hex and info */}
-        <div className="flex items-center w-[200px] pl-4">
-          <div className="w-24 text-left font-mono text-sm text-muted-foreground">
-            0x{hex}
+        {/* Right: Hex, sign type, and info - expanded to 250px */}
+        <div className="flex items-center w-[250px] pl-4 flex-shrink-0">
+          <div className="w-28 text-left font-mono text-sm text-muted-foreground flex-shrink-0">
+            0x{hex.toUpperCase()}
           </div>
-          <div className="flex-1 flex justify-end">
+          <div className="flex items-center gap-2 flex-1">
+            {/* Sign type badge for operands */}
+            {isClickable && operandKey && (
+              <Badge
+                variant="outline"
+                className="text-xs cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => toggleOperandSign(operandKey)}
+                title={`Click to toggle between signed and unsigned interpretation`}
+              >
+                {signType}
+              </Badge>
+            )}
             <Badge variant={isResult ? "default" : "outline"} className="text-xs">
               {bitWidth}bit
             </Badge>
@@ -208,21 +323,22 @@ export function AdvancedBitwiseVisualization({
     );
   };
 
-  // Render compact expression visualization with intermediate results
+  // Render compact expression visualization
   const renderCompactExpression = () => {
     if (!evaluationResult?.result.isValid) return null;
 
     // For single value expressions
     if (!evaluationResult.result.steps.length) {
       const value = evaluationResult.result.finalResult;
+      const operandKey = `${value}_0`;
       return (
         <div className="space-y-1">
-          {renderBitRow(value, undefined, true)}
+          {renderBitRow(value, undefined, false, true, operandKey)}
         </div>
       );
     }
 
-    // For multi-operand expressions - show operands, operators and intermediate results compactly
+    // For multi-operand expressions
     const steps = evaluationResult.result.steps;
     
     return (
@@ -232,36 +348,34 @@ export function AdvancedBitwiseVisualization({
             {/* For first step, show both operands */}
             {stepIndex === 0 && (
               <>
-                {renderBitRow(step.operand1, undefined, false, stepIndex * 100)}
+                {renderBitRow(step.operand1, undefined, false, true, `${step.operand1}_${stepIndex}_0`)}
                 {step.operand2 !== undefined && 
-                  renderBitRow(step.operand2, step.operator, false, stepIndex * 100 + 1)
+                  renderBitRow(step.operand2, step.operator, false, true, `${step.operand2}_${stepIndex}_1`)
                 }
               </>
             )}
             
             {/* For subsequent steps, only show the new operand */}
             {stepIndex > 0 && step.operand2 !== undefined && 
-              renderBitRow(step.operand2, step.operator, false, stepIndex * 100)
+              renderBitRow(step.operand2, step.operator, false, true, `${step.operand2}_${stepIndex}_0`)
             }
             
             {/* Separator line */}
             <div className="flex items-center px-3">
-              <div className="w-[160px] pr-4"></div>
-              <div className="flex-1 px-4">
+              <div className="w-[180px] pr-4 flex-shrink-0"></div>
+              <div className="w-[360px] px-4 flex-shrink-0">
                 <div className="border-t border-border border-dashed"></div>
               </div>
-              <div className="w-[200px] pl-4"></div>
+              <div className="w-[250px] pl-4 flex-shrink-0"></div>
             </div>
             
             {/* Result */}
-            {renderBitRow(step.result, "=", true, stepIndex * 100 + 2)}
+            {renderBitRow(step.result, "=", true, false)}
           </div>
         ))}
       </div>
     );
   };
-
-
 
   // Render error state
   const renderError = () => {
