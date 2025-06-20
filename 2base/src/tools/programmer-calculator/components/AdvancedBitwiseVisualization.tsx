@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Calculator } from "lucide-react";
 import type { Base, BitWidth } from "../types";
 import { formatForBase } from "../lib/base-converter";
 import { 
@@ -15,6 +17,7 @@ import {
   type ParsedExpression,
   type ExpressionResult 
 } from "../lib/expression-parser";
+import { CalculatorGrid } from "./CalculatorGrid";
 
 interface BitwiseVisualizationProps {
   initialExpression?: string;
@@ -50,6 +53,7 @@ export function AdvancedBitwiseVisualization({
   const [hoveredBit, setHoveredBit] = useState<string | null>(null);
   const [clickedBit, setClickedBit] = useState<string | null>(null);
   const [operandSigns, setOperandSigns] = useState<OperandSignState>({});
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // Format values for different bases with sign support
   const formatValue = useCallback((value: number, targetBase: Base, isSigned: boolean = true): string => {
@@ -302,9 +306,11 @@ export function AdvancedBitwiseVisualization({
           </div>
         </div>
 
-        {/* Middle: Bit visualization - optimized width with 4-bit spacing */}
-        <div className="w-[360px] px-4 border-r border-border flex-shrink-0">
-          <div className="flex justify-center">
+        {/* Middle: Bit visualization - responsive width based on bit width */}
+        <div className={`px-4 border-r border-border flex-shrink-0 ${
+          bitWidth <= 32 ? 'w-[360px]' : 'w-[600px]'
+        }`}>
+          <div className="flex justify-center overflow-x-auto">
             {/* Render bits with spacing every 4 bits */}
             {binary.split("").map((bit, index) => {
               const position = bitWidth - 1 - index;
@@ -314,7 +320,7 @@ export function AdvancedBitwiseVisualization({
               return (
                 <span
                   key={bitKey}
-                  className={`w-5 h-5 flex items-center justify-center text-xs font-mono rounded transition-all duration-200 ${getBitColor(bit, position)} ${
+                  className={`${bitWidth <= 32 ? 'w-5 h-5' : 'w-4 h-4'} flex items-center justify-center text-xs font-mono rounded transition-all duration-200 ${getBitColor(bit, position)} ${
                     needsSpacing ? "ml-1" : ""
                   } ${
                     isClickable ? "cursor-pointer hover:scale-110 hover:shadow-sm" : ""
@@ -331,9 +337,13 @@ export function AdvancedBitwiseVisualization({
           </div>
         </div>
 
-        {/* Right: Hex, sign type, and info - expanded to 250px */}
-        <div className="flex items-center w-[250px] pl-4 flex-shrink-0">
-          <div className="w-28 text-left font-mono text-sm text-muted-foreground flex-shrink-0">
+        {/* Right: Hex, sign type, and info - responsive width */}
+        <div className={`flex items-center pl-4 flex-shrink-0 ${
+          bitWidth <= 32 ? 'w-[250px]' : 'w-[280px]'
+        }`}>
+          <div className={`text-left font-mono text-sm text-muted-foreground flex-shrink-0 ${
+            bitWidth <= 32 ? 'w-28' : 'w-32'
+          }`}>
             0x{hex.toUpperCase()}
           </div>
           <div className="flex items-center gap-2 flex-1">
@@ -466,19 +476,53 @@ export function AdvancedBitwiseVisualization({
             <div className="flex gap-2">
               <Input
                 id="expression"
-                placeholder="Enter expression like '15 & 7 | 3' and press Enter or click Calculate"
+                placeholder="Enter expression like '15 & 7 | 3' and press Enter"
                 value={expression}
                 onChange={(e) => handleExpressionChange(e.target.value)}
                 onKeyPress={handleKeyPress}
                 className="font-mono"
                 disabled={isProcessing}
               />
-              <Button 
-                onClick={handleExpressionSubmit}
-                disabled={!expression.trim() || isProcessing}
-              >
-                {isProcessing ? "Processing..." : "Calculate"}
-              </Button>
+              <Sheet open={isCalculatorOpen} onOpenChange={setIsCalculatorOpen}>
+                <SheetTrigger asChild>
+                  <Button size="icon" variant="outline">
+                    <Calculator className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-[400px] sm:w-[540px]">
+                  <SheetHeader>
+                    <SheetTitle>Calculator</SheetTitle>
+                    <SheetDescription>
+                      Use the calculator to build expressions and see instant results
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="mt-6">
+                    <CalculatorGrid
+                      base={base}
+                      onButtonClick={(value: string, type: "number" | "operation" | "function" | "special") => {
+                        if (type === "special" && value === "backspace") {
+                          const newExpression = expression.slice(0, -1);
+                          setExpression(newExpression);
+                          processExpressionInput(newExpression);
+                        } else {
+                          const newExpression = expression + value;
+                          setExpression(newExpression);
+                          if (value === "=") {
+                            processExpressionInput(expression);
+                          } else {
+                            processExpressionInput(newExpression);
+                          }
+                        }
+                      }}
+                      onClear={() => {
+                        setExpression("");
+                        setEvaluationResult(null);
+                        onExpressionChange?.("", null);
+                      }}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
 
