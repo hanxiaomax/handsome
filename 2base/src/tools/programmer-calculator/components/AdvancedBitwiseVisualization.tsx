@@ -495,9 +495,6 @@ export function AdvancedBitwiseVisualization({
                   <Calculator className="h-4 w-4" />
                 </Button>
               )}
-              <Button onClick={handleExpressionSubmit} disabled={isProcessing}>
-                Calculate
-              </Button>
             </div>
           </div>
 

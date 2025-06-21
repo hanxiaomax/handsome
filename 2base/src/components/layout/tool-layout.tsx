@@ -196,9 +196,10 @@ function WindowControls({
           <Button
             variant="ghost"
             size="sm"
-            onClick={onMinimize || (() => {})}
+            onClick={onMinimize}
             className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
             title="Minimize to Drawer"
+            disabled={!onMinimize}
           >
             <Minus className="h-4 w-4 stroke-[1.5]" />
           </Button>

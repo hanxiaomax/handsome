@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ToolLayout } from "@/components/layout/tool-layout";
 import { AdvancedBitwiseVisualization } from "./components/AdvancedBitwiseVisualization";
 import { ProgrammerCal } from "./components/programmer-cal";
 import { toolInfo } from "./toolInfo";
+import {
+  useMinimizedToolsActions,
+  useIsToolMinimized,
+  useToolState,
+} from "@/stores/minimized-tools-store";
+import { useFavoriteActions, useIsFavorite } from "@/stores/favorites-store";
 import type { Base, BitWidth } from "./types";
 
 export default function ProgrammerCalculator() {
+  const navigate = useNavigate();
+
   // Current expression and result for synchronization
   const [currentExpression, setCurrentExpression] = useState("");
   const [currentResult, setCurrentResult] = useState<number | null>(null);
@@ -18,6 +27,38 @@ export default function ProgrammerCalculator() {
 
   // Right panel state
   const [isCalculatorPanelOpen, setIsCalculatorPanelOpen] = useState(false);
+
+  // Store hooks for minimize and favorite functionality
+  const { minimizeTool, restoreTool } = useMinimizedToolsActions();
+  const { toggleFavorite } = useFavoriteActions();
+  const isFavorite = useIsFavorite(toolInfo.id);
+  const isMinimized = useIsToolMinimized(toolInfo.id);
+  const savedState = useToolState(toolInfo.id);
+
+  // Handle tool restoration from minimized state
+  useEffect(() => {
+    if (isMinimized && savedState) {
+      // Restore tool state
+      if (savedState.currentExpression) {
+        setCurrentExpression(savedState.currentExpression as string);
+      }
+      if (savedState.currentResult !== undefined) {
+        setCurrentResult(savedState.currentResult as number | null);
+      }
+      if (savedState.calculatorBase) {
+        setCalculatorBase(savedState.calculatorBase as Base);
+      }
+      if (savedState.calculatorBitWidth) {
+        setCalculatorBitWidth(savedState.calculatorBitWidth as BitWidth);
+      }
+      if (savedState.isCalculatorPanelOpen !== undefined) {
+        setIsCalculatorPanelOpen(savedState.isCalculatorPanelOpen as boolean);
+      }
+
+      // Remove from minimized tools
+      restoreTool(toolInfo.id);
+    }
+  }, [isMinimized, savedState, restoreTool]);
 
   // Handle expression changes from visualization component
   const handleExpressionChange = useCallback(
@@ -32,6 +73,33 @@ export default function ProgrammerCalculator() {
   const handleToggleCalculator = useCallback(() => {
     setIsCalculatorPanelOpen(!isCalculatorPanelOpen);
   }, [isCalculatorPanelOpen]);
+
+  // Handle minimize tool
+  const handleMinimize = useCallback(() => {
+    const toolState = {
+      currentExpression,
+      currentResult,
+      calculatorBase,
+      calculatorBitWidth,
+      isCalculatorPanelOpen,
+    };
+    minimizeTool(toolInfo, toolState);
+    // Navigate to tools page after minimizing
+    navigate("/tools");
+  }, [
+    currentExpression,
+    currentResult,
+    calculatorBase,
+    calculatorBitWidth,
+    isCalculatorPanelOpen,
+    minimizeTool,
+    navigate,
+  ]);
+
+  // Handle toggle favorite
+  const handleToggleFavorite = useCallback(() => {
+    toggleFavorite(toolInfo.id);
+  }, [toggleFavorite]);
 
   // Right panel content - Calculator (only when open)
   const rightPanelContent = isCalculatorPanelOpen ? (
@@ -72,7 +140,13 @@ export default function ProgrammerCalculator() {
   ) : undefined;
 
   return (
-    <ToolLayout toolName={toolInfo.name} toolDescription={toolInfo.description}>
+    <ToolLayout
+      toolName={toolInfo.name}
+      toolDescription={toolInfo.description}
+      onMinimize={handleMinimize}
+      onToggleFavorite={handleToggleFavorite}
+      isFavorite={isFavorite}
+    >
       <div className="w-full p-6 space-y-6">
         {/* Main Content Layout */}
         <div className="flex justify-center">
