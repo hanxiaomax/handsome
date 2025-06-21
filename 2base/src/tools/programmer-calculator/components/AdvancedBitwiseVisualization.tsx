@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Calculator } from "lucide-react";
+import { Keyboard, type CalculatorBase } from "@/components/common/keyboard";
 
 import type { Base, BitWidth } from "../types";
 import { formatForBase } from "../lib/base-converter";
@@ -217,7 +218,7 @@ export function AdvancedBitwiseVisualization({
     }));
   }, []);
 
-  // Handle calculator key press
+  // Handle calculator key press - 纯公式编写模式
   const handleCalculatorKey = useCallback((key: string) => {
     let keyToAdd = key;
     
@@ -230,21 +231,9 @@ export function AdvancedBitwiseVisualization({
     }
     
     const newExpression = expression + keyToAdd;
+    
     setExpression(newExpression);
-    
-    // Auto-process for complete expressions
-    // Only process if the expression looks complete (has operands and operators)
-    const hasOperator = /[&|^~+\-*/%]|<<|>>/.test(newExpression);
-    const hasOperands = /\d/.test(newExpression);
-    const isComplete = hasOperator && hasOperands && !newExpression.endsWith(' ');
-    
-    if (isComplete) {
-      // Debounce the processing to avoid excessive calculations
-      setTimeout(() => {
-        processExpressionInput(newExpression);
-      }, 150);
-    }
-  }, [expression, processExpressionInput]);
+  }, [expression]);
 
   // Handle calculator clear
   const handleCalculatorClear = useCallback(() => {
@@ -253,45 +242,26 @@ export function AdvancedBitwiseVisualization({
     onExpressionChange?.('', null);
   }, [onExpressionChange]);
 
-  // Handle calculator backspace
+  // Handle calculator backspace - 纯公式编写模式
   const handleCalculatorBackspace = useCallback(() => {
     const newExpression = expression.slice(0, -1);
     setExpression(newExpression);
     
-    if (newExpression.trim()) {
-      // Debounce the processing for backspace as well
-      setTimeout(() => {
-        processExpressionInput(newExpression);
-      }, 150);
-    } else {
+    // 如果表达式为空，清除结果
+    if (!newExpression.trim()) {
       setEvaluationResult(null);
       onExpressionChange?.(newExpression, null);
     }
-  }, [expression, processExpressionInput, onExpressionChange]);
-
-  // Get available keys for current base
-  const getAvailableKeys = useCallback((currentBase: Base) => {
-    const digits = {
-      2: ['0', '1'],
-      8: ['0', '1', '2', '3', '4', '5', '6', '7'],
-      10: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-      16: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
-    };
-    
-    const operators = ['&', '|', '^', '~', '<<', '>>', '+', '-', '*', '/', '%', '(', ')'];
-    
-    return {
-      digits: digits[currentBase],
-      operators
-    };
-  }, []);
+  }, [expression, onExpressionChange]);
 
   // Handle expression input change
   const handleExpressionChange = (value: string) => {
     setExpression(value);
+    // 通知父组件表达式变化，但不进行计算
+    onExpressionChange?.(value, null);
   };
 
-  // Handle expression submission
+  // Handle expression submission - 仅在此时进行计算和校验
   const handleExpressionSubmit = () => {
     processExpressionInput(expression);
   };
@@ -302,6 +272,11 @@ export function AdvancedBitwiseVisualization({
       handleExpressionSubmit();
     }
   };
+
+  // Handle calculator base change
+  const handleCalculatorBaseChange = useCallback((newBase: CalculatorBase) => {
+    setBase(newBase);
+  }, []);
 
   // Clear result when expression changes
   useEffect(() => {
@@ -317,6 +292,8 @@ export function AdvancedBitwiseVisualization({
       processExpressionInput(initialExpression);
     }
   }, [initialExpression, expression, processExpressionInput]);
+
+
 
   // Render single bit row with sign type support
   const renderBitRow = (
@@ -531,98 +508,10 @@ export function AdvancedBitwiseVisualization({
     );
   };
 
-  // Render calculator keyboard
-  const renderCalculatorKeyboard = () => {
-    const { digits, operators } = getAvailableKeys(base);
-    
-    return (
-      <div className="w-80 p-4 space-y-4">
-        {/* Base selector */}
-        <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Base</Label>
-          <Select value={base.toString()} onValueChange={(value) => setBase(parseInt(value) as Base)}>
-            <SelectTrigger className="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2">Bin</SelectItem>
-              <SelectItem value="8">Oct</SelectItem>
-              <SelectItem value="10">Dec</SelectItem>
-              <SelectItem value="16">Hex</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <Separator />
-        
-        {/* Digits */}
-        <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">Digits</Label>
-          <div className="grid grid-cols-4 gap-1">
-            {digits.map((digit) => (
-              <Button
-                key={digit}
-                variant="outline"
-                size="sm"
-                className="h-8 font-mono"
-                onClick={() => handleCalculatorKey(digit)}
-              >
-                {digit}
-              </Button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Operators */}
-        <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">Operators</Label>
-          <div className="grid grid-cols-4 gap-1">
-            {operators.map((op) => (
-              <Button
-                key={op}
-                variant="outline"
-                size="sm"
-                className="h-8 font-mono text-xs"
-                onClick={() => handleCalculatorKey(op)}
-              >
-                {op}
-              </Button>
-            ))}
-          </div>
-        </div>
-        
-        <Separator />
-        
-        {/* Control buttons */}
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={handleCalculatorBackspace}
-          >
-            ⌫
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={handleCalculatorClear}
-          >
-            Clear
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={() => setIsCalculatorOpen(false)}
-          >
-            Done
-          </Button>
-        </div>
-      </div>
-    );
-  };
+  // Handle calculator close
+  const handleCalculatorClose = useCallback(() => {
+    setIsCalculatorOpen(false);
+  }, []);
 
   return (
     <>
@@ -642,6 +531,15 @@ export function AdvancedBitwiseVisualization({
                 className="font-mono text-base"
                 disabled={isProcessing}
               />
+              <Button
+                variant="outline"
+                size="sm"
+                className="px-3"
+                onClick={handleCalculatorClear}
+                title="Clear expression"
+              >
+                Clear
+              </Button>
               <Popover open={isCalculatorOpen} onOpenChange={setIsCalculatorOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -654,7 +552,16 @@ export function AdvancedBitwiseVisualization({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
-                  {renderCalculatorKeyboard()}
+                  <Keyboard
+                    type="simple-cal"
+                    base={base as CalculatorBase}
+                    onBaseChange={handleCalculatorBaseChange}
+                    onKeyPress={handleCalculatorKey}
+                    onClear={handleCalculatorClear}
+                    onBackspace={handleCalculatorBackspace}
+                    onCalculate={handleExpressionSubmit}
+                    onClose={handleCalculatorClose}
+                  />
                 </PopoverContent>
               </Popover>
             </div>
