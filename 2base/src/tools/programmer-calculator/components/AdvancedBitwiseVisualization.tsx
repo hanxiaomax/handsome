@@ -219,18 +219,55 @@ export function AdvancedBitwiseVisualization({
 
   // Handle calculator key press
   const handleCalculatorKey = useCallback((key: string) => {
-    setExpression(prev => prev + key);
-  }, []);
+    let keyToAdd = key;
+    
+    // Smart spacing for operators (except parentheses)
+    const needsSpacing = ['&', '|', '^', '~', '+', '-', '*', '/', '%', '<<', '>>'].includes(key);
+    if (needsSpacing && expression && !expression.endsWith(' ')) {
+      keyToAdd = ` ${key} `;
+    } else if (needsSpacing) {
+      keyToAdd = `${key} `;
+    }
+    
+    const newExpression = expression + keyToAdd;
+    setExpression(newExpression);
+    
+    // Auto-process for complete expressions
+    // Only process if the expression looks complete (has operands and operators)
+    const hasOperator = /[&|^~+\-*/%]|<<|>>/.test(newExpression);
+    const hasOperands = /\d/.test(newExpression);
+    const isComplete = hasOperator && hasOperands && !newExpression.endsWith(' ');
+    
+    if (isComplete) {
+      // Debounce the processing to avoid excessive calculations
+      setTimeout(() => {
+        processExpressionInput(newExpression);
+      }, 150);
+    }
+  }, [expression, processExpressionInput]);
 
   // Handle calculator clear
   const handleCalculatorClear = useCallback(() => {
     setExpression('');
-  }, []);
+    setEvaluationResult(null);
+    onExpressionChange?.('', null);
+  }, [onExpressionChange]);
 
   // Handle calculator backspace
   const handleCalculatorBackspace = useCallback(() => {
-    setExpression(prev => prev.slice(0, -1));
-  }, []);
+    const newExpression = expression.slice(0, -1);
+    setExpression(newExpression);
+    
+    if (newExpression.trim()) {
+      // Debounce the processing for backspace as well
+      setTimeout(() => {
+        processExpressionInput(newExpression);
+      }, 150);
+    } else {
+      setEvaluationResult(null);
+      onExpressionChange?.(newExpression, null);
+    }
+  }, [expression, processExpressionInput, onExpressionChange]);
 
   // Get available keys for current base
   const getAvailableKeys = useCallback((currentBase: Base) => {
@@ -546,7 +583,7 @@ export function AdvancedBitwiseVisualization({
                 variant="outline"
                 size="sm"
                 className="h-8 font-mono text-xs"
-                onClick={() => handleCalculatorKey(op === '<<' || op === '>>' ? ` ${op} ` : op)}
+                onClick={() => handleCalculatorKey(op)}
               >
                 {op}
               </Button>
