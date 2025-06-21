@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/resizable";
 import { useNavigate } from "react-router-dom";
 import { Minus, Home, Bookmark, Info, Settings, X } from "lucide-react";
-import React, { useState } from "react";
+import React from "react";
 
 // Custom button interface for extensibility
 interface CustomToolButton {
@@ -32,11 +32,13 @@ interface ToolLayoutProps {
   isFavorite?: boolean;
   onShowDocumentation?: () => void;
   customControls?: React.ReactNode;
-  // Right panel props
-  rightPanelContent?: React.ReactNode;
-  rightPanelTitle?: string;
-  rightPanelDescription?: string;
-  onRightPanelContentChange?: (
+  // Right sidebar props (renamed from rightPanel for clarity)
+  rightSidebarContent?: React.ReactNode;
+  rightSidebarTitle?: string;
+  rightSidebarDescription?: string;
+  isRightSidebarOpen?: boolean;
+  onRightSidebarToggle?: () => void;
+  onRightSidebarContentChange?: (
     content: React.ReactNode,
     title?: string,
     description?: string
@@ -55,6 +57,10 @@ interface WindowControlsProps {
   toolDescription?: string;
   customControls?: React.ReactNode;
   customButtons?: CustomToolButton[];
+  // Right sidebar controls
+  onRightSidebarToggle?: () => void;
+  isRightSidebarOpen?: boolean;
+  hasRightSidebarContent?: boolean;
 }
 
 function WindowControls({
@@ -67,6 +73,9 @@ function WindowControls({
   toolDescription,
   customControls,
   customButtons = [],
+  onRightSidebarToggle,
+  isRightSidebarOpen = false,
+  hasRightSidebarContent = false,
 }: WindowControlsProps) {
   // Function to truncate description to 30 words max
   const truncateDescription = (desc: string): string => {
@@ -138,15 +147,25 @@ function WindowControls({
           </span>
         </div>
 
-        {/* Right Panel Toggle Button - Always present but disabled */}
+        {/* Right Sidebar Toggle Button - Settings */}
         <div className="flex flex-col items-center gap-0.5">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {}} // Disabled functionality
-            className="h-8 w-8 p-0 opacity-50 cursor-not-allowed"
-            title="Settings (Temporarily Disabled)"
-            disabled={true}
+            onClick={onRightSidebarToggle}
+            className={`h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground ${
+              isRightSidebarOpen ? "bg-accent text-accent-foreground" : ""
+            } ${
+              !hasRightSidebarContent ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            title={
+              hasRightSidebarContent
+                ? isRightSidebarOpen
+                  ? "Close Sidebar"
+                  : "Open Sidebar"
+                : "No sidebar content available"
+            }
+            disabled={!hasRightSidebarContent || !onRightSidebarToggle}
           >
             <Settings className="h-4 w-4 stroke-[1.5]" />
           </Button>
@@ -269,37 +288,38 @@ export function ToolLayout({
   onShowDocumentation,
   isFavorite = false,
   customControls,
-  rightPanelContent,
-  rightPanelTitle = "Settings",
-  rightPanelDescription,
-  onRightPanelContentChange,
+  rightSidebarContent,
+  rightSidebarTitle = "Settings",
+  rightSidebarDescription,
+  isRightSidebarOpen = false,
+  onRightSidebarToggle,
+  onRightSidebarContentChange,
   customButtons = [],
 }: ToolLayoutProps) {
   const navigate = useNavigate();
-  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
 
   const handleNavigateHome = () => {
     navigate("/tools");
   };
 
-  const handleCloseRightPanel = () => {
-    setIsRightPanelOpen(false);
+  const handleCloseRightSidebar = () => {
+    onRightSidebarToggle?.();
   };
 
-  // Expose right panel content update function to child tools
+  // Expose right sidebar content update function to child tools
   React.useEffect(() => {
-    if (onRightPanelContentChange) {
-      onRightPanelContentChange(
-        rightPanelContent,
-        rightPanelTitle,
-        rightPanelDescription
+    if (onRightSidebarContentChange) {
+      onRightSidebarContentChange(
+        rightSidebarContent,
+        rightSidebarTitle,
+        rightSidebarDescription
       );
     }
   }, [
-    rightPanelContent,
-    rightPanelTitle,
-    rightPanelDescription,
-    onRightPanelContentChange,
+    rightSidebarContent,
+    rightSidebarTitle,
+    rightSidebarDescription,
+    onRightSidebarContentChange,
   ]);
 
   return (
@@ -353,6 +373,9 @@ export function ToolLayout({
               toolDescription={toolDescription}
               customControls={customControls}
               customButtons={customButtons}
+              onRightSidebarToggle={onRightSidebarToggle}
+              isRightSidebarOpen={isRightSidebarOpen}
+              hasRightSidebarContent={!!rightSidebarContent}
             />
 
             {/* Resizable Content Area */}
@@ -360,7 +383,9 @@ export function ToolLayout({
               <ResizablePanelGroup direction="horizontal" className="h-full">
                 {/* Main Tool Content */}
                 <ResizablePanel
-                  defaultSize={rightPanelContent && isRightPanelOpen ? 70 : 100}
+                  defaultSize={
+                    rightSidebarContent && isRightSidebarOpen ? 70 : 100
+                  }
                   minSize={50}
                   className="flex flex-col"
                 >
@@ -369,8 +394,8 @@ export function ToolLayout({
                   </div>
                 </ResizablePanel>
 
-                {/* Right Panel */}
-                {rightPanelContent && isRightPanelOpen && (
+                {/* Right Sidebar */}
+                {rightSidebarContent && isRightSidebarOpen && (
                   <>
                     <ResizableHandle withHandle />
                     <ResizablePanel
@@ -380,12 +405,12 @@ export function ToolLayout({
                       className="flex flex-col border-l"
                     >
                       <RightPanel
-                        isOpen={isRightPanelOpen}
-                        onClose={handleCloseRightPanel}
-                        title={rightPanelTitle}
-                        description={rightPanelDescription}
+                        isOpen={isRightSidebarOpen}
+                        onClose={handleCloseRightSidebar}
+                        title={rightSidebarTitle}
+                        description={rightSidebarDescription}
                       >
-                        {rightPanelContent}
+                        {rightSidebarContent}
                       </RightPanel>
                     </ResizablePanel>
                   </>

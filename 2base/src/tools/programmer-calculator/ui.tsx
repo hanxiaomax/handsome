@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToolLayout } from "@/components/layout/tool-layout";
 import { AdvancedBitwiseVisualization } from "./components/AdvancedBitwiseVisualization";
-import { ProgrammerCal } from "./components/programmer-cal";
+
 import { toolInfo } from "./toolInfo";
 import {
   useMinimizedToolsActions,
@@ -24,9 +24,6 @@ export default function ProgrammerCalculator() {
   // Calculator state for synchronization
   const [calculatorBase, setCalculatorBase] = useState<Base>(10);
   const [calculatorBitWidth, setCalculatorBitWidth] = useState<BitWidth>(32);
-
-  // Right panel state
-  const [isCalculatorPanelOpen, setIsCalculatorPanelOpen] = useState(false);
 
   // Store hooks for minimize and favorite functionality
   const { minimizeTool, restoreTool } = useMinimizedToolsActions();
@@ -51,9 +48,6 @@ export default function ProgrammerCalculator() {
       if (savedState.calculatorBitWidth) {
         setCalculatorBitWidth(savedState.calculatorBitWidth as BitWidth);
       }
-      if (savedState.isCalculatorPanelOpen !== undefined) {
-        setIsCalculatorPanelOpen(savedState.isCalculatorPanelOpen as boolean);
-      }
 
       // Remove from minimized tools
       restoreTool(toolInfo.id);
@@ -69,11 +63,6 @@ export default function ProgrammerCalculator() {
     []
   );
 
-  // Toggle calculator panel
-  const handleToggleCalculator = useCallback(() => {
-    setIsCalculatorPanelOpen(!isCalculatorPanelOpen);
-  }, [isCalculatorPanelOpen]);
-
   // Handle minimize tool
   const handleMinimize = useCallback(() => {
     const toolState = {
@@ -81,7 +70,6 @@ export default function ProgrammerCalculator() {
       currentResult,
       calculatorBase,
       calculatorBitWidth,
-      isCalculatorPanelOpen,
     };
     minimizeTool(toolInfo, toolState);
     // Navigate to tools page after minimizing
@@ -91,7 +79,6 @@ export default function ProgrammerCalculator() {
     currentResult,
     calculatorBase,
     calculatorBitWidth,
-    isCalculatorPanelOpen,
     minimizeTool,
     navigate,
   ]);
@@ -100,44 +87,6 @@ export default function ProgrammerCalculator() {
   const handleToggleFavorite = useCallback(() => {
     toggleFavorite(toolInfo.id);
   }, [toggleFavorite]);
-
-  // Right panel content - Calculator (only when open)
-  const rightPanelContent = isCalculatorPanelOpen ? (
-    <div className="h-full">
-      <ProgrammerCal
-        compact={true}
-        borderless={true}
-        maxWidth="full"
-        initialBase={calculatorBase}
-        initialBitWidth={calculatorBitWidth}
-        onValueChange={(_value: string, newBase: Base) => {
-          // Update expression with the new value and base
-          setCalculatorBase(newBase);
-        }}
-        onOperationComplete={(_expressionStr: string, result: string) => {
-          // Update the main expression when calculation is complete
-          setCurrentExpression(result);
-        }}
-        onBaseChange={(newBase: Base) => {
-          // Sync base changes
-          setCalculatorBase(newBase);
-        }}
-        onBitWidthChange={(newBitWidth: BitWidth) => {
-          // Sync bit width changes
-          setCalculatorBitWidth(newBitWidth);
-        }}
-        onStateChange={(state) => {
-          // Real-time sync: update expression whenever currentValue changes
-          if (state.currentValue && state.currentValue !== "0") {
-            setCurrentExpression(state.currentValue);
-          }
-          // Sync base and bit width changes
-          setCalculatorBase(state.base);
-          setCalculatorBitWidth(state.bitWidth);
-        }}
-      />
-    </div>
-  ) : undefined;
 
   return (
     <ToolLayout
@@ -155,9 +104,6 @@ export default function ProgrammerCalculator() {
             <AdvancedBitwiseVisualization
               initialExpression={currentExpression}
               onExpressionChange={handleExpressionChange}
-              onToggleCalculator={handleToggleCalculator}
-              isCalculatorOpen={isCalculatorPanelOpen}
-              calculatorContent={rightPanelContent}
             />
           </div>
         </div>

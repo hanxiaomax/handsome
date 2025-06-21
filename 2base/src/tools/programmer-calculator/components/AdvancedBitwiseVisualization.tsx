@@ -4,10 +4,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Calculator } from "lucide-react";
+
 import type { Base, BitWidth } from "../types";
 import { formatForBase } from "../lib/base-converter";
 import { 
@@ -20,9 +21,6 @@ import {
 interface BitwiseVisualizationProps {
   initialExpression?: string;
   onExpressionChange?: (expression: string, result: number | null) => void;
-  onToggleCalculator?: () => void;
-  isCalculatorOpen?: boolean;
-  calculatorContent?: React.ReactNode;
 }
 
 interface OperandInfo {
@@ -40,10 +38,7 @@ interface OperandSignState {
 
 export function AdvancedBitwiseVisualization({ 
   initialExpression = "", 
-  onExpressionChange,
-  onToggleCalculator,
-  isCalculatorOpen = false,
-  calculatorContent
+  onExpressionChange
 }: BitwiseVisualizationProps) {
   // Component state
   const [expression, setExpression] = useState(initialExpression);
@@ -57,6 +52,7 @@ export function AdvancedBitwiseVisualization({
   const [hoveredBit, setHoveredBit] = useState<string | null>(null);
   const [clickedBit, setClickedBit] = useState<string | null>(null);
   const [operandSigns, setOperandSigns] = useState<OperandSignState>({});
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // Format values for different bases with sign support
   const formatValue = useCallback((value: number, targetBase: Base, isSigned: boolean = true): string => {
@@ -219,6 +215,38 @@ export function AdvancedBitwiseVisualization({
       ...prev,
       [operandKey]: prev[operandKey] === 'unsigned' ? 'signed' : 'unsigned'
     }));
+  }, []);
+
+  // Handle calculator key press
+  const handleCalculatorKey = useCallback((key: string) => {
+    setExpression(prev => prev + key);
+  }, []);
+
+  // Handle calculator clear
+  const handleCalculatorClear = useCallback(() => {
+    setExpression('');
+  }, []);
+
+  // Handle calculator backspace
+  const handleCalculatorBackspace = useCallback(() => {
+    setExpression(prev => prev.slice(0, -1));
+  }, []);
+
+  // Get available keys for current base
+  const getAvailableKeys = useCallback((currentBase: Base) => {
+    const digits = {
+      2: ['0', '1'],
+      8: ['0', '1', '2', '3', '4', '5', '6', '7'],
+      10: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+      16: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+    };
+    
+    const operators = ['&', '|', '^', '~', '<<', '>>', '+', '-', '*', '/', '%', '(', ')'];
+    
+    return {
+      digits: digits[currentBase],
+      operators
+    };
   }, []);
 
   // Handle expression input change
@@ -466,6 +494,99 @@ export function AdvancedBitwiseVisualization({
     );
   };
 
+  // Render calculator keyboard
+  const renderCalculatorKeyboard = () => {
+    const { digits, operators } = getAvailableKeys(base);
+    
+    return (
+      <div className="w-80 p-4 space-y-4">
+        {/* Base selector */}
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">Base</Label>
+          <Select value={base.toString()} onValueChange={(value) => setBase(parseInt(value) as Base)}>
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2">Bin</SelectItem>
+              <SelectItem value="8">Oct</SelectItem>
+              <SelectItem value="10">Dec</SelectItem>
+              <SelectItem value="16">Hex</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <Separator />
+        
+        {/* Digits */}
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">Digits</Label>
+          <div className="grid grid-cols-4 gap-1">
+            {digits.map((digit) => (
+              <Button
+                key={digit}
+                variant="outline"
+                size="sm"
+                className="h-8 font-mono"
+                onClick={() => handleCalculatorKey(digit)}
+              >
+                {digit}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
+        {/* Operators */}
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">Operators</Label>
+          <div className="grid grid-cols-4 gap-1">
+            {operators.map((op) => (
+              <Button
+                key={op}
+                variant="outline"
+                size="sm"
+                className="h-8 font-mono text-xs"
+                onClick={() => handleCalculatorKey(op === '<<' || op === '>>' ? ` ${op} ` : op)}
+              >
+                {op}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
+        <Separator />
+        
+        {/* Control buttons */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={handleCalculatorBackspace}
+          >
+            ⌫
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={handleCalculatorClear}
+          >
+            Clear
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => setIsCalculatorOpen(false)}
+          >
+            Done
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="w-full space-y-8 mt-6">
@@ -484,17 +605,21 @@ export function AdvancedBitwiseVisualization({
                 className="font-mono text-base"
                 disabled={isProcessing}
               />
-              {onToggleCalculator && (
-                <Button 
-                  size="icon" 
-                  variant="outline"
-                  onClick={onToggleCalculator}
-                  className={`flex-shrink-0 ${isCalculatorOpen ? "bg-accent text-accent-foreground" : ""}`}
-                  title={isCalculatorOpen ? "Close Calculator" : "Open Calculator"}
-                >
-                  <Calculator className="h-4 w-4" />
-                </Button>
-              )}
+              <Popover open={isCalculatorOpen} onOpenChange={setIsCalculatorOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="px-3"
+                    disabled={isProcessing}
+                  >
+                    <Calculator className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  {renderCalculatorKeyboard()}
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -567,20 +692,7 @@ export function AdvancedBitwiseVisualization({
         </div>
       </div>
 
-      {/* Calculator Panel */}
-      <Sheet open={isCalculatorOpen} onOpenChange={onToggleCalculator}>
-        <SheetContent className="w-[480px] sm:w-[600px]">
-          <SheetHeader>
-            <SheetTitle>Calculator</SheetTitle>
-            <SheetDescription>
-              Use the calculator to build expressions and see instant results
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6 h-full">
-            {calculatorContent}
-          </div>
-        </SheetContent>
-      </Sheet>
+
     </>
   );
 }
