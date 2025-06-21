@@ -3,9 +3,25 @@ import { Button } from "@/components/ui/button";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/navigation/theme-toggle";
 import { GlobalSearch } from "@/components/navigation/global-search";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 import { useNavigate } from "react-router-dom";
-import { Minus, Home, Bookmark, Info } from "lucide-react";
-import React from "react";
+import { Minus, Home, Bookmark, Info, Settings, X } from "lucide-react";
+import React, { useState } from "react";
+
+// Custom button interface for extensibility
+interface CustomToolButton {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  onClick: () => void;
+  isActive?: boolean;
+  disabled?: boolean;
+  variant?: "ghost" | "default" | "destructive" | "outline" | "secondary";
+}
 
 interface ToolLayoutProps {
   toolName: string;
@@ -16,6 +32,17 @@ interface ToolLayoutProps {
   isFavorite?: boolean;
   onShowDocumentation?: () => void;
   customControls?: React.ReactNode;
+  // Right panel props
+  rightPanelContent?: React.ReactNode;
+  rightPanelTitle?: string;
+  rightPanelDescription?: string;
+  onRightPanelContentChange?: (
+    content: React.ReactNode,
+    title?: string,
+    description?: string
+  ) => void;
+  // Custom buttons support
+  customButtons?: CustomToolButton[];
 }
 
 interface WindowControlsProps {
@@ -27,6 +54,7 @@ interface WindowControlsProps {
   toolName: string;
   toolDescription?: string;
   customControls?: React.ReactNode;
+  customButtons?: CustomToolButton[];
 }
 
 function WindowControls({
@@ -38,6 +66,7 @@ function WindowControls({
   toolName,
   toolDescription,
   customControls,
+  customButtons = [],
 }: WindowControlsProps) {
   // Function to truncate description to 30 words max
   const truncateDescription = (desc: string): string => {
@@ -66,60 +95,166 @@ function WindowControls({
 
       {/* Right - Standard Controls */}
       <div className="flex-1 flex items-center gap-1 justify-end">
-        {/* Documentation Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onShowDocumentation}
-          className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
-          title="Show Documentation"
-          disabled={!onShowDocumentation}
-        >
-          <Info className="h-4 w-4 stroke-[1.5]" />
-        </Button>
+        {/* Custom Tool Buttons */}
+        {customButtons.map((button) => (
+          <div key={button.id} className="flex flex-col items-center gap-0.5">
+            <Button
+              variant={button.variant || "ghost"}
+              size="sm"
+              onClick={button.onClick}
+              className={`h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground ${
+                button.isActive ? "bg-accent text-accent-foreground" : ""
+              }`}
+              title={button.title}
+              disabled={button.disabled}
+            >
+              <button.icon className="h-4 w-4 stroke-[1.5]" />
+            </Button>
+            <span className="text-[10px] text-muted-foreground leading-none">
+              {button.title.split(" ")[0]}
+            </span>
+          </div>
+        ))}
 
-        {/* Home Button */}
-        {onNavigateHome && (
+        {/* Separator between custom and system buttons */}
+        {customButtons.length > 0 && (
+          <div className="h-8 w-px bg-border mx-1"></div>
+        )}
+
+        {/* Documentation Button - Always present */}
+        <div className="flex flex-col items-center gap-0.5">
           <Button
             variant="ghost"
             size="sm"
-            onClick={onNavigateHome}
+            onClick={onShowDocumentation}
+            className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
+            title="Show Documentation"
+            disabled={!onShowDocumentation}
+          >
+            <Info className="h-4 w-4 stroke-[1.5]" />
+          </Button>
+          <span className="text-[10px] text-muted-foreground leading-none">
+            Info
+          </span>
+        </div>
+
+        {/* Right Panel Toggle Button - Always present but disabled */}
+        <div className="flex flex-col items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {}} // Disabled functionality
+            className="h-8 w-8 p-0 opacity-50 cursor-not-allowed"
+            title="Settings (Temporarily Disabled)"
+            disabled={true}
+          >
+            <Settings className="h-4 w-4 stroke-[1.5]" />
+          </Button>
+          <span className="text-[10px] text-muted-foreground leading-none">
+            Settings
+          </span>
+        </div>
+
+        {/* Home Button - Always present */}
+        <div className="flex flex-col items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onNavigateHome || (() => {})}
             className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
             title="Go to Home"
           >
             <Home className="h-4 w-4 stroke-[1.5]" />
           </Button>
-        )}
+          <span className="text-[10px] text-muted-foreground leading-none">
+            Home
+          </span>
+        </div>
 
-        {/* Favorite Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggleFavorite}
-          className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
-          title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-          disabled={!onToggleFavorite}
-        >
-          <Bookmark
-            className={`h-4 w-4 stroke-[1.5] ${
-              isFavorite ? "fill-primary text-primary" : ""
-            }`}
-          />
-        </Button>
-
-        {/* Minimize Button */}
-        {onMinimize && (
+        {/* Favorite Button - Always present */}
+        <div className="flex flex-col items-center gap-0.5">
           <Button
             variant="ghost"
             size="sm"
-            onClick={onMinimize}
+            onClick={onToggleFavorite || (() => {})}
+            className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
+            title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+          >
+            <Bookmark
+              className={`h-4 w-4 stroke-[1.5] ${
+                isFavorite ? "fill-primary text-primary" : ""
+              }`}
+            />
+          </Button>
+          <span className="text-[10px] text-muted-foreground leading-none">
+            {isFavorite ? "Saved" : "Save"}
+          </span>
+        </div>
+
+        {/* Minimize Button - Always present */}
+        <div className="flex flex-col items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onMinimize || (() => {})}
             className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
             title="Minimize to Drawer"
           >
             <Minus className="h-4 w-4 stroke-[1.5]" />
           </Button>
-        )}
+          <span className="text-[10px] text-muted-foreground leading-none">
+            Minimize
+          </span>
+        </div>
       </div>
+    </div>
+  );
+}
+
+interface RightPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}
+
+function RightPanel({
+  isOpen,
+  onClose,
+  title,
+  description,
+  children,
+}: RightPanelProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Right Panel Header */}
+      <div className="border-b bg-background/95 backdrop-blur p-4 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+            {description && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {description}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0 hover:bg-accent hover:text-accent-foreground"
+            title="Close Panel"
+          >
+            <X className="h-4 w-4 stroke-[1.5]" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Right Panel Content */}
+      <div className="flex-1 overflow-auto p-4">{children}</div>
     </div>
   );
 }
@@ -133,12 +268,38 @@ export function ToolLayout({
   onShowDocumentation,
   isFavorite = false,
   customControls,
+  rightPanelContent,
+  rightPanelTitle = "Settings",
+  rightPanelDescription,
+  onRightPanelContentChange,
+  customButtons = [],
 }: ToolLayoutProps) {
   const navigate = useNavigate();
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
 
   const handleNavigateHome = () => {
     navigate("/tools");
   };
+
+  const handleCloseRightPanel = () => {
+    setIsRightPanelOpen(false);
+  };
+
+  // Expose right panel content update function to child tools
+  React.useEffect(() => {
+    if (onRightPanelContentChange) {
+      onRightPanelContentChange(
+        rightPanelContent,
+        rightPanelTitle,
+        rightPanelDescription
+      );
+    }
+  }, [
+    rightPanelContent,
+    rightPanelTitle,
+    rightPanelDescription,
+    onRightPanelContentChange,
+  ]);
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -178,7 +339,7 @@ export function ToolLayout({
             </div>
           </header>
 
-          {/* Main Content Area - Tool Implementation */}
+          {/* Main Content Area - Tool Implementation with Resizable Panels */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Window Controls Bar with Tool Name */}
             <WindowControls
@@ -190,10 +351,46 @@ export function ToolLayout({
               toolName={toolName}
               toolDescription={toolDescription}
               customControls={customControls}
+              customButtons={customButtons}
             />
 
-            {/* Tool Content - Below Tool Info */}
-            <div className="flex-1 overflow-auto bg-muted/30">{children}</div>
+            {/* Resizable Content Area */}
+            <div className="flex-1 overflow-hidden">
+              <ResizablePanelGroup direction="horizontal" className="h-full">
+                {/* Main Tool Content */}
+                <ResizablePanel
+                  defaultSize={rightPanelContent && isRightPanelOpen ? 70 : 100}
+                  minSize={50}
+                  className="flex flex-col"
+                >
+                  <div className="flex-1 overflow-auto bg-muted/30">
+                    {children}
+                  </div>
+                </ResizablePanel>
+
+                {/* Right Panel */}
+                {rightPanelContent && isRightPanelOpen && (
+                  <>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel
+                      defaultSize={30}
+                      minSize={25}
+                      maxSize={50}
+                      className="flex flex-col border-l"
+                    >
+                      <RightPanel
+                        isOpen={isRightPanelOpen}
+                        onClose={handleCloseRightPanel}
+                        title={rightPanelTitle}
+                        description={rightPanelDescription}
+                      >
+                        {rightPanelContent}
+                      </RightPanel>
+                    </ResizablePanel>
+                  </>
+                )}
+              </ResizablePanelGroup>
+            </div>
           </div>
 
           {/* Minimized Tools Indicator is managed globally in App.tsx */}
@@ -202,3 +399,6 @@ export function ToolLayout({
     </SidebarProvider>
   );
 }
+
+// Export the CustomToolButton interface for use by tools
+export type { CustomToolButton };

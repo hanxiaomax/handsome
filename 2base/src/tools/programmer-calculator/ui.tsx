@@ -1,25 +1,23 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Calculator } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { ToolWrapper } from "@/components/common/tool-wrapper";
-import { ProgrammerCal } from "./components/programmer-cal";
+import { ToolLayout } from "@/components/layout/tool-layout";
 import { AdvancedBitwiseVisualization } from "./components/AdvancedBitwiseVisualization";
+import { ProgrammerCal } from "./components/programmer-cal";
 import { toolInfo } from "./toolInfo";
+import type { Base, BitWidth } from "./types";
 
 export default function ProgrammerCalculator() {
-  // Show calculator panel state (default hidden)
-  const [showCalculator, setShowCalculator] = useState(false);
   // Current expression and result for synchronization
   const [currentExpression, setCurrentExpression] = useState("");
   const [currentResult, setCurrentResult] = useState<number | null>(null);
 
-  // Calculator panel toggle
-  const handleCalculatorToggle = (checked: boolean) => {
-    setShowCalculator(checked);
-  };
+  // Calculator state for synchronization
+  const [calculatorBase, setCalculatorBase] = useState<Base>(10);
+  const [calculatorBitWidth, setCalculatorBitWidth] = useState<BitWidth>(32);
+
+  // Right panel state
+  const [isCalculatorPanelOpen, setIsCalculatorPanelOpen] = useState(false);
 
   // Handle expression changes from visualization component
   const handleExpressionChange = useCallback(
@@ -30,57 +28,62 @@ export default function ProgrammerCalculator() {
     []
   );
 
-  // Control panel components
-  const controlPanel = (
-    <div className="flex items-center space-x-4">
-      {/* Calculator panel toggle */}
-      <div className="flex items-center space-x-2">
-        <Calculator className="h-4 w-4 text-muted-foreground" />
-        <Label htmlFor="calculator-toggle" className="text-sm font-medium">
-          Calculator Panel
-        </Label>
-        <Switch
-          id="calculator-toggle"
-          checked={showCalculator}
-          onCheckedChange={handleCalculatorToggle}
-        />
-      </div>
+  // Toggle calculator panel
+  const handleToggleCalculator = useCallback(() => {
+    setIsCalculatorPanelOpen(!isCalculatorPanelOpen);
+  }, [isCalculatorPanelOpen]);
+
+  // Right panel content - Calculator (only when open)
+  const rightPanelContent = isCalculatorPanelOpen ? (
+    <div className="h-full">
+      <ProgrammerCal
+        compact={true}
+        borderless={true}
+        maxWidth="full"
+        initialBase={calculatorBase}
+        initialBitWidth={calculatorBitWidth}
+        onValueChange={(_value: string, newBase: Base) => {
+          // Update expression with the new value and base
+          setCalculatorBase(newBase);
+        }}
+        onOperationComplete={(_expressionStr: string, result: string) => {
+          // Update the main expression when calculation is complete
+          setCurrentExpression(result);
+        }}
+        onBaseChange={(newBase: Base) => {
+          // Sync base changes
+          setCalculatorBase(newBase);
+        }}
+        onBitWidthChange={(newBitWidth: BitWidth) => {
+          // Sync bit width changes
+          setCalculatorBitWidth(newBitWidth);
+        }}
+        onStateChange={(state) => {
+          // Real-time sync: update expression whenever currentValue changes
+          if (state.currentValue && state.currentValue !== "0") {
+            setCurrentExpression(state.currentValue);
+          }
+          // Sync base and bit width changes
+          setCalculatorBase(state.base);
+          setCalculatorBitWidth(state.bitWidth);
+        }}
+      />
     </div>
-  );
+  ) : undefined;
 
   return (
-    <ToolWrapper
-      toolInfo={toolInfo}
-      maxWidth="full"
-      customControls={controlPanel}
-    >
-      <div className="space-y-6">
+    <ToolLayout toolName={toolInfo.name} toolDescription={toolInfo.description}>
+      <div className="w-full p-6 space-y-6">
         {/* Main Content Layout */}
-        <div
-          className={`flex gap-6 ${
-            showCalculator ? "justify-start" : "justify-center"
-          }`}
-        >
-          {/* Calculator Panel (conditional) */}
-          {showCalculator && (
-            <div className="flex-shrink-0 w-[400px]">
-              <ProgrammerCal
-                forceStoreState={true}
-                hideBitVisualization={true}
-                maxWidth="md"
-              />
-            </div>
-          )}
-
-          {/* Bitwise Visualization Panel (always visible, now independent) */}
-          <div
-            className={`${
-              showCalculator ? "flex-1" : "max-w-6xl w-full"
-            } min-w-0`}
-          >
+        <div className="flex justify-center">
+          {/* Bitwise Visualization Panel (full width) */}
+          <div className="max-w-6xl w-full">
             <AdvancedBitwiseVisualization
               initialExpression={currentExpression}
               onExpressionChange={handleExpressionChange}
+              onToggleCalculator={handleToggleCalculator}
+              isCalculatorOpen={isCalculatorPanelOpen}
+              calculatorContent={rightPanelContent}
             />
           </div>
         </div>
@@ -93,6 +96,6 @@ export default function ProgrammerCalculator() {
           </div>
         )}
       </div>
-    </ToolWrapper>
+    </ToolLayout>
   );
 }

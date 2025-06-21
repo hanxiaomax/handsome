@@ -18,7 +18,6 @@ export function ControlBar({
     <div className="flex items-center gap-4">
       {/* Bit Width Selection */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Bit Width:</span>
         <ToggleGroup
           type="single"
           value={bitWidth.toString()}
@@ -44,7 +43,6 @@ export function ControlBar({
 
       {/* Base Selection */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Base:</span>
         <ToggleGroup
           type="single"
           value={base.toString()}

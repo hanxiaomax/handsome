@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, startTransition } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Calculator } from "lucide-react";
 import type { Base, BitWidth } from "../types";
 import { formatForBase } from "../lib/base-converter";
@@ -17,11 +16,13 @@ import {
   type ParsedExpression,
   type ExpressionResult 
 } from "../lib/expression-parser";
-import { CalculatorGrid } from "./CalculatorGrid";
 
 interface BitwiseVisualizationProps {
   initialExpression?: string;
   onExpressionChange?: (expression: string, result: number | null) => void;
+  onToggleCalculator?: () => void;
+  isCalculatorOpen?: boolean;
+  calculatorContent?: React.ReactNode;
 }
 
 interface OperandInfo {
@@ -39,7 +40,10 @@ interface OperandSignState {
 
 export function AdvancedBitwiseVisualization({ 
   initialExpression = "", 
-  onExpressionChange 
+  onExpressionChange,
+  onToggleCalculator,
+  isCalculatorOpen = false,
+  calculatorContent
 }: BitwiseVisualizationProps) {
   // Component state
   const [expression, setExpression] = useState(initialExpression);
@@ -53,7 +57,6 @@ export function AdvancedBitwiseVisualization({
   const [hoveredBit, setHoveredBit] = useState<string | null>(null);
   const [clickedBit, setClickedBit] = useState<string | null>(null);
   const [operandSigns, setOperandSigns] = useState<OperandSignState>({});
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   // Format values for different bases with sign support
   const formatValue = useCallback((value: number, targetBase: Base, isSigned: boolean = true): string => {
@@ -246,8 +249,9 @@ export function AdvancedBitwiseVisualization({
   useEffect(() => {
     if (initialExpression && initialExpression !== expression) {
       setExpression(initialExpression);
+      processExpressionInput(initialExpression);
     }
-  }, [initialExpression]);
+  }, [initialExpression, expression, processExpressionInput]);
 
   // Render single bit row with sign type support
   const renderBitRow = (
@@ -463,16 +467,13 @@ export function AdvancedBitwiseVisualization({
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Bitwise Operation Visualization</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <>
+      <div className="w-full space-y-8 mt-6">
         {/* Controls */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Expression input */}
-          <div className="space-y-2">
-            <Label htmlFor="expression">Expression</Label>
+          <div className="space-y-3">
+            <Label htmlFor="expression" className="text-base font-medium">Expression</Label>
             <div className="flex gap-2">
               <Input
                 id="expression"
@@ -480,56 +481,30 @@ export function AdvancedBitwiseVisualization({
                 value={expression}
                 onChange={(e) => handleExpressionChange(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="font-mono"
+                className="font-mono text-base"
                 disabled={isProcessing}
               />
-              <Sheet open={isCalculatorOpen} onOpenChange={setIsCalculatorOpen}>
-                <SheetTrigger asChild>
-                  <Button size="icon" variant="outline">
-                    <Calculator className="h-4 w-4" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="w-[400px] sm:w-[540px]">
-                  <SheetHeader>
-                    <SheetTitle>Calculator</SheetTitle>
-                    <SheetDescription>
-                      Use the calculator to build expressions and see instant results
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="mt-6">
-                    <CalculatorGrid
-                      base={base}
-                      onButtonClick={(value: string, type: "number" | "operation" | "function" | "special") => {
-                        if (type === "special" && value === "backspace") {
-                          const newExpression = expression.slice(0, -1);
-                          setExpression(newExpression);
-                          processExpressionInput(newExpression);
-                        } else {
-                          const newExpression = expression + value;
-                          setExpression(newExpression);
-                          if (value === "=") {
-                            processExpressionInput(expression);
-                          } else {
-                            processExpressionInput(newExpression);
-                          }
-                        }
-                      }}
-                      onClear={() => {
-                        setExpression("");
-                        setEvaluationResult(null);
-                        onExpressionChange?.("", null);
-                      }}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
+              {onToggleCalculator && (
+                <Button 
+                  size="icon" 
+                  variant="outline"
+                  onClick={onToggleCalculator}
+                  className={`flex-shrink-0 ${isCalculatorOpen ? "bg-accent text-accent-foreground" : ""}`}
+                  title={isCalculatorOpen ? "Close Calculator" : "Open Calculator"}
+                >
+                  <Calculator className="h-4 w-4" />
+                </Button>
+              )}
+              <Button onClick={handleExpressionSubmit} disabled={isProcessing}>
+                Calculate
+              </Button>
             </div>
           </div>
 
           {/* Settings */}
-          <div className="flex gap-4">
+          <div className="flex gap-6">
             <div className="space-y-2">
-              <Label htmlFor="base">Base</Label>
+              <Label htmlFor="base" className="text-sm font-medium">Base</Label>
               <Select value={base.toString()} onValueChange={(value) => setBase(parseInt(value) as Base)}>
                 <SelectTrigger id="base" className="w-24">
                   <SelectValue />
@@ -544,7 +519,7 @@ export function AdvancedBitwiseVisualization({
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="bitwidth">Bit Width</Label>
+              <Label htmlFor="bitwidth" className="text-sm font-medium">Bit Width</Label>
               <Select value={bitWidth.toString()} onValueChange={(value) => setBitWidth(parseInt(value) as BitWidth)}>
                 <SelectTrigger id="bitwidth" className="w-20">
                   <SelectValue />
@@ -563,7 +538,7 @@ export function AdvancedBitwiseVisualization({
         <Separator />
 
         {/* Visualization */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Error display */}
           {evaluationResult && !evaluationResult.parsed.isValid && renderError()}
           
@@ -572,7 +547,7 @@ export function AdvancedBitwiseVisualization({
           
           {/* Results display */}
           {evaluationResult?.result.isValid && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Expression header */}
               <div className="text-lg font-semibold">
                 Expression: <code className="text-primary">{expression}</code>
@@ -585,15 +560,30 @@ export function AdvancedBitwiseVisualization({
           
           {/* Empty state */}
           {!expression.trim() && (
-            <div className="text-center text-muted-foreground py-8">
-              <p>Enter an expression above and press Enter or click Calculate</p>
+            <div className="text-center text-muted-foreground py-12">
+              <p>Enter an expression above and press Enter</p>
               <p className="text-sm mt-2">
                 Try: <code className="cursor-pointer hover:text-primary" onClick={() => setExpression("15 & 7")}>15 & 7</code> or type <code>help</code> for examples
               </p>
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Calculator Panel */}
+      <Sheet open={isCalculatorOpen} onOpenChange={onToggleCalculator}>
+        <SheetContent className="w-[480px] sm:w-[600px]">
+          <SheetHeader>
+            <SheetTitle>Calculator</SheetTitle>
+            <SheetDescription>
+              Use the calculator to build expressions and see instant results
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 h-full">
+            {calculatorContent}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
