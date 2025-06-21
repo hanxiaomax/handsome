@@ -1,216 +1,141 @@
-import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
-export type KeyboardType = "simple-cal";
-export type CalculatorBase = 2 | 8 | 10 | 16;
+export type KeyboardVariant =
+  | "numeric" // 数字键盘 (3x4)
+  | "calculator" // 计算器键盘 (4x4)
+  | "qwerty" // QWERTY字母键盘
+  | "qwerty-compact" // 紧凑QWERTY键盘
+  | "operators" // 操作符键盘
+  | "hex" // 十六进制键盘
+  | "binary" // 二进制键盘
+  | "custom"; // 自定义布局
 
-interface BaseKeyboardProps {
-  type: KeyboardType;
+export interface KeyboardProps {
+  variant: KeyboardVariant;
   onKeyPress: (key: string) => void;
-  onClear: () => void;
-  onBackspace: () => void;
-  onCalculate: () => void;
-  onClose: () => void;
+  layout?: string[][]; // 仅在 variant='custom' 时需要
   className?: string;
 }
 
-interface SimpleCalKeyboardProps extends BaseKeyboardProps {
-  type: "simple-cal";
-  base: CalculatorBase;
-  onBaseChange: (base: CalculatorBase) => void;
-}
-
-type KeyboardProps = SimpleCalKeyboardProps;
-
-export function Keyboard(props: KeyboardProps) {
-  if (props.type === "simple-cal") {
-    return <SimpleCalKeyboard {...props} />;
-  }
-
-  // 未来可以添加其他键盘类型，例如：
-  // if (props.type === 'scientific-cal') {
-  //   return <ScientificCalKeyboard {...props} />;
-  // }
-  // if (props.type === 'text-input') {
-  //   return <TextInputKeyboard {...props} />;
-  // }
-
-  return null;
-}
-
-function SimpleCalKeyboard({
-  base,
-  onBaseChange,
+export function Keyboard({
+  variant,
   onKeyPress,
-  onClear,
-  onBackspace,
-  onCalculate,
-  onClose,
-  className = "",
-}: Omit<SimpleCalKeyboardProps, "type">) {
-  // Get available keys for current base
-  const getAvailableKeys = useCallback((currentBase: CalculatorBase) => {
-    const digits = {
-      2: ["0", "1"],
-      8: ["0", "1", "2", "3", "4", "5", "6", "7"],
-      10: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
-      16: [
-        "0",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "A",
-        "B",
-        "C",
-        "D",
-        "E",
-        "F",
-      ],
-    };
+  layout: customLayout,
+  className,
+}: KeyboardProps) {
+  const getLayout = (variant: KeyboardVariant): string[][] => {
+    switch (variant) {
+      case "numeric":
+        return [
+          ["7", "8", "9"],
+          ["4", "5", "6"],
+          ["1", "2", "3"],
+          ["0", ".", "="],
+        ];
 
-    const operators = [
-      "&",
-      "|",
-      "^",
-      "~",
-      "<<",
-      ">>",
-      "+",
-      "-",
-      "*",
-      "/",
-      "%",
-      "(",
-      ")",
-    ];
+      case "calculator":
+        return [
+          ["7", "8", "9", "/"],
+          ["4", "5", "6", "*"],
+          ["1", "2", "3", "-"],
+          ["0", ".", "=", "+"],
+        ];
 
-    return {
-      digits: digits[currentBase],
-      operators,
-    };
-  }, []);
+      case "qwerty":
+        return [
+          ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+          ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+          ["Z", "X", "C", "V", "B", "N", "M"],
+        ];
 
-  const { digits, operators } = getAvailableKeys(base);
+      case "qwerty-compact":
+        return [
+          ["Q", "W", "E", "R", "T"],
+          ["A", "S", "D", "F", "G"],
+          ["Z", "X", "C", "V", "B"],
+        ];
+
+      case "operators":
+        return [
+          ["&", "|", "^"],
+          ["<<", ">>", "~"],
+          ["(", ")", "="],
+        ];
+
+      case "hex":
+        return [
+          ["0", "1", "2", "3"],
+          ["4", "5", "6", "7"],
+          ["8", "9", "A", "B"],
+          ["C", "D", "E", "F"],
+        ];
+
+      case "binary":
+        return [["0", "1"]];
+
+      case "custom":
+        if (!customLayout) {
+          throw new Error('Custom layout is required when variant is "custom"');
+        }
+        return customLayout;
+
+      default:
+        return [[""]];
+    }
+  };
+
+  const getVariantStyles = (variant: KeyboardVariant) => {
+    switch (variant) {
+      case "binary":
+      case "operators":
+        return {
+          container: "gap-2",
+          button: "h-12 min-w-16 text-base font-semibold",
+          row: "gap-2",
+        };
+      case "qwerty-compact":
+      case "hex":
+        return {
+          container: "gap-1",
+          button: "h-8 min-w-8 text-xs",
+          row: "gap-1",
+        };
+      case "qwerty":
+        return {
+          container: "gap-2",
+          button: "h-10 min-w-10 text-sm",
+          row: "gap-2",
+        };
+      default:
+        // numeric, calculator, custom
+        return {
+          container: "gap-2",
+          button: "h-10 min-w-10 text-sm",
+          row: "gap-2",
+        };
+    }
+  };
+
+  const layout = getLayout(variant);
+  const styles = getVariantStyles(variant);
 
   return (
-    <div className={`w-80 p-4 space-y-4 ${className}`}>
-      {/* Base selector */}
-      <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium">Base</Label>
-        <Select
-          value={base.toString()}
-          onValueChange={(value) =>
-            onBaseChange(parseInt(value) as CalculatorBase)
-          }
-        >
-          <SelectTrigger className="w-20">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="2">Bin</SelectItem>
-            <SelectItem value="8">Oct</SelectItem>
-            <SelectItem value="10">Dec</SelectItem>
-            <SelectItem value="16">Hex</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Separator />
-
-      {/* Digits */}
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Digits</Label>
-        <div className="grid grid-cols-4 gap-1">
-          {digits.map((digit) => (
+    <div className={cn("flex flex-col", styles.container, className)}>
+      {layout.map((row, rowIndex) => (
+        <div key={rowIndex} className={cn("flex justify-center", styles.row)}>
+          {row.map((key, keyIndex) => (
             <Button
-              key={digit}
+              key={`${rowIndex}-${keyIndex}`}
               variant="outline"
-              size="sm"
-              className="h-8 font-mono"
-              onClick={() => onKeyPress(digit)}
+              className={cn("font-mono flex-shrink-0", styles.button)}
+              onClick={() => onKeyPress(key)}
             >
-              {digit}
+              {key}
             </Button>
           ))}
         </div>
-      </div>
-
-      {/* Operators */}
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Operators</Label>
-        <div className="grid grid-cols-4 gap-1">
-          {operators.map((op) => (
-            <Button
-              key={op}
-              variant="outline"
-              size="sm"
-              className="h-8 font-mono text-xs"
-              onClick={() => onKeyPress(op)}
-            >
-              {op}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Control buttons */}
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1"
-          onClick={onBackspace}
-        >
-          ⌫
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1"
-          onClick={onClear}
-        >
-          Clear
-        </Button>
-      </div>
-
-      <div className="flex gap-2">
-        <Button
-          variant="default"
-          size="sm"
-          className="flex-1"
-          onClick={onCalculate}
-        >
-          = Calculate
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1"
-          onClick={onClose}
-        >
-          Done
-        </Button>
-      </div>
+      ))}
     </div>
   );
 }
-
-// 导出类型以供其他组件使用
-export type { SimpleCalKeyboardProps };

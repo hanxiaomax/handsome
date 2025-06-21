@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Calculator } from "lucide-react";
-import { Keyboard, type CalculatorBase } from "@/components/common/keyboard";
+import { Keyboard } from "@/components/common/keyboard";
 
 import type { Base, BitWidth } from "../types";
 import { formatForBase } from "../lib/base-converter";
@@ -274,7 +274,7 @@ export function AdvancedBitwiseVisualization({
   };
 
   // Handle calculator base change
-  const handleCalculatorBaseChange = useCallback((newBase: CalculatorBase) => {
+  const handleCalculatorBaseChange = useCallback((newBase: Base) => {
     setBase(newBase);
   }, []);
 
@@ -551,17 +551,88 @@ export function AdvancedBitwiseVisualization({
                     <Calculator className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Keyboard
-                    type="simple-cal"
-                    base={base as CalculatorBase}
-                    onBaseChange={handleCalculatorBaseChange}
-                    onKeyPress={handleCalculatorKey}
-                    onClear={handleCalculatorClear}
-                    onBackspace={handleCalculatorBackspace}
-                    onCalculate={handleExpressionSubmit}
-                    onClose={handleCalculatorClose}
-                  />
+                <PopoverContent className="w-auto p-4" align="end">
+                  <div className="space-y-4">
+                    {/* Base selector */}
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Base</Label>
+                      <Select
+                        value={base.toString()}
+                        onValueChange={(value) => handleCalculatorBaseChange(parseInt(value) as Base)}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2">Bin</SelectItem>
+                          <SelectItem value="8">Oct</SelectItem>
+                          <SelectItem value="10">Dec</SelectItem>
+                          <SelectItem value="16">Hex</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Separator />
+
+                    {/* Digits */}
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Digits</Label>
+                      <Keyboard
+                        variant={base === 2 ? "binary" : base === 16 ? "hex" : "numeric"}
+                        onKeyPress={handleCalculatorKey}
+                      />
+                    </div>
+
+                    {/* Operators */}
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Operators</Label>
+                      <Keyboard
+                        variant="operators"
+                        onKeyPress={handleCalculatorKey}
+                      />
+                    </div>
+
+                    <Separator />
+
+                    {/* Control buttons */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={handleCalculatorBackspace}
+                      >
+                        ⌫
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={handleCalculatorClear}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex-1"
+                        onClick={handleExpressionSubmit}
+                      >
+                        = Calculate
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={handleCalculatorClose}
+                      >
+                        Done
+                      </Button>
+                    </div>
+                  </div>
                 </PopoverContent>
               </Popover>
             </div>
