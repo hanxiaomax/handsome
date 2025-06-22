@@ -574,8 +574,8 @@ export function AdvancedBitwiseVisualization({
                     <Calculator className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-4" align="end">
-                  <div className="space-y-4">
+                <PopoverContent className="w-auto p-2 mt-2" align="end">
+                  <div className="space-y-2">
                     {/* Header with title and close button */}
                     <div className="flex justify-between items-center">
                       <Label className="text-sm font-medium">Programmer Calculator</Label>

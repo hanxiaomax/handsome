@@ -44,7 +44,6 @@ export interface KeyboardProps {
   gridConfig?: GridConfig;
   className?: string;
   gap?: "none" | "sm" | "md" | "lg";
-  buttonHeight?: "sm" | "md" | "lg" | "xl";
   // Function key callbacks
   onFunctionKey?: (functionKey: string, value?: BaseType) => void; // Handle function keys like base change
   // Display state
@@ -58,7 +57,6 @@ export function Keyboard({
   gridConfig,
   className,
   gap = "sm",
-  buttonHeight = "sm",
   onFunctionKey,
   currentBase = 10,
 }: KeyboardProps) {
@@ -98,9 +96,9 @@ export function Keyboard({
       default:
         // custom, grid
         return {
-          container: "gap-1",
-          button: "h-7 min-w-8 text-xs font-normal px-1",
-          row: "gap-1",
+          container: "gap-0.5",
+          button: "h-6 min-w-6 text-xs font-normal px-0.5",
+          row: "gap-0.5",
         };
     }
   };
@@ -157,21 +155,6 @@ export function Keyboard({
         return "gap-3";
       default:
         return "gap-1";
-    }
-  };
-
-  const getButtonHeightClass = (height: string) => {
-    switch (height) {
-      case "sm":
-        return "h-8";
-      case "md":
-        return "h-10";
-      case "lg":
-        return "h-12";
-      case "xl":
-        return "h-14";
-      default:
-        return "h-10";
     }
   };
 
@@ -240,6 +223,8 @@ export function Keyboard({
               value: "⌫",
               row: 1,
               col: 6,
+              variant: "default" as const,
+              className: "!text-lg !font-black",
             },
             {
               id: "A",
@@ -358,7 +343,7 @@ export function Keyboard({
             },
             {
               id: "clear",
-              label: "Clear",
+              label: "C",
               value: "Clear",
               row: 5,
               col: 6,
@@ -458,7 +443,7 @@ export function Keyboard({
     if (variant !== "programmer") return null;
 
     return (
-      <div className="flex gap-1 mb-2">
+      <div className="flex gap-0.5 mb-1">
         {[
           { value: 2 as BaseType, label: "BIN" },
           { value: 8 as BaseType, label: "OCT" },
@@ -470,7 +455,7 @@ export function Keyboard({
             pressed={currentBase === value}
             onPressedChange={() => onFunctionKey?.("baseChange", value)}
             size="sm"
-            className="text-xs font-mono"
+            className="text-xs font-mono h-5 px-2"
           >
             {label}
           </Toggle>
@@ -487,7 +472,6 @@ export function Keyboard({
 
     const gridLayout = createGridLayout(config);
     const gapClass = getGapClass(gap);
-    const buttonHeightClass = getButtonHeightClass(buttonHeight);
 
     return (
       <div
@@ -528,10 +512,10 @@ export function Keyboard({
                 variant={button.variant || "outline"}
                 disabled={button.disabled || !isAvailable}
                 className={cn(
-                  "font-mono text-sm font-medium flex-shrink-0",
+                  "font-mono flex-shrink-0",
                   "transition-all duration-150 active:scale-95",
                   !isAvailable && "opacity-30 cursor-not-allowed",
-                  buttonHeightClass,
+                  styles.button,
                   button.className
                 )}
                 style={{
@@ -606,7 +590,14 @@ export const sampleGridConfigs = {
         colSpan: 2,
         variant: "destructive" as const,
       },
-      { id: "backspace", label: "⌫", value: "backspace", row: 1, col: 3 },
+      {
+        id: "backspace",
+        label: "⌫",
+        value: "backspace",
+        row: 1,
+        col: 3,
+        className: "!text-lg !font-black",
+      },
       {
         id: "divide",
         label: "÷",
@@ -666,11 +657,12 @@ export const sampleGridConfigs = {
       { id: "not", label: "~", value: "~", row: 1, col: 5 },
       {
         id: "backspace",
-        label: "",
+        label: "⌫",
         value: "backspace",
         row: 1,
         col: 6,
         variant: "destructive" as const,
+        className: "!text-lg !font-black",
       },
       {
         id: "A",
