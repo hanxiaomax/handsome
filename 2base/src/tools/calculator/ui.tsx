@@ -125,7 +125,7 @@ export default function CalculatorTool() {
                 {/* Basic Usage */}
                 <div>
                   <h3 className="font-medium mb-3">Basic Usage</h3>
-                  <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                  <div className="bg-muted p-4 rounded-lg">
                     <pre className="text-sm overflow-x-auto">
                       <code>{`import { Calculator } from '@/components/common/calculator';
 
@@ -155,133 +155,123 @@ function MyApp() {
                 <div>
                   <h3 className="font-medium mb-3">Component Props</h3>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm border-collapse border border-gray-300 dark:border-gray-600">
+                    <table className="w-full text-sm border-collapse border border-border">
                       <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-800">
-                          <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left">
+                        <tr className="bg-muted">
+                          <th className="border border-border px-3 py-2 text-left">
                             Prop
                           </th>
-                          <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left">
+                          <th className="border border-border px-3 py-2 text-left">
                             Type
                           </th>
-                          <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left">
+                          <th className="border border-border px-3 py-2 text-left">
                             Default
                           </th>
-                          <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left">
+                          <th className="border border-border px-3 py-2 text-left">
                             Description
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             initialValue
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             number | string
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
-                            0
-                          </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">0</td>
+                          <td className="border border-border px-3 py-2">
                             Initial display value
                           </td>
                         </tr>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             onValueChange
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             (value, formatted) =&gt; void
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
-                            -
-                          </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">-</td>
+                          <td className="border border-border px-3 py-2">
                             Called when value changes
                           </td>
                         </tr>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             onCalculationComplete
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             (result) =&gt; void
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
-                            -
-                          </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">-</td>
+                          <td className="border border-border px-3 py-2">
                             Called when calculation completes
                           </td>
                         </tr>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             decimalPlaces
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             number
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
-                            -
-                          </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">-</td>
+                          <td className="border border-border px-3 py-2">
                             Number of decimal places for results
                           </td>
                         </tr>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             bindToFocusedInput
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             boolean
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             false
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             Auto-bind to focused input fields
                           </td>
                         </tr>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             autoApply
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             boolean
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             false
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             Auto-apply results to bound inputs
                           </td>
                         </tr>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             realTimeBinding
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             boolean
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             false
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             Real-time value binding during input
                           </td>
                         </tr>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             className
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             string
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
-                            -
-                          </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">-</td>
+                          <td className="border border-border px-3 py-2">
                             Additional CSS classes
                           </td>
                         </tr>
@@ -294,7 +284,7 @@ function MyApp() {
                 <div>
                   <h3 className="font-medium mb-3">Key Features</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                    <div className="p-4 bg-primary/5 rounded-lg">
                       <h4 className="font-medium mb-2">
                         🧮 Complete Formula Display
                       </h4>
@@ -303,7 +293,7 @@ function MyApp() {
                         current result in a dual-line display.
                       </p>
                     </div>
-                    <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+                    <div className="p-4 bg-secondary/5 rounded-lg">
                       <h4 className="font-medium mb-2">
                         📏 Horizontal Scrolling
                       </h4>
@@ -312,7 +302,7 @@ function MyApp() {
                         layout or expanding the container.
                       </p>
                     </div>
-                    <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                    <div className="p-4 bg-accent/5 rounded-lg">
                       <h4 className="font-medium mb-2">
                         🔬 Scientific Functions
                       </h4>
@@ -321,7 +311,7 @@ function MyApp() {
                         with standard mathematical notation.
                       </p>
                     </div>
-                    <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
+                    <div className="p-4 bg-muted/50 rounded-lg">
                       <h4 className="font-medium mb-2">
                         ⚙️ Flexible Integration
                       </h4>
@@ -349,7 +339,7 @@ function MyApp() {
                 <div>
                   <div className="flex items-center gap-4 mb-4">
                     <h3 className="font-medium">Compact Size</h3>
-                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded">
+                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
                       max-w-xs
                     </span>
                   </div>
@@ -358,7 +348,7 @@ function MyApp() {
                       <strong>Best for:</strong> Sidebars, small panels, mobile
                       layouts
                     </p>
-                    <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded text-xs">
+                    <div className="bg-muted p-3 rounded text-xs">
                       <code>
                         {
                           '<Calculator className="max-w-xs" decimalPlaces={2} />'
@@ -379,7 +369,7 @@ function MyApp() {
                 <div>
                   <div className="flex items-center gap-4 mb-4">
                     <h3 className="font-medium">Standard Size</h3>
-                    <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded">
+                    <span className="px-2 py-1 bg-secondary/10 text-secondary-foreground text-xs rounded">
                       max-w-md
                     </span>
                   </div>
@@ -388,7 +378,7 @@ function MyApp() {
                       <strong>Best for:</strong> Main content areas, dialog
                       boxes, general use
                     </p>
-                    <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded text-xs">
+                    <div className="bg-muted p-3 rounded text-xs">
                       <code>
                         {
                           '<Calculator className="max-w-md" decimalPlaces={2} />'
@@ -409,7 +399,7 @@ function MyApp() {
                 <div>
                   <div className="flex items-center gap-4 mb-4">
                     <h3 className="font-medium">Large Size</h3>
-                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded">
+                    <span className="px-2 py-1 bg-accent/10 text-accent-foreground text-xs rounded">
                       max-w-lg
                     </span>
                   </div>
@@ -418,7 +408,7 @@ function MyApp() {
                       <strong>Best for:</strong> Dedicated calculator pages,
                       wide layouts, desktop applications
                     </p>
-                    <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded text-xs">
+                    <div className="bg-muted p-3 rounded text-xs">
                       <code>
                         {
                           '<Calculator className="max-w-lg" decimalPlaces={2} />'
@@ -439,63 +429,63 @@ function MyApp() {
                 <div>
                   <h3 className="font-medium mb-3">Size Comparison</h3>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm border-collapse border border-gray-300 dark:border-gray-600">
+                    <table className="w-full text-sm border-collapse border border-border">
                       <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-800">
-                          <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left">
+                        <tr className="bg-muted">
+                          <th className="border border-border px-3 py-2 text-left">
                             Size
                           </th>
-                          <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left">
+                          <th className="border border-border px-3 py-2 text-left">
                             CSS Class
                           </th>
-                          <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left">
+                          <th className="border border-border px-3 py-2 text-left">
                             Max Width
                           </th>
-                          <th className="border border-gray-300 dark:border-gray-600 px-3 py-2 text-left">
+                          <th className="border border-border px-3 py-2 text-left">
                             Best Use Cases
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">
+                          <td className="border border-border px-3 py-2 font-medium">
                             Compact
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             max-w-xs
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             20rem (320px)
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             Sidebars, mobile layouts, compact panels
                           </td>
                         </tr>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">
+                          <td className="border border-border px-3 py-2 font-medium">
                             Standard
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             max-w-md
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             28rem (448px)
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             General use, dialogs, main content
                           </td>
                         </tr>
                         <tr>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-medium">
+                          <td className="border border-border px-3 py-2 font-medium">
                             Large
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2 font-mono">
+                          <td className="border border-border px-3 py-2 font-mono">
                             max-w-lg
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             32rem (512px)
                           </td>
-                          <td className="border border-gray-300 dark:border-gray-600 px-3 py-2">
+                          <td className="border border-border px-3 py-2">
                             Dedicated pages, wide layouts, desktop apps
                           </td>
                         </tr>
@@ -520,7 +510,7 @@ function MyApp() {
                   <h3 className="font-medium mb-3">
                     Form Integration with State Management
                   </h3>
-                  <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                  <div className="bg-muted p-4 rounded-lg">
                     <pre className="text-sm overflow-x-auto">
                       <code>{`import { useState } from 'react';
 import { Calculator } from '@/components/common/calculator';
@@ -566,7 +556,7 @@ function FormWithCalculator() {
                 {/* Example 2: Real-time Binding */}
                 <div>
                   <h3 className="font-medium mb-3">Real-time Input Binding</h3>
-                  <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                  <div className="bg-muted p-4 rounded-lg">
                     <pre className="text-sm overflow-x-auto">
                       <code>{`function RealTimeCalculator() {
   return (
@@ -599,7 +589,7 @@ function FormWithCalculator() {
                   <h3 className="font-medium mb-3">
                     Custom Styling and Themes
                   </h3>
-                  <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                  <div className="bg-muted p-4 rounded-lg">
                     <pre className="text-sm overflow-x-auto">
                       <code>{`function CustomStyledCalculator() {
   return (
@@ -644,7 +634,7 @@ function FormWithCalculator() {
                   </p>
                   <p className="text-2xl font-mono">{formattedValue}</p>
                   {result !== null && (
-                    <p className="text-sm text-green-600 dark:text-green-400">
+                    <p className="text-sm text-primary">
                       Last Calculation Result: {result?.toString() || "N/A"}
                     </p>
                   )}
@@ -816,7 +806,7 @@ function FormWithCalculator() {
                           </div>
 
                           {/* Quick calculation example */}
-                          <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                          <div className="p-4 bg-primary/5 rounded-lg">
                             <h4 className="font-medium mb-2">
                               Quick Calculation Example:
                             </h4>
@@ -838,7 +828,7 @@ function FormWithCalculator() {
                       </div>
 
                       {/* Advantages section */}
-                      <div className="text-sm text-muted-foreground bg-green-50 dark:bg-green-950 p-4 rounded-lg">
+                      <div className="text-sm text-muted-foreground bg-secondary/5 p-4 rounded-lg">
                         <h4 className="font-medium mb-2">
                           Panel Calculator Advantages:
                         </h4>
@@ -921,7 +911,7 @@ function FormWithCalculator() {
                             />
 
                             {/* Current value display */}
-                            <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                            <div className="p-4 bg-primary/5 rounded-lg">
                               <h4 className="font-medium mb-2">
                                 Current {currentCalculatorField} Value:
                               </h4>

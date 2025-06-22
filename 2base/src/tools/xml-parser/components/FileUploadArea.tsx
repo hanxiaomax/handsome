@@ -36,7 +36,7 @@ export function FileUploadArea({
       <p className="text-muted-foreground mb-3">
         Drop your XML file here or click to browse
       </p>
-      <p className="text-sm text-gray-400 dark:text-gray-500">
+      <p className="text-sm text-muted-foreground">
         Supports .xml, .arxml, .xsd, .svg files
       </p>
       <input

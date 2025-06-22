@@ -157,7 +157,7 @@ function convert(value) {
             <TabsTrigger value="ai" className="flex items-center gap-1">
               <Sparkles className="h-3 w-3" />
               AI Generate
-              <Crown className="h-3 w-3 text-yellow-500" />
+              <Crown className="h-3 w-3 text-primary" />
             </TabsTrigger>
           </TabsList>
 
@@ -286,7 +286,7 @@ function convert(value) {
             <TabsContent value="ai" className="space-y-4 mt-0">
               <div className="flex items-center gap-2 mb-4">
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  <Crown className="h-3 w-3 text-yellow-500" />
+                  <Crown className="h-3 w-3 text-primary" />
                 </Badge>
                 <span className="text-sm text-muted-foreground">
                   AI-powered conversion generation requires a Pro subscription

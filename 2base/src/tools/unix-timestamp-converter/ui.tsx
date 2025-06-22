@@ -199,7 +199,7 @@ export default function UnixTimestampConverter() {
                       SECONDS
                     </p>
                     <div className="relative group">
-                      <div className="text-5xl lg:text-6xl font-mono font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                      <div className="text-5xl lg:text-6xl font-mono font-bold text-foreground tracking-tight">
                         {currentTimestamp.seconds.toLocaleString()}
                       </div>
                       <Button
@@ -220,7 +220,7 @@ export default function UnixTimestampConverter() {
 
                   {/* Milliseconds and Microseconds */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
                       <p className="text-xs text-muted-foreground mb-1">
                         MILLISECONDS
                       </p>
@@ -228,7 +228,7 @@ export default function UnixTimestampConverter() {
                         {currentTimestamp.milliseconds}
                       </p>
                     </div>
-                    <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
                       <p className="text-xs text-muted-foreground mb-1">
                         MICROSECONDS
                       </p>
@@ -247,7 +247,7 @@ export default function UnixTimestampConverter() {
                     </p>
                     {/* Time (Upper) */}
                     <div className="relative group">
-                      <div className="text-5xl lg:text-6xl font-mono font-bold text-destructive tracking-tight">
+                      <div className="text-5xl lg:text-6xl font-mono font-bold text-primary tracking-tight">
                         {currentDate.toLocaleTimeString("en-US", {
                           hour12: false,
                           hour: "2-digit",
@@ -278,12 +278,12 @@ export default function UnixTimestampConverter() {
 
                   {/* Date and Timezone */}
                   <div className="grid grid-cols-1 gap-4">
-                    <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
                       <p className="text-xs text-muted-foreground mb-1">
                         {Intl.DateTimeFormat().resolvedOptions().timeZone}
                       </p>
                       <div className="relative group">
-                        <p className="text-lg font-mono font-semibold text-gray-900 dark:text-gray-100">
+                        <p className="text-lg font-mono font-semibold text-foreground">
                           {currentDate.toLocaleDateString("en-US", {
                             weekday: "short",
                             year: "numeric",

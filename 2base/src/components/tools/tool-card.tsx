@@ -69,7 +69,7 @@ export function ToolCard({ tool, onUse, onInfo }: ToolCardProps) {
             {tool.name}
           </h3>
           <Badge
-            variant={versionInfo.isPaid ? "destructive" : "secondary"}
+            variant={versionInfo.isPaid ? "outline" : "secondary"}
             className="text-xs"
           >
             {versionInfo.pricing}
@@ -113,7 +113,7 @@ export function ToolCard({ tool, onUse, onInfo }: ToolCardProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="w-2 h-2 bg-destructive rounded-full"></div>
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Requires backend service</p>

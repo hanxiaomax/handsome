@@ -67,13 +67,13 @@ export function LeftPanelToolbar({
         {fileInfo ? (
           <>
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-green-600" />
+              <FileText className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">{fileInfo.name}</span>
             </div>
 
             {parserState.status === "parsing" && (
               <div className="flex items-center gap-2 ml-4">
-                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">
                   Parsing... {Math.round(parserState.progress)}%
                 </span>
@@ -210,7 +210,7 @@ export function LeftPanelToolbar({
                     onClick={onClear}
                     variant="ghost"
                     size="sm"
-                    className="h-7 w-7 p-0 hover:bg-red-100 dark:hover:bg-red-900/20"
+                    className="h-7 w-7 p-0 hover:bg-muted/50"
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>

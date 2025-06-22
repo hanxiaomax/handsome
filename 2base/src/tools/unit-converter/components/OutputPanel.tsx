@@ -301,7 +301,7 @@ function CustomConversionRow({
         <div className="flex items-center gap-2">
           <div>
             <div className="font-medium text-sm flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-purple-500" />
+              <Sparkles className="h-3 w-3 text-accent" />
               {conversion.name}
             </div>
             <div className="text-xs text-muted-foreground">
@@ -318,7 +318,7 @@ function CustomConversionRow({
       <TableCell className="text-right">
         <div className="space-y-1">
           {error ? (
-            <div className="text-xs text-red-500">Error</div>
+            <div className="text-xs text-destructive">Error</div>
           ) : result !== null ? (
             <div className="font-mono font-semibold text-sm">
               {result.toFixed(3)}

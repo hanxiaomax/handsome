@@ -58,7 +58,7 @@ export function TreeView({
             <span
               className={`truncate ${
                 element.type === "ELEMENT"
-                  ? "font-medium text-blue-600"
+                  ? "font-medium text-primary"
                   : "text-muted-foreground"
               }`}
             >

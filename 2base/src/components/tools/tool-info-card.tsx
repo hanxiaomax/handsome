@@ -91,7 +91,7 @@ export function ToolInfoCard({
                   </Badge>
                 )}
                 <Badge
-                  variant={versionInfo.isPaid ? "destructive" : "secondary"}
+                  variant={versionInfo.isPaid ? "outline" : "secondary"}
                   className={`text-[10px] px-1 py-0 ${compact ? "h-3" : "h-4"}`}
                 >
                   {versionInfo.pricing}
@@ -110,7 +110,7 @@ export function ToolInfoCard({
             >
               <Heart
                 className={`${compact ? "h-3 w-3" : "h-4 w-4"} ${
-                  isFavorite ? "fill-current text-destructive" : ""
+                  isFavorite ? "fill-current text-primary" : ""
                 }`}
               />
             </Button>

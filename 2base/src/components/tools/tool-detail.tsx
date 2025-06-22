@@ -31,7 +31,7 @@ export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
           <div className="flex items-center gap-2 mb-2">
             <h1 className="text-2xl font-bold">{tool.name}</h1>
             <Badge
-              variant={versionInfo.isPaid ? "destructive" : "secondary"}
+              variant={versionInfo.isPaid ? "outline" : "secondary"}
               className="text-sm"
             >
               {versionInfo.pricing}

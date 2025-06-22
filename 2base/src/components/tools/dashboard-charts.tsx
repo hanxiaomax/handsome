@@ -93,7 +93,7 @@ export function DashboardCharts() {
 
         <Card className="border-0 shadow-none bg-muted/30">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-destructive">
+            <div className="text-2xl font-bold text-secondary-foreground">
               {tools.filter((t) => getToolVersionInfo(t).isNew).length}
             </div>
             <div className="text-xs text-muted-foreground mt-1">New Tools</div>
@@ -169,7 +169,7 @@ export function DashboardCharts() {
                           {versionInfo.isNew && (
                             <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">NEW</Badge>
                           )}
-                          <Badge variant={versionInfo.isPaid ? "destructive" : "secondary"} className="text-[10px] px-1 py-0 h-4">
+                          <Badge variant={versionInfo.isPaid ? "outline" : "secondary"} className="text-[10px] px-1 py-0 h-4">
                             {versionInfo.pricing}
                           </Badge>
                         </div>

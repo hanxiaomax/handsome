@@ -471,8 +471,8 @@ export default function EmojiLibrary() {
                           <Heart
                             className={`h-3 w-3 ${
                               engine.isFavorite(emoji.emoji)
-                                ? "fill-red-500 text-red-500"
-                                : "text-muted-foreground hover:text-red-500"
+                                ? "fill-primary text-primary"
+                                : "text-muted-foreground hover:text-primary"
                             }`}
                           />
                         </Button>

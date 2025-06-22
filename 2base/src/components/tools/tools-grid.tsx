@@ -110,7 +110,7 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                 </Badge>
               )}
               {tool.requiresBackend && !versionInfo.isNew && (
-                <Badge className="bg-destructive text-destructive-foreground text-xs font-medium px-2 py-1">
+                <Badge className="bg-secondary text-secondary-foreground text-xs font-medium px-2 py-1">
                   API
                 </Badge>
               )}
@@ -195,7 +195,7 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                     </Badge>
                   )}
                   {tool.requiresBackend && !versionInfo.isNew && (
-                    <Badge className="bg-destructive text-destructive-foreground text-xs px-2 py-0.5">
+                    <Badge className="bg-secondary text-secondary-foreground text-xs px-2 py-0.5">
                       API
                     </Badge>
                   )}

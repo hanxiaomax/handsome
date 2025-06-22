@@ -142,7 +142,7 @@ export function ScientificCalculator({ onValueSelect }: CalculatorProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="destructive" size="sm" className="ml-2">
+        <Button variant="outline" size="sm" className="ml-2">
           <Calculator className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
