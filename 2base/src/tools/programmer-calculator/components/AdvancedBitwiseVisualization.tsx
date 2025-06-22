@@ -39,7 +39,7 @@ interface OperandSignState {
 
 export function AdvancedBitwiseVisualization({ 
   initialExpression = "", 
-  onExpressionChange
+  onExpressionChange 
 }: BitwiseVisualizationProps) {
   // Component state
   const [expression, setExpression] = useState(initialExpression);
@@ -240,6 +240,8 @@ export function AdvancedBitwiseVisualization({
     
     if (key === "Calculate") {
       processExpressionInput(expression);
+      // Auto-close calculator after calculation
+      setIsCalculatorOpen(false);
       return;
     }
     
@@ -519,6 +521,17 @@ export function AdvancedBitwiseVisualization({
     setIsCalculatorOpen(false);
   }, []);
 
+  // Handle calculator open/close with input clearing
+  const handleCalculatorOpenChange = useCallback((open: boolean) => {
+    if (open) {
+      // Clear input when opening calculator
+      setExpression('');
+      setEvaluationResult(null);
+      onExpressionChange?.('', null);
+    }
+    setIsCalculatorOpen(open);
+  }, [onExpressionChange]);
+
   return (
     <>
       <div className="w-full space-y-8 mt-6">
@@ -537,7 +550,7 @@ export function AdvancedBitwiseVisualization({
                 className="font-mono text-base"
                 disabled={isProcessing}
               />
-              <Button
+              <Button 
                 variant="outline"
                 size="sm"
                 className="px-3"
@@ -550,7 +563,7 @@ export function AdvancedBitwiseVisualization({
               >
                 Clear
               </Button>
-              <Popover open={isCalculatorOpen} onOpenChange={setIsCalculatorOpen}>
+              <Popover open={isCalculatorOpen} onOpenChange={handleCalculatorOpenChange}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
