@@ -5,10 +5,28 @@ alwaysApply: true
 ---
 # Cursor Rules for Tool Suite Website
 
+## 🚫 ABSOLUTE PROHIBITIONS
+
+### Chinese Character Ban
+- **ZERO TOLERANCE**: Absolutely no Chinese characters ([\u4e00-\u9fff]) anywhere in code
+- **Applies to**: Variable names, function names, comments, strings, documentation, commit messages
+- **Enforcement**: Any Chinese character is an immediate violation requiring fix
+- **Validation**: Use regex search `[\u4e00-\u9fff]` to verify compliance before any commit
+
+### Theme Color Requirements
+- **MANDATORY**: All colors must use predefined theme variables
+- **Prohibited**: Hard-coded hex colors (#123456), RGB values, named colors (red, blue)
+- **Required**: Use CSS custom properties: `hsl(var(--primary))`, `bg-primary`, `text-foreground`
+- **Exception**: Only system colors like `transparent`, `inherit`, `currentColor` allowed
+
+### Git Commit Restrictions
+- **FORBIDDEN**: Automatic git commits by AI
+- **REQUIRED**: All commits must be manually reviewed and executed by user
+- **PROCESS**: AI suggests changes, user reviews, user commits manually
+
 ## General Guidelines
 
 - Use English exclusively for all code, comments, documentation, and user-facing text
-- Absolutely no Chinese characters in code, variable names, function names, comments, or UI text
 - Follow TypeScript best practices with strict type checking
 - Prioritize accessibility and responsive design
 - Maintain consistent code style across the project
@@ -581,6 +599,64 @@ const TreeNode = ({ node, depth = 0 }: { node: TreeItem, depth?: number }) => {
 
 ## Styling Guidelines
 
+## Theme Color System
+
+### Mandatory Theme Usage
+All colors MUST use the predefined theme system. No exceptions.
+
+#### ✅ Allowed Color Patterns
+```css
+/* CSS Custom Properties */
+background-color: hsl(var(--primary));
+color: hsl(var(--foreground));
+border-color: hsl(var(--border));
+
+/* Tailwind Theme Classes */
+bg-primary text-primary-foreground
+bg-secondary text-secondary-foreground
+bg-accent text-accent-foreground
+bg-muted text-muted-foreground
+bg-destructive text-destructive-foreground
+
+/* System Colors Only */
+transparent, inherit, currentColor
+```
+
+#### ❌ Prohibited Color Patterns
+```css
+/* Hard-coded colors - FORBIDDEN */
+color: #ff0000;
+background: rgb(255, 0, 0);
+border: 1px solid blue;
+color: red;
+
+/* Named colors - FORBIDDEN */
+background-color: lightblue;
+color: darkgray;
+```
+
+#### Theme Color Reference
+```css
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
+  --radius: 0.5rem;
+}
+```
+
 ### Design System Adherence
 - Use shadcn/ui color tokens and spacing system
 - Maintain consistent border radius (0.5rem)
@@ -1066,6 +1142,12 @@ Brief description of the tool's purpose and capabilities.
 - Use refactor/component-name for refactoring
 - Use docs/section-name for documentation updates
 
+### Commit Restrictions
+- **AI MUST NOT automatically commit changes**
+- **AI MUST NOT run git add/commit commands**
+- **AI can only suggest changes and modifications**
+- **User must manually review and commit all changes**
+
 ### Advanced Tool Development Workflow
 For complex tools with multiple components:
 
@@ -1240,6 +1322,9 @@ export const toolInfo: ToolInfo = {
 
 ## Code Review Checklist
 
+- [ ] **No Chinese Characters**: Verify with regex `[\u4e00-\u9fff]` search
+- [ ] **Theme Colors Only**: No hard-coded colors, only theme variables
+- [ ] **No Auto-Commits**: All changes require manual user review and commit
 - [ ] TypeScript types are properly defined with strict typing
 - [ ] Components follow naming conventions and project structure
 - [ ] Error handling is comprehensive and user-friendly
@@ -1250,7 +1335,6 @@ export const toolInfo: ToolInfo = {
 - [ ] Code follows project structure and import organization
 - [ ] Responsive design is implemented and tested
 - [ ] Dark mode support is included and functional
-- [ ] No Chinese characters in any code or comments
 - [ ] Common components are used appropriately
 - [ ] Tool-specific components are justified and well-designed
 - [ ] **Refactoring follows incremental approach**: Large-scale changes are done through component extraction and gradual replacement, not ui.tsx rewrites
