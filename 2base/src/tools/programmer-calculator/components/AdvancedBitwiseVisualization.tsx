@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Calculator } from "lucide-react";
-import { Keyboard } from "@/components/common/keyboard";
+import { Keyboard, type BaseType } from "@/components/common/keyboard";
 
 import type { Base, BitWidth } from "../types";
 import { formatForBase } from "../lib/base-converter";
@@ -218,8 +218,31 @@ export function AdvancedBitwiseVisualization({
     }));
   }, []);
 
-  // Handle calculator key press - 纯公式编写模式
+  // Handle calculator key press - pure formula editing mode
   const handleCalculatorKey = useCallback((key: string) => {
+    // Handle special function keys
+    if (key === "Backspace") {
+      const newExpression = expression.slice(0, -1);
+      setExpression(newExpression);
+      if (!newExpression.trim()) {
+        setEvaluationResult(null);
+        onExpressionChange?.(newExpression, null);
+      }
+      return;
+    }
+    
+    if (key === "Clear") {
+      setExpression('');
+      setEvaluationResult(null);
+      onExpressionChange?.('', null);
+      return;
+    }
+    
+    if (key === "Calculate") {
+      processExpressionInput(expression);
+      return;
+    }
+    
     let keyToAdd = key;
     
     // Smart spacing for operators (except parentheses)
@@ -233,35 +256,18 @@ export function AdvancedBitwiseVisualization({
     const newExpression = expression + keyToAdd;
     
     setExpression(newExpression);
-  }, [expression]);
+  }, [expression, onExpressionChange, processExpressionInput]);
 
-  // Handle calculator clear
-  const handleCalculatorClear = useCallback(() => {
-    setExpression('');
-    setEvaluationResult(null);
-    onExpressionChange?.('', null);
-  }, [onExpressionChange]);
 
-  // Handle calculator backspace - 纯公式编写模式
-  const handleCalculatorBackspace = useCallback(() => {
-    const newExpression = expression.slice(0, -1);
-    setExpression(newExpression);
-    
-    // 如果表达式为空，清除结果
-    if (!newExpression.trim()) {
-      setEvaluationResult(null);
-      onExpressionChange?.(newExpression, null);
-    }
-  }, [expression, onExpressionChange]);
 
   // Handle expression input change
   const handleExpressionChange = (value: string) => {
     setExpression(value);
-    // 通知父组件表达式变化，但不进行计算
+    // Notify parent component of expression change without calculation
     onExpressionChange?.(value, null);
   };
 
-  // Handle expression submission - 仅在此时进行计算和校验
+  // Handle expression submission - only perform calculation and validation here
   const handleExpressionSubmit = () => {
     processExpressionInput(expression);
   };
@@ -274,8 +280,8 @@ export function AdvancedBitwiseVisualization({
   };
 
   // Handle calculator base change
-  const handleCalculatorBaseChange = useCallback((newBase: Base) => {
-    setBase(newBase);
+  const handleCalculatorBaseChange = useCallback((newBase: BaseType) => {
+    setBase(newBase as Base);
   }, []);
 
   // Clear result when expression changes
@@ -535,7 +541,11 @@ export function AdvancedBitwiseVisualization({
                 variant="outline"
                 size="sm"
                 className="px-3"
-                onClick={handleCalculatorClear}
+                onClick={() => {
+                  setExpression('');
+                  setEvaluationResult(null);
+                  onExpressionChange?.('', null);
+                }}
                 title="Clear expression"
               >
                 Clear
@@ -553,84 +563,16 @@ export function AdvancedBitwiseVisualization({
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-4" align="end">
                   <div className="space-y-4">
-                    {/* Base selector */}
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">Base</Label>
-                      <Select
-                        value={base.toString()}
-                        onValueChange={(value) => handleCalculatorBaseChange(parseInt(value) as Base)}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="2">Bin</SelectItem>
-                          <SelectItem value="8">Oct</SelectItem>
-                          <SelectItem value="10">Dec</SelectItem>
-                          <SelectItem value="16">Hex</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Separator />
-
-                    {/* Digits */}
+                    {/* Programmer Keyboard with integrated base controls */}
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Digits</Label>
+                      <Label className="text-xs text-muted-foreground">Programmer Calculator</Label>
                       <Keyboard
-                        variant={base === 2 ? "binary" : base === 16 ? "hex" : "numeric"}
+                        variant="programmer"
+                        base={base as BaseType}
                         onKeyPress={handleCalculatorKey}
+                        onBaseChange={handleCalculatorBaseChange}
+                        onClose={handleCalculatorClose}
                       />
-                    </div>
-
-                    {/* Operators */}
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Operators</Label>
-                      <Keyboard
-                        variant="operators"
-                        onKeyPress={handleCalculatorKey}
-                      />
-                    </div>
-
-                    <Separator />
-
-                    {/* Control buttons */}
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={handleCalculatorBackspace}
-                      >
-                        ⌫
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={handleCalculatorClear}
-                      >
-                        Clear
-                      </Button>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="flex-1"
-                        onClick={handleExpressionSubmit}
-                      >
-                        = Calculate
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={handleCalculatorClose}
-                      >
-                        Done
-                      </Button>
                     </div>
                   </div>
                 </PopoverContent>
