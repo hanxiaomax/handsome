@@ -105,12 +105,12 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
             {/* Corner Status Badge */}
             <div className="absolute top-3 right-3 z-10">
               {versionInfo.isNew && (
-                <Badge className="bg-blue-500 text-white text-xs font-medium px-2 py-1">
-                  Live
+                <Badge className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1">
+                  New
                 </Badge>
               )}
               {tool.requiresBackend && !versionInfo.isNew && (
-                <Badge className="bg-orange-500 text-white text-xs font-medium px-2 py-1">
+                <Badge className="bg-destructive text-destructive-foreground text-xs font-medium px-2 py-1">
                   API
                 </Badge>
               )}
@@ -142,7 +142,7 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                     <Star
                       className={`h-4 w-4 ${
                         isFavorite
-                          ? "fill-yellow-400 text-yellow-400"
+                          ? "fill-primary text-primary"
                           : "text-muted-foreground"
                       }`}
                     />
@@ -190,12 +190,12 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                     {tool.name}
                   </h3>
                   {versionInfo.isNew && (
-                    <Badge className="bg-blue-500 text-white text-xs px-2 py-0.5">
+                    <Badge className="bg-primary text-primary-foreground text-xs px-2 py-0.5">
                       Live
                     </Badge>
                   )}
                   {tool.requiresBackend && !versionInfo.isNew && (
-                    <Badge className="bg-orange-500 text-white text-xs px-2 py-0.5">
+                    <Badge className="bg-destructive text-destructive-foreground text-xs px-2 py-0.5">
                       API
                     </Badge>
                   )}
@@ -216,7 +216,7 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                   <Star
                     className={`h-4 w-4 ${
                       isFavorite
-                        ? "fill-yellow-400 text-yellow-400"
+                        ? "fill-primary text-primary"
                         : "text-muted-foreground"
                     }`}
                   />
