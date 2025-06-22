@@ -29,6 +29,7 @@ export interface ExpressionResult {
 // Define operation types
 const ARITHMETIC_OPS = ["+", "-", "*", "/", "%"];
 const BITWISE_OPS = ["&", "|", "^", "~", "<<", ">>"];
+const UNARY_OPS = ["~"]; // Unary operators
 const ALL_OPS = [...ARITHMETIC_OPS, ...BITWISE_OPS];
 
 /**
@@ -142,7 +143,23 @@ export function parseExpression(
       };
     }
 
-    // Validate token sequence (should alternate operand-operator-operand...)
+    // Check for unary operations (like ~42)
+    const isUnaryExpression =
+      parsedTokens.length === 2 &&
+      parsedTokens[0].type === "operator" &&
+      UNARY_OPS.includes(parsedTokens[0].value) &&
+      parsedTokens[1].type === "operand";
+
+    if (isUnaryExpression) {
+      // Valid unary expression
+      return {
+        tokens: parsedTokens,
+        isValid: true,
+        operationType,
+      };
+    }
+
+    // For binary expressions, validate token sequence (should alternate operand-operator-operand...)
     for (let i = 0; i < parsedTokens.length; i++) {
       const expectedType = i % 2 === 0 ? "operand" : "operator";
       if (parsedTokens[i].type !== expectedType) {
@@ -155,7 +172,7 @@ export function parseExpression(
       }
     }
 
-    // Must start and end with operand
+    // Must start and end with operand for binary expressions
     if (
       parsedTokens[0].type !== "operand" ||
       parsedTokens[parsedTokens.length - 1].type !== "operand"
@@ -201,9 +218,45 @@ export function evaluateExpression(
   }
 
   const steps: ExpressionResult["steps"] = [];
-  let currentResult = parsed.tokens[0].numericValue!;
 
   try {
+    // Check for unary operations
+    const isUnaryExpression =
+      parsed.tokens.length === 2 &&
+      parsed.tokens[0].type === "operator" &&
+      UNARY_OPS.includes(parsed.tokens[0].value) &&
+      parsed.tokens[1].type === "operand";
+
+    if (isUnaryExpression) {
+      // Handle unary operation
+      const operator = parsed.tokens[0];
+      const operand = parsed.tokens[1];
+
+      const result = performCalculation(
+        operand.value, // For unary operations like ~, we pass the operand as the first value
+        "0", // Second operand is not used for unary operations
+        operator.value as Operation,
+        base,
+        bitWidth
+      );
+
+      steps.push({
+        operand1: operand.numericValue!,
+        operator: operator.value,
+        result: result,
+        expression: `${operator.value}${operand.value}`,
+      });
+
+      return {
+        steps,
+        finalResult: result,
+        isValid: true,
+      };
+    }
+
+    // Handle binary operations
+    let currentResult = parsed.tokens[0].numericValue!;
+
     // Process each operator-operand pair
     for (let i = 1; i < parsed.tokens.length; i += 2) {
       const operator = parsed.tokens[i];

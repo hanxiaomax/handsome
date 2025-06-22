@@ -240,7 +240,6 @@ export function Keyboard({
               value: "⌫",
               row: 1,
               col: 6,
-              variant: "destructive" as const,
             },
             {
               id: "A",
@@ -248,7 +247,6 @@ export function Keyboard({
               value: "A",
               row: 2,
               col: 1,
-              variant: "secondary" as const,
             },
             {
               id: "B",
@@ -256,7 +254,6 @@ export function Keyboard({
               value: "B",
               row: 2,
               col: 2,
-              variant: "secondary" as const,
             },
             {
               id: "C",
@@ -264,7 +261,6 @@ export function Keyboard({
               value: "C",
               row: 2,
               col: 3,
-              variant: "secondary" as const,
             },
             {
               id: "D",
@@ -272,7 +268,6 @@ export function Keyboard({
               value: "D",
               row: 2,
               col: 4,
-              variant: "secondary" as const,
             },
             {
               id: "E",
@@ -280,7 +275,6 @@ export function Keyboard({
               value: "E",
               row: 2,
               col: 5,
-              variant: "secondary" as const,
             },
             {
               id: "F",
@@ -288,7 +282,6 @@ export function Keyboard({
               value: "F",
               row: 2,
               col: 6,
-              variant: "secondary" as const,
             },
             { id: "7", label: "7", value: "7", row: 3, col: 1 },
             { id: "8", label: "8", value: "8", row: 3, col: 2 },
@@ -299,7 +292,7 @@ export function Keyboard({
               value: "&",
               row: 3,
               col: 4,
-              variant: "secondary" as const,
+              variant: "default" as const,
             },
             {
               id: "or",
@@ -307,7 +300,7 @@ export function Keyboard({
               value: "|",
               row: 3,
               col: 5,
-              variant: "secondary" as const,
+              variant: "default" as const,
             },
             {
               id: "xor",
@@ -315,7 +308,7 @@ export function Keyboard({
               value: "^",
               row: 3,
               col: 6,
-              variant: "secondary" as const,
+              variant: "default" as const,
             },
             { id: "4", label: "4", value: "4", row: 4, col: 1 },
             { id: "5", label: "5", value: "5", row: 4, col: 2 },
@@ -326,7 +319,7 @@ export function Keyboard({
               value: "+",
               row: 4,
               col: 4,
-              variant: "secondary" as const,
+              variant: "default" as const,
             },
             {
               id: "subtract",
@@ -334,7 +327,7 @@ export function Keyboard({
               value: "-",
               row: 4,
               col: 5,
-              variant: "secondary" as const,
+              variant: "default" as const,
             },
             {
               id: "multiply",
@@ -342,7 +335,7 @@ export function Keyboard({
               value: "*",
               row: 4,
               col: 6,
-              variant: "secondary" as const,
+              variant: "default" as const,
             },
             { id: "1", label: "1", value: "1", row: 5, col: 1 },
             { id: "2", label: "2", value: "2", row: 5, col: 2 },
@@ -353,7 +346,7 @@ export function Keyboard({
               value: "/",
               row: 5,
               col: 4,
-              variant: "secondary" as const,
+              variant: "default" as const,
             },
             {
               id: "modulo",
@@ -361,7 +354,7 @@ export function Keyboard({
               value: "%",
               row: 5,
               col: 5,
-              variant: "secondary" as const,
+              variant: "default" as const,
             },
             {
               id: "clear",
@@ -369,7 +362,7 @@ export function Keyboard({
               value: "Clear",
               row: 5,
               col: 6,
-              variant: "destructive" as const,
+              variant: "default" as const,
             },
             { id: "0", label: "0", value: "0", row: 6, col: 1 },
             { id: "decimal", label: ".", value: ".", row: 6, col: 2 },
@@ -381,9 +374,6 @@ export function Keyboard({
               col: 3,
               variant: "default" as const,
             },
-            { id: "x", label: "x", value: "x", row: 6, col: 4 },
-            { id: "y", label: "y", value: "y", row: 6, col: 5 },
-            { id: "z", label: "z", value: "z", row: 6, col: 6 },
           ],
         };
 
@@ -453,6 +443,7 @@ export function Keyboard({
               row: 5,
               col: 4,
               variant: "default" as const,
+              colSpan: 2,
             },
           ],
         };
