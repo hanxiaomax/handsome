@@ -563,15 +563,30 @@ export function AdvancedBitwiseVisualization({
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-4" align="end">
                   <div className="space-y-4">
+                    {/* Header with title and close button */}
+                    <div className="flex justify-between items-center">
+                      <Label className="text-sm font-medium">Programmer Calculator</Label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleCalculatorClose}
+                        className="h-6 w-6 p-0"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                    
                     {/* Programmer Keyboard with integrated base controls */}
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Programmer Calculator</Label>
                       <Keyboard
                         variant="programmer"
-                        base={base as BaseType}
+                        currentBase={base as BaseType}
                         onKeyPress={handleCalculatorKey}
-                        onBaseChange={handleCalculatorBaseChange}
-                        onClose={handleCalculatorClose}
+                        onFunctionKey={(functionKey, value) => {
+                          if (functionKey === "baseChange" && typeof value === "number") {
+                            handleCalculatorBaseChange(value as BaseType);
+                          }
+                        }}
                       />
                     </div>
                   </div>

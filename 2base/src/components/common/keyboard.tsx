@@ -19,7 +19,6 @@ export interface GridButtonConfig {
   col: number; // Starting column position (1-based)
   rowSpan?: number; // Number of rows to span, default is 1
   colSpan?: number; // Number of columns to span, default is 1
-  color?: string; // Button color class name or color value
   variant?:
     | "default"
     | "destructive"
@@ -46,10 +45,10 @@ export interface KeyboardProps {
   className?: string;
   gap?: "none" | "sm" | "md" | "lg";
   buttonHeight?: "sm" | "md" | "lg" | "xl";
-  // Programmer keyboard specific props
-  base?: BaseType; // Current base for programmer keyboard
-  onBaseChange?: (base: BaseType) => void; // Base change callback
-  onClose?: () => void; // Close keyboard callback
+  // Function key callbacks
+  onFunctionKey?: (functionKey: string, value?: BaseType) => void; // Handle function keys like base change
+  // Display state
+  currentBase?: BaseType; // Current base for display purposes
 }
 
 export function Keyboard({
@@ -59,10 +58,9 @@ export function Keyboard({
   gridConfig,
   className,
   gap = "sm",
-  buttonHeight = "md",
-  base = 10,
-  onBaseChange,
-  onClose,
+  buttonHeight = "sm",
+  onFunctionKey,
+  currentBase = 10,
 }: KeyboardProps) {
   const getLayout = (variant: KeyboardVariant): string[][] => {
     switch (variant) {
@@ -88,7 +86,7 @@ export function Keyboard({
       case "programmer":
         return {
           container: "gap-1",
-          button: "h-7 min-w-8 text-xs font-medium px-1",
+          button: "h-6 min-w-8 text-xs font-medium px-1",
           row: "gap-1",
         };
       case "simple":
@@ -108,18 +106,18 @@ export function Keyboard({
   };
 
   // Check if a key is available in current base
-  const isKeyAvailable = (key: string, currentBase: BaseType): boolean => {
+  const isKeyAvailable = (key: string, baseValue: BaseType): boolean => {
     // Hex digits A-F only available in base 16
     if (["A", "B", "C", "D", "E", "F"].includes(key)) {
-      return currentBase === 16;
+      return baseValue === 16;
     }
     // Digits 8-9 not available in base 8
     if (["8", "9"].includes(key)) {
-      return currentBase >= 10;
+      return baseValue >= 10;
     }
     // Digits 2-7 not available in base 2
     if (["2", "3", "4", "5", "6", "7"].includes(key)) {
-      return currentBase >= 8;
+      return baseValue >= 8;
     }
     // All other keys (operators, parentheses, etc.) are always available
     return true;
@@ -221,37 +219,6 @@ export function Keyboard({
     return button.row - 1 === row && button.col - 1 === col;
   };
 
-  const getButtonCustomStyles = (button: GridButtonConfig) => {
-    const styles: React.CSSProperties = {};
-
-    if (button.color) {
-      // If it's a CSS color value
-      if (
-        button.color.startsWith("#") ||
-        button.color.startsWith("rgb") ||
-        button.color.startsWith("hsl")
-      ) {
-        styles.backgroundColor = button.color;
-        styles.borderColor = button.color;
-        styles.color = getContrastColor(button.color);
-      }
-    }
-
-    return styles;
-  };
-
-  const getContrastColor = (backgroundColor: string): string => {
-    // Simplified contrast color calculation
-    if (
-      backgroundColor.includes("light") ||
-      backgroundColor.includes("white") ||
-      backgroundColor.startsWith("#f")
-    ) {
-      return "hsl(var(--foreground))";
-    }
-    return "hsl(var(--background))";
-  };
-
   // Get built-in grid configuration
   const getBuiltinGridConfig = (
     variant: KeyboardVariant
@@ -281,7 +248,7 @@ export function Keyboard({
               value: "A",
               row: 2,
               col: 1,
-              color: "bg-accent",
+              variant: "secondary" as const,
             },
             {
               id: "B",
@@ -289,7 +256,7 @@ export function Keyboard({
               value: "B",
               row: 2,
               col: 2,
-              color: "bg-accent",
+              variant: "secondary" as const,
             },
             {
               id: "C",
@@ -297,7 +264,7 @@ export function Keyboard({
               value: "C",
               row: 2,
               col: 3,
-              color: "bg-accent",
+              variant: "secondary" as const,
             },
             {
               id: "D",
@@ -305,7 +272,7 @@ export function Keyboard({
               value: "D",
               row: 2,
               col: 4,
-              color: "bg-accent",
+              variant: "secondary" as const,
             },
             {
               id: "E",
@@ -313,7 +280,7 @@ export function Keyboard({
               value: "E",
               row: 2,
               col: 5,
-              color: "bg-accent",
+              variant: "secondary" as const,
             },
             {
               id: "F",
@@ -321,7 +288,7 @@ export function Keyboard({
               value: "F",
               row: 2,
               col: 6,
-              color: "bg-accent",
+              variant: "secondary" as const,
             },
             { id: "7", label: "7", value: "7", row: 3, col: 1 },
             { id: "8", label: "8", value: "8", row: 3, col: 2 },
@@ -413,7 +380,6 @@ export function Keyboard({
               row: 6,
               col: 3,
               variant: "default" as const,
-              color: "bg-primary text-primary-foreground",
             },
             { id: "x", label: "x", value: "x", row: 6, col: 4 },
             { id: "y", label: "y", value: "y", row: 6, col: 5 },
@@ -487,7 +453,6 @@ export function Keyboard({
               row: 5,
               col: 4,
               variant: "default" as const,
-              color: "bg-primary text-primary-foreground",
             },
           ],
         };
@@ -497,46 +462,28 @@ export function Keyboard({
     }
   };
 
-  // Render top control bar
-  const renderTopControls = () => {
+  // Render base controls for programmer variant
+  const renderBaseControls = () => {
+    if (variant !== "programmer") return null;
+
     return (
-      <div className="flex justify-between items-center mb-2 p-2 bg-muted/20 rounded">
-        {/* Base controls for programmer variant */}
-        {variant === "programmer" && onBaseChange && (
-          <div className="flex gap-1">
-            {[
-              { value: 2 as BaseType, label: "BIN" },
-              { value: 8 as BaseType, label: "OCT" },
-              { value: 10 as BaseType, label: "DEC" },
-              { value: 16 as BaseType, label: "HEX" },
-            ].map(({ value, label }) => (
-              <Toggle
-                key={value}
-                pressed={base === value}
-                onPressedChange={() => onBaseChange(value)}
-                size="sm"
-                className="text-xs font-mono"
-              >
-                {label}
-              </Toggle>
-            ))}
-          </div>
-        )}
-
-        {/* Spacer for non-programmer variants */}
-        {variant !== "programmer" && <div />}
-
-        {/* Close button */}
-        {onClose && (
-          <Button
-            variant="outline"
+      <div className="flex gap-1 mb-2">
+        {[
+          { value: 2 as BaseType, label: "BIN" },
+          { value: 8 as BaseType, label: "OCT" },
+          { value: 10 as BaseType, label: "DEC" },
+          { value: 16 as BaseType, label: "HEX" },
+        ].map(({ value, label }) => (
+          <Toggle
+            key={value}
+            pressed={currentBase === value}
+            onPressedChange={() => onFunctionKey?.("baseChange", value)}
             size="sm"
-            onClick={onClose}
-            className="text-xs px-3"
+            className="text-xs font-mono"
           >
-            Done
-          </Button>
-        )}
+            {label}
+          </Toggle>
+        ))}
       </div>
     );
   };
@@ -581,7 +528,7 @@ export function Keyboard({
             // Check if key is available in current base
             const isAvailable =
               variant === "programmer"
-                ? isKeyAvailable(button.value, base)
+                ? isKeyAvailable(button.value, currentBase)
                 : true;
 
             return (
@@ -594,21 +541,13 @@ export function Keyboard({
                   "transition-all duration-150 active:scale-95",
                   !isAvailable && "opacity-30 cursor-not-allowed",
                   buttonHeightClass,
-                  button.className,
-                  // If custom color and not CSS color value, treat as class name
-                  button.color &&
-                    !button.color.startsWith("#") &&
-                    !button.color.startsWith("rgb") &&
-                    !button.color.startsWith("hsl")
-                    ? button.color
-                    : ""
+                  button.className
                 )}
                 style={{
                   gridRowStart: rowIndex + 1,
                   gridRowEnd: rowIndex + 1 + rowSpan,
                   gridColumnStart: colIndex + 1,
                   gridColumnEnd: colIndex + 1 + colSpan,
-                  ...getButtonCustomStyles(button),
                 }}
                 onClick={() =>
                   isAvailable && handleKeyPress(button.value, button)
@@ -625,7 +564,7 @@ export function Keyboard({
 
   return (
     <div className={cn("flex flex-col", styles.container, className)}>
-      {renderTopControls()}
+      {renderBaseControls()}
 
       {variant === "programmer" || variant === "simple" || variant === "grid"
         ? renderGridKeyboard()
@@ -742,12 +681,54 @@ export const sampleGridConfigs = {
         col: 6,
         variant: "destructive" as const,
       },
-      { id: "A", label: "A", value: "A", row: 2, col: 1, color: "bg-accent" },
-      { id: "B", label: "B", value: "B", row: 2, col: 2, color: "bg-accent" },
-      { id: "C", label: "C", value: "C", row: 2, col: 3, color: "bg-accent" },
-      { id: "D", label: "D", value: "D", row: 2, col: 4, color: "bg-accent" },
-      { id: "E", label: "E", value: "E", row: 2, col: 5, color: "bg-accent" },
-      { id: "F", label: "F", value: "F", row: 2, col: 6, color: "bg-accent" },
+      {
+        id: "A",
+        label: "A",
+        value: "A",
+        row: 2,
+        col: 1,
+        variant: "secondary" as const,
+      },
+      {
+        id: "B",
+        label: "B",
+        value: "B",
+        row: 2,
+        col: 2,
+        variant: "secondary" as const,
+      },
+      {
+        id: "C",
+        label: "C",
+        value: "C",
+        row: 2,
+        col: 3,
+        variant: "secondary" as const,
+      },
+      {
+        id: "D",
+        label: "D",
+        value: "D",
+        row: 2,
+        col: 4,
+        variant: "secondary" as const,
+      },
+      {
+        id: "E",
+        label: "E",
+        value: "E",
+        row: 2,
+        col: 5,
+        variant: "secondary" as const,
+      },
+      {
+        id: "F",
+        label: "F",
+        value: "F",
+        row: 2,
+        col: 6,
+        variant: "secondary" as const,
+      },
       { id: "7", label: "7", value: "7", row: 3, col: 1 },
       { id: "8", label: "8", value: "8", row: 3, col: 2 },
       { id: "9", label: "9", value: "9", row: 3, col: 3 },
@@ -838,7 +819,6 @@ export const sampleGridConfigs = {
         row: 6,
         col: 3,
         variant: "default" as const,
-        color: "bg-primary text-primary-foreground",
       },
       { id: "x", label: "x", value: "x", row: 6, col: 4 },
       { id: "y", label: "y", value: "y", row: 6, col: 5 },
