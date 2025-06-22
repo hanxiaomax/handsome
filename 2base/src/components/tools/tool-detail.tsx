@@ -39,7 +39,7 @@ export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
             {tool.requiresBackend && (
               <Badge
                 variant="outline"
-                className="text-orange-600 border-orange-200"
+                className="text-destructive border-destructive/20"
               >
                 <ExternalLink className="h-3 w-3 mr-1" />
                 Requires API
@@ -75,7 +75,7 @@ export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
         >
           <Star
             className={`h-4 w-4 ${
-              isFavorite ? "fill-current text-yellow-500" : ""
+              isFavorite ? "fill-current text-primary" : ""
             }`}
           />
           {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
@@ -171,7 +171,7 @@ export function ToolDetail({ tool, onUseTool }: ToolDetailProps) {
           <div className="space-y-3">
             {getUseCases(tool).map((useCase, index) => (
               <div key={index} className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
+                <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
                 <p className="text-sm">{useCase}</p>
               </div>
             ))}

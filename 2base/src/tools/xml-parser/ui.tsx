@@ -113,7 +113,7 @@ export default function XMLParser() {
               >
                 <div className="flex items-center justify-between h-full">
                   <div className="flex items-center gap-2">
-                    <FileCode className="w-4 h-4 text-blue-600" />
+                    <FileCode className="w-4 h-4 text-primary" />
                     <h3 className="font-medium text-sm">Input XML</h3>
                     {uiState.fileUpload.fileInfo && (
                       <Badge variant="secondary" className="text-xs">
@@ -206,9 +206,9 @@ export default function XMLParser() {
                 <div className="flex items-center justify-between h-full">
                   <div className="flex items-center gap-2">
                     {uiState.displayMode === "tree" ? (
-                      <TreePine className="w-4 h-4 text-green-600" />
+                      <TreePine className="w-4 h-4 text-primary" />
                     ) : (
-                      <Brackets className="w-4 h-4 text-purple-600" />
+                      <Brackets className="w-4 h-4 text-accent-foreground" />
                     )}
                     <h3 className="font-medium text-sm">
                       {uiState.displayMode === "beautified" && "Beautified XML"}

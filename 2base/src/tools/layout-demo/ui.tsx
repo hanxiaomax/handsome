@@ -237,7 +237,7 @@ export default function LayoutDemo() {
             className="flex items-center justify-between"
           >
             <div className="flex items-center gap-3">
-              <Monitor className="w-6 h-6 text-blue-600" />
+              <Monitor className="w-6 h-6 text-primary" />
               <h1 className="text-2xl font-bold">Enhanced Skeleton Demo</h1>
             </div>
             <div className="text-sm text-muted-foreground">
@@ -250,7 +250,7 @@ export default function LayoutDemo() {
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Circle className="w-3 h-3 fill-green-500 text-green-500" />
+                  <Circle className="w-3 h-3 fill-primary text-primary" />
                   <span className="text-sm font-medium">
                     Enhanced System Active
                   </span>

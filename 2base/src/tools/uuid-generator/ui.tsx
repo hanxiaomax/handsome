@@ -194,7 +194,7 @@ function UUIDGeneratorTool() {
                     >
                       <span className="select-all">{item.uuid}</span>
                       {copiedUUID === item.uuid ? (
-                        <Check className="w-4 h-4 text-green-500" />
+                        <Check className="w-4 h-4 text-primary" />
                       ) : (
                         <Copy className="w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity" />
                       )}
@@ -210,7 +210,7 @@ function UUIDGeneratorTool() {
                   className="flex items-center gap-2"
                 >
                   {copiedAll ? (
-                    <Check className="w-4 h-4 text-green-500" />
+                    <Check className="w-4 h-4 text-primary" />
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}

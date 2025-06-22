@@ -27,7 +27,7 @@ export function ToolCard({ tool, onUse, onInfo }: ToolCardProps) {
         <div className="absolute top-3 right-3">
           <Badge
             variant="secondary"
-            className="text-xs bg-green-100 text-green-700 border-green-200 font-medium"
+            className="text-xs bg-secondary text-secondary-foreground border-secondary font-medium"
           >
             NEW
           </Badge>
@@ -113,7 +113,7 @@ export function ToolCard({ tool, onUse, onInfo }: ToolCardProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-destructive rounded-full"></div>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Requires backend service</p>

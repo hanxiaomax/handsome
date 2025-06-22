@@ -21,11 +21,11 @@ export function TextInputArea({
   return (
     <div className="space-y-4">
       <div className="text-center mb-4">
-        <FileCode className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+        <FileCode className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+        <h3 className="text-lg font-medium text-foreground mb-2">
           Paste XML Content
         </h3>
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-muted-foreground">
           Paste your XML content directly into the text area below
         </p>
       </div>

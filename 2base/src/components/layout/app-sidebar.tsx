@@ -98,13 +98,13 @@ export function AppSidebar({ selectedTool }: AppSidebarProps) {
                         {versionInfo.isNew && (
                           <Badge
                             variant="secondary"
-                            className="text-[10px] px-1 py-0 h-4 bg-green-100 text-green-700 border-green-200 font-medium mr-1"
+                            className="text-[10px] px-1 py-0 h-4 bg-secondary text-secondary-foreground border-secondary font-medium mr-1"
                           >
                             NEW
                           </Badge>
                         )}
                         {tool.requiresBackend && (
-                          <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
+                          <span className="text-xs bg-destructive/10 text-destructive px-1.5 py-0.5 rounded">
                             API
                           </span>
                         )}

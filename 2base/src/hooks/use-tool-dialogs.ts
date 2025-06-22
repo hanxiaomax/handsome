@@ -232,7 +232,7 @@ export function useToolDialogs() {
         React.createElement(
           "button",
           {
-            className: "px-4 py-2 text-sm border rounded-md hover:bg-gray-50",
+            className: "px-4 py-2 text-sm border rounded-md hover:bg-muted",
             onClick: () => {
               if (onCancel) onCancel();
               closeDialog(id);

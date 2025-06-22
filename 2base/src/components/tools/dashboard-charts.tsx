@@ -51,9 +51,9 @@ export function DashboardCharts() {
   const getIntensityColor = (level) => {
     switch (level) {
       case 0: return "bg-muted";
-      case 1: return "bg-green-200 dark:bg-green-900";
-      case 2: return "bg-green-400 dark:bg-green-700";
-      case 3: return "bg-green-600 dark:bg-green-500";
+      case 1: return "bg-secondary/50";
+      case 2: return "bg-secondary";
+      case 3: return "bg-primary";
       default: return "bg-muted";
     }
   };
@@ -84,7 +84,7 @@ export function DashboardCharts() {
 
         <Card className="border-0 shadow-none bg-muted/30">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-primary">
               {tools.filter((t) => t.pricing === "free").length}
             </div>
             <div className="text-xs text-muted-foreground mt-1">Free Tools</div>
@@ -93,7 +93,7 @@ export function DashboardCharts() {
 
         <Card className="border-0 shadow-none bg-muted/30">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-destructive">
               {tools.filter((t) => getToolVersionInfo(t).isNew).length}
             </div>
             <div className="text-xs text-muted-foreground mt-1">New Tools</div>
@@ -102,7 +102,7 @@ export function DashboardCharts() {
 
         <Card className="border-0 shadow-none bg-muted/30">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-accent-foreground">
               {categories.filter((c) => c.id !== "all" && c.count > 0).length}
             </div>
             <div className="text-xs text-muted-foreground mt-1">Categories</div>
@@ -140,9 +140,9 @@ export function DashboardCharts() {
               <span>Less</span>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-sm bg-muted"></div>
-                <div className="w-3 h-3 rounded-sm bg-green-200 dark:bg-green-900"></div>
-                <div className="w-3 h-3 rounded-sm bg-green-400 dark:bg-green-700"></div>
-                <div className="w-3 h-3 rounded-sm bg-green-600 dark:bg-green-500"></div>
+                            <div className="w-3 h-3 rounded-sm bg-secondary/50"></div>
+            <div className="w-3 h-3 rounded-sm bg-secondary"></div>
+            <div className="w-3 h-3 rounded-sm bg-primary"></div>
               </div>
               <span>More</span>
             </div>

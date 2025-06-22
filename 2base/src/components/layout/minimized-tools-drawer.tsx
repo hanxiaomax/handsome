@@ -168,7 +168,7 @@ export function MinimizedToolsDrawer({ children }: MinimizedToolsDrawerProps) {
                     {minimizedTool.state && (
                       <div className="mt-2">
                         <Badge variant="secondary" className="text-xs">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary mr-1.5" />
                           State Saved
                         </Badge>
                       </div>
