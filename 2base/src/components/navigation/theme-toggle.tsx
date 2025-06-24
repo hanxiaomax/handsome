@@ -1,5 +1,6 @@
-import { Moon, Sun, Monitor, Palette, Check } from 'lucide-react';
+import { Moon, Sun, Palette, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,58 +9,42 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useTheme, type Theme, type ColorScheme } from '@/hooks/use-theme';
-
-const themes: { value: Theme; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { value: 'light', label: 'Light', icon: Sun },
-  { value: 'dark', label: 'Dark', icon: Moon },
-  { value: 'system', label: 'System', icon: Monitor },
-];
+import { useTheme, type ColorScheme } from '@/hooks/use-theme';
 
 const colorSchemes: { value: ColorScheme; label: string; color: string }[] = [
-  { value: 'default', label: 'Default', color: 'bg-slate-500' },
-  { value: 'blue', label: 'Blue', color: 'bg-blue-500' },
-  { value: 'green', label: 'Green', color: 'bg-green-500' },
-  { value: 'purple', label: 'Purple', color: 'bg-purple-500' },
-  { value: 'orange', label: 'Orange', color: 'bg-orange-500' },
-  { value: 'red', label: 'Red', color: 'bg-red-500' },
+  { value: 'default', label: 'Default', color: 'bg-primary' },
+  { value: 'blue', label: 'Blue', color: 'bg-primary' },
+  { value: 'green', label: 'Green', color: 'bg-secondary' },
+  { value: 'purple', label: 'Purple', color: 'bg-accent' },
+  { value: 'orange', label: 'Orange', color: 'bg-primary' },
+  { value: 'red', label: 'Red', color: 'bg-primary' },
 ];
 
 export function ThemeToggle() {
   const { theme, colorScheme, setTheme, setColorScheme } = useTheme();
 
-  const currentTheme = themes.find(t => t.value === theme);
-  const ThemeIcon = currentTheme?.icon || Monitor;
+  // Convert theme to boolean for switch (light = false, dark = true)
+  const isDark = theme === 'dark';
+
+  // Handle theme toggle
+  const handleThemeToggle = (checked: boolean) => {
+    setTheme(checked ? 'dark' : 'light');
+  };
+
+  // Get current theme icon
+  const ThemeIcon = isDark ? Moon : Sun;
 
   return (
-    <div className="flex items-center gap-2">
-      {/* Theme Mode Toggle */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
-            <ThemeIcon className="h-4 w-4" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Theme Mode</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {themes.map((themeOption) => {
-            const Icon = themeOption.icon;
-            return (
-              <DropdownMenuItem
-                key={themeOption.value}
-                onClick={() => setTheme(themeOption.value)}
-                className="flex items-center gap-2"
-              >
-                <Icon className="h-4 w-4" />
-                <span>{themeOption.label}</span>
-                {theme === themeOption.value && <Check className="h-4 w-4 ml-auto" />}
-              </DropdownMenuItem>
-            );
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className="flex items-center gap-3">
+      {/* Theme Mode Switch */}
+      <div className="flex items-center gap-2">
+        <ThemeIcon className="h-4 w-4 text-muted-foreground" />
+        <Switch
+          checked={isDark}
+          onCheckedChange={handleThemeToggle}
+          aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+        />
+      </div>
 
       {/* Color Scheme Toggle */}
       <DropdownMenu>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export type Theme = "light" | "dark" | "system";
+export type Theme = "light" | "dark";
 export type ColorScheme =
   | "default"
   | "blue"
@@ -12,9 +12,13 @@ export type ColorScheme =
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("ui-theme") as Theme) || "system";
+      const savedTheme = localStorage.getItem("ui-theme") as Theme;
+      // If saved theme is valid, use it; otherwise default to light
+      return savedTheme === "light" || savedTheme === "dark"
+        ? savedTheme
+        : "light";
     }
-    return "system";
+    return "light";
   });
 
   const [colorScheme, setColorScheme] = useState<ColorScheme>(() => {
@@ -29,16 +33,7 @@ export function useTheme() {
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
-    }
+    root.classList.add(theme);
   }, [theme]);
 
   useEffect(() => {
