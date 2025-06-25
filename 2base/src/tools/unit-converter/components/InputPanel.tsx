@@ -14,6 +14,7 @@ export function InputPanel({
   category,
   onValueChange,
   onUnitChange,
+  onCategoryChange,
 }: InputPanelProps) {
   // Get current category data
   const selectedCategory = unitCategories.find((c) => c.id === category);
@@ -23,14 +24,7 @@ export function InputPanel({
       {/* Category Selection */}
       <CategorySelector
         selectedCategory={category}
-        onCategoryChange={(categoryId: string) => {
-          // This will be handled by parent component to reset unit
-          const newCategory = unitCategories.find((c) => c.id === categoryId);
-          const firstUnit = newCategory?.groups[0]?.units[0];
-          if (firstUnit) {
-            onUnitChange(firstUnit.id);
-          }
-        }}
+        onCategoryChange={onCategoryChange}
       />
 
       {/* Value Input with Calculator */}

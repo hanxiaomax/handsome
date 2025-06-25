@@ -295,7 +295,7 @@ function CustomConversionRow({
   };
 
   return (
-    <TableRow className="group hover:bg-gradient-to-r hover:from-purple-50/50 hover:to-blue-50/50 dark:hover:from-purple-950/20 dark:hover:to-blue-950/20 transition-colors">
+    <TableRow className="group hover:bg-muted/30 transition-colors">
       {/* Custom Unit Information */}
       <TableCell>
         <div className="flex items-center gap-2">

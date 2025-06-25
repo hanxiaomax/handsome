@@ -257,7 +257,7 @@ export function ScientificCalculator({ onValueSelect }: CalculatorProps) {
               ÷
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
               size="sm"
               onClick={() => setDisplay(display.slice(0, -1) || "0")}
             >

@@ -17,6 +17,13 @@ export function CategorySelector({
     { value: "volume", label: "Volume", icon: "V" },
     { value: "area", label: "Area", icon: "A" },
     { value: "speed", label: "Speed", icon: "S" },
+    { value: "time", label: "Time", icon: "T" },
+    { value: "pressure", label: "Pressure", icon: "P" },
+    { value: "energy", label: "Energy", icon: "E" },
+    { value: "power", label: "Power", icon: "P" },
+    { value: "data", label: "Data Storage", icon: "D" },
+    { value: "angle", label: "Angle", icon: "A" },
+    { value: "frequency", label: "Frequency", icon: "F" },
   ];
 
   return (

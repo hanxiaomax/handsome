@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ToolWrapper } from "@/components/common/tool-wrapper";
+import { ToolLayout } from "@/components/layout/tool-layout";
 import { toolInfo } from "./toolInfo";
 
 // Import new architecture components and hooks
@@ -36,47 +36,44 @@ export default function UnitConverter() {
   };
 
   return (
-    <ToolWrapper
-      toolInfo={toolInfo}
-      maxWidth="4xl"
-      state={{
-        converterState: {
-          ...uiState,
-          ...businessState,
-        },
-      }}
-    >
-      <div className="p-6 space-y-6 mt-5">
-        {/* Input Section - Using new InputPanel component */}
-        <InputPanel
-          value={uiState.inputValue}
-          unit={uiState.inputUnit}
-          category={uiState.selectedCategory}
-          onValueChange={handlers.onInputValueChange}
-          onUnitChange={handlers.onInputUnitChange}
-        />
+    <ToolLayout toolName={toolInfo.name} toolDescription={toolInfo.description}>
+      {/* Unit Converter Main Container - Comprehensive conversion workspace */}
+      <div id="unit-converter-main-container" className="w-full p-6 space-y-6">
+        {/* Input Section - User input for value and unit selection */}
+        <div id="input-section" className="space-y-4">
+          <InputPanel
+            value={uiState.inputValue}
+            unit={uiState.inputUnit}
+            category={uiState.selectedCategory}
+            onValueChange={handlers.onInputValueChange}
+            onUnitChange={handlers.onInputUnitChange}
+            onCategoryChange={handlers.onCategoryChange}
+          />
+        </div>
 
-        {/* Output Section - Using new OutputPanel component */}
-        <OutputPanel
-          results={businessComputed.displayResults}
-          focusedUnits={uiState.focusedUnits}
-          showAllUnits={uiState.showAllUnits}
-          customConversions={businessState.customConversions}
-          inputValue={uiState.inputValue}
-          onToggleFocus={handlers.onToggleFocus}
-          onCopyValue={handlers.onCopyValue}
-          onSwapUnits={handlers.onSwapUnits}
-          onToggleShowAll={handleToggleShowAll}
-          onCreateCustom={handleCreateCustom}
-        />
+        {/* Results Section - Conversion output and results display */}
+        <div id="results-section" className="space-y-4">
+          <OutputPanel
+            results={businessComputed.displayResults}
+            focusedUnits={uiState.focusedUnits}
+            showAllUnits={uiState.showAllUnits}
+            customConversions={businessState.customConversions}
+            inputValue={uiState.inputValue}
+            onToggleFocus={handlers.onToggleFocus}
+            onCopyValue={handlers.onCopyValue}
+            onSwapUnits={handlers.onSwapUnits}
+            onToggleShowAll={handleToggleShowAll}
+            onCreateCustom={handleCreateCustom}
+          />
+        </div>
 
-        {/* Custom Conversion Dialog */}
+        {/* Custom Conversion Dialog - Advanced conversion creation */}
         <CustomConversionDialog
           isOpen={customDialogOpen}
           onOpenChange={setCustomDialogOpen}
           onSave={handlers.onSaveCustomConversion}
         />
       </div>
-    </ToolWrapper>
+    </ToolLayout>
   );
 }
