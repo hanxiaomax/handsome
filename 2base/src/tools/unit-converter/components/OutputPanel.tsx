@@ -47,38 +47,31 @@ export function OutputPanel({
     return null;
   }
 
-  const displayResults = showAllUnits ? results : results.slice(0, 12);
+  const displayResults = showAllUnits ? results : results.slice(0, 8);
   const displayCustomConversions = showAllUnits
     ? customConversions
-    : customConversions.slice(0, 3);
+    : customConversions.slice(0, 2);
 
   return (
     <div className="space-y-4">
-      {/* Header with toggle */}
-      <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium">Conversion Results</Label>
-        <div className="flex items-center gap-2">
-          {results.length > 12 && (
-            <Button variant="ghost" size="sm" onClick={onToggleShowAll}>
-              {showAllUnits ? (
-                <>
-                  <ChevronUp className="h-4 w-4 mr-1" />
-                  Show Less
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  Show All ({results.length})
-                </>
-              )}
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={onCreateCustom}>
-            <Plus className="h-4 w-4 mr-1" />
-            Custom
+      {/* Show All/Less Button - Only show if there are more than 8 results */}
+      {results.length > 8 && (
+        <div className="flex items-center justify-center mb-4">
+          <Button variant="ghost" size="sm" onClick={onToggleShowAll}>
+            {showAllUnits ? (
+              <>
+                <ChevronUp className="h-4 w-4 mr-1" />
+                Show Less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 mr-1" />
+                Show All ({results.length})
+              </>
+            )}
           </Button>
         </div>
-      </div>
+      )}
 
       {/* Results Table */}
       <div className="border rounded-md">
@@ -114,20 +107,58 @@ export function OutputPanel({
 
             {/* Show more row when not expanded */}
             {!showAllUnits &&
-              (results.length > 12 || customConversions.length > 3) && (
+              (results.length > 8 || customConversions.length > 2) && (
                 <TableRow className="hover:bg-muted/30">
                   <TableCell colSpan={3} className="text-center py-4">
                     <Button variant="ghost" size="sm" onClick={onToggleShowAll}>
                       <ChevronDown className="h-4 w-4 mr-1" />
                       Show{" "}
                       {results.length -
-                        12 +
-                        Math.max(0, customConversions.length - 3)}{" "}
+                        8 +
+                        Math.max(0, customConversions.length - 2)}{" "}
                       more units
                     </Button>
                   </TableCell>
                 </TableRow>
               )}
+
+            {/* Custom Conversion Creation Row - Styled like other conversion rows */}
+            <TableRow
+              className="hover:bg-muted/50 cursor-pointer transition-colors border-t-2 border-dashed border-muted"
+              onClick={onCreateCustom}
+            >
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Plus className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <div className="font-medium text-sm text-muted-foreground">
+                      Create Custom Unit
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Add your own conversion
+                    </div>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <span className="text-muted-foreground text-sm">
+                  Click to create
+                </span>
+              </TableCell>
+              <TableCell className="text-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCreateCustom();
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </div>

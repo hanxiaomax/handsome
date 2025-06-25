@@ -9,6 +9,7 @@ import { useUnitConverterState } from "./lib/hooks/useUnitConverterState";
 import { useUnitConverterLogic } from "./lib/hooks/useUnitConverterLogic";
 import { InputPanel } from "./components/InputPanel";
 import { OutputPanel } from "./components/OutputPanel";
+import { CategorySelector } from "./components/CategorySelector";
 import { CustomConversionDialog } from "./components/custom-conversion-dialog";
 
 export default function UnitConverter() {
@@ -37,34 +38,50 @@ export default function UnitConverter() {
 
   return (
     <ToolLayout toolName={toolInfo.name} toolDescription={toolInfo.description}>
-      {/* Unit Converter Main Container - Comprehensive conversion workspace */}
-      <div id="unit-converter-main-container" className="w-full p-6 space-y-6">
-        {/* Input Section - User input for value and unit selection */}
-        <div id="input-section" className="space-y-4">
-          <InputPanel
-            value={uiState.inputValue}
-            unit={uiState.inputUnit}
-            category={uiState.selectedCategory}
-            onValueChange={handlers.onInputValueChange}
-            onUnitChange={handlers.onInputUnitChange}
-            onCategoryChange={handlers.onCategoryChange}
-          />
+      {/* Unit Converter Main Container - Clean layout with category header */}
+      <div
+        id="unit-converter-main-container"
+        className="w-full max-w-4xl mx-auto p-6 space-y-8"
+      >
+        {/* Category Selection Header - Independent of conversion area */}
+        <div id="category-header" className="text-center">
+          <h2 className="text-2xl font-bold mb-6">Unit Converter</h2>
+          <div className="max-w-xs mx-auto">
+            <CategorySelector
+              selectedCategory={uiState.selectedCategory}
+              onCategoryChange={handlers.onCategoryChange}
+            />
+          </div>
         </div>
 
-        {/* Results Section - Conversion output and results display */}
-        <div id="results-section" className="space-y-4">
-          <OutputPanel
-            results={businessComputed.displayResults}
-            focusedUnits={uiState.focusedUnits}
-            showAllUnits={uiState.showAllUnits}
-            customConversions={businessState.customConversions}
-            inputValue={uiState.inputValue}
-            onToggleFocus={handlers.onToggleFocus}
-            onCopyValue={handlers.onCopyValue}
-            onSwapUnits={handlers.onSwapUnits}
-            onToggleShowAll={handleToggleShowAll}
-            onCreateCustom={handleCreateCustom}
-          />
+        {/* Conversion Area - Left input, Right results */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          {/* Left Panel - Simple Input without title */}
+          <div id="input-panel">
+            <InputPanel
+              value={uiState.inputValue}
+              unit={uiState.inputUnit}
+              category={uiState.selectedCategory}
+              onValueChange={handlers.onInputValueChange}
+              onUnitChange={handlers.onInputUnitChange}
+            />
+          </div>
+
+          {/* Right Panel - Results without title */}
+          <div id="results-panel">
+            <OutputPanel
+              results={businessComputed.displayResults}
+              focusedUnits={uiState.focusedUnits}
+              showAllUnits={uiState.showAllUnits}
+              customConversions={businessState.customConversions}
+              inputValue={uiState.inputValue}
+              onToggleFocus={handlers.onToggleFocus}
+              onCopyValue={handlers.onCopyValue}
+              onSwapUnits={handlers.onSwapUnits}
+              onToggleShowAll={handleToggleShowAll}
+              onCreateCustom={handleCreateCustom}
+            />
+          </div>
         </div>
 
         {/* Custom Conversion Dialog - Advanced conversion creation */}

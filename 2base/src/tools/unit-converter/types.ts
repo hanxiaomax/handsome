@@ -106,7 +106,6 @@ export interface InputPanelProps {
   category: string;
   onValueChange: (value: number) => void;
   onUnitChange: (unitId: string) => void;
-  onCategoryChange: (categoryId: string) => void;
 }
 
 export interface OutputPanelProps {
