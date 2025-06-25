@@ -114,11 +114,15 @@ export interface OutputPanelProps {
   showAllUnits: boolean;
   customConversions: CustomConversion[];
   inputValue: number;
+  inputUnit: string;
+  category: string;
   onToggleFocus: (unitId: string) => void;
   onCopyValue: (value: string) => void;
   onSwapUnits: (targetUnit: ConversionResult) => void;
   onToggleShowAll: () => void;
   onCreateCustom: () => void;
+  onInputValueChange: (value: number) => void;
+  onInputUnitChange: (unitId: string) => void;
 }
 
 export interface ResultRowProps {

@@ -28,9 +28,6 @@ export function CategorySelector({
 
   return (
     <div className="space-y-2">
-      <label htmlFor="category-select" className="text-sm font-medium">
-        Category
-      </label>
       <Combobox
         value={selectedCategory}
         onValueChange={onCategoryChange}

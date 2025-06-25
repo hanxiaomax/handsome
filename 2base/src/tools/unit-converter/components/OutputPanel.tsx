@@ -11,6 +11,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Copy,
   ChevronDown,
   ChevronUp,
@@ -18,18 +31,22 @@ import {
   Focus,
   Plus,
   Sparkles,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type {
   OutputPanelProps,
   ResultRowProps,
   CustomConversionRowProps,
 } from "../types";
+import { unitCategories } from "../lib/data";
 import { executeCustomFormula } from "../lib/utils";
 import { toast } from "sonner";
 
 /**
  * Output Panel Component
- * Displays conversion results in a clean table layout
+ * Displays conversion results with external input source above table
  */
 export function OutputPanel({
   results,
@@ -37,15 +54,31 @@ export function OutputPanel({
   showAllUnits,
   customConversions,
   inputValue,
+  inputUnit,
+  category,
   onToggleFocus,
   onCopyValue,
   onSwapUnits,
   onToggleShowAll,
   onCreateCustom,
+  onInputValueChange,
+  onInputUnitChange,
 }: OutputPanelProps) {
-  if (results.length === 0) {
-    return null;
-  }
+  const [open, setOpen] = useState(false);
+
+  // Get current category data
+  const selectedCategory = unitCategories.find((c) => c.id === category);
+
+  // Flatten all units for searching
+  const allUnits =
+    selectedCategory?.groups.flatMap((group) =>
+      group.units.map((unit) => ({
+        ...unit,
+        groupName: group.name,
+      }))
+    ) || [];
+
+  const selectedUnit = allUnits.find((u) => u.id === inputUnit);
 
   const displayResults = showAllUnits ? results : results.slice(0, 8);
   const displayCustomConversions = showAllUnits
@@ -54,9 +87,82 @@ export function OutputPanel({
 
   return (
     <div className="space-y-4">
+      {/* Input Source - Simple and direct without panel */}
+      <div className="relative mb-6">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium pointer-events-none">
+          Input
+        </div>
+        <input
+          type="number"
+          value={inputValue || ""}
+          onChange={(e) => onInputValueChange(parseFloat(e.target.value) || 0)}
+          className="w-full h-10 rounded-md border border-input bg-background pl-16 pr-30 text-right text-lg font-mono ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+          min={0}
+          placeholder="Enter value..."
+        />
+        <div className="absolute right-1 top-1 bottom-1 w-30">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                role="combobox"
+                aria-expanded={open}
+                className="h-8 w-full px-2 text-xs border-0 bg-transparent hover:bg-muted/50 justify-center"
+              >
+                {selectedUnit ? (
+                  <span className="font-medium text-primary truncate">
+                    {selectedUnit.symbol}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Unit</span>
+                )}
+                <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <Command>
+                <CommandInput placeholder="Search units..." />
+                <CommandList>
+                  <CommandEmpty>No unit found.</CommandEmpty>
+                  {selectedCategory?.groups.map((group) => (
+                    <CommandGroup key={group.id} heading={group.name}>
+                      {group.units.map((unit) => (
+                        <CommandItem
+                          key={unit.id}
+                          value={`${unit.name} ${unit.symbol} ${group.name}`}
+                          onSelect={() => {
+                            onInputUnitChange(unit.id);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              unit.id === selectedUnit?.id
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          <div className="flex items-center justify-between w-full">
+                            <span>{unit.name}</span>
+                            <span className="text-muted-foreground text-sm">
+                              {unit.symbol}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ))}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
       {/* Show All/Less Button - Only show if there are more than 8 results */}
       {results.length > 8 && (
-        <div className="flex items-center justify-center mb-4">
+        <div className="flex items-center justify-center">
           <Button variant="ghost" size="sm" onClick={onToggleShowAll}>
             {showAllUnits ? (
               <>
@@ -73,7 +179,7 @@ export function OutputPanel({
         </div>
       )}
 
-      {/* Results Table */}
+      {/* Conversion Results Table */}
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -122,41 +228,16 @@ export function OutputPanel({
                 </TableRow>
               )}
 
-            {/* Custom Conversion Creation Row - Styled like other conversion rows */}
+            {/* Custom Conversion Creation Row - Simplified single line */}
             <TableRow
               className="hover:bg-muted/50 cursor-pointer transition-colors border-t-2 border-dashed border-muted"
               onClick={onCreateCustom}
             >
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Plus className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <div className="font-medium text-sm text-muted-foreground">
-                      Create Custom Unit
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Add your own conversion
-                    </div>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell className="text-right">
-                <span className="text-muted-foreground text-sm">
-                  Click to create
-                </span>
-              </TableCell>
-              <TableCell className="text-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCreateCustom();
-                  }}
-                >
+              <TableCell colSpan={3} className="text-center py-3">
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
                   <Plus className="h-4 w-4" />
-                </Button>
+                  <span className="text-sm font-medium">Add Custom Unit</span>
+                </div>
               </TableCell>
             </TableRow>
           </TableBody>
@@ -202,7 +283,7 @@ export function OutputPanel({
 
 /**
  * Result Row Component
- * Displays a single conversion result in table row format
+ * Displays a single conversion result with symbol prioritized
  */
 function ResultRow({
   result,
@@ -217,13 +298,13 @@ function ResultRow({
         isFocused ? "bg-primary/5 border-l-2 border-l-primary" : ""
       }`}
     >
-      {/* Unit Information */}
+      {/* Unit Information - Symbol prioritized */}
       <TableCell>
         <div className="flex items-center gap-2">
           <div>
-            <div className="font-medium text-sm">{result.unit.name}</div>
-            <div className="text-xs text-muted-foreground">
-              {result.unit.symbol}
+            <div className="font-bold text-base">{result.unit.symbol}</div>
+            <div className="text-sm text-muted-foreground">
+              {result.unit.name}
             </div>
           </div>
           {isFocused && (
@@ -241,17 +322,16 @@ function ResultRow({
             className="font-mono font-semibold text-sm"
             title={result.formattedValue}
           >
+            {result.isApproximate && (
+              <span className="text-muted-foreground mr-1">~</span>
+            )}
             {result.formattedValue}
           </div>
           {result.scientificValue && (
             <div className="text-xs text-muted-foreground font-mono">
+              {result.isApproximate && <span className="mr-1">~</span>}
               {result.scientificValue}
             </div>
-          )}
-          {result.isApproximate && (
-            <Badge variant="outline" className="text-xs">
-              ~
-            </Badge>
           )}
         </div>
       </TableCell>
