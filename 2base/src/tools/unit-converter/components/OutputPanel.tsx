@@ -96,7 +96,7 @@ export function OutputPanel({
           type="number"
           value={inputValue || ""}
           onChange={(e) => onInputValueChange(parseFloat(e.target.value) || 0)}
-          className="w-full h-10 rounded-md border border-input bg-background pl-16 pr-30 text-right text-lg font-mono ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+          className="w-full h-10 rounded-md border border-input bg-background pl-16 pr-32 text-right text-lg font-mono ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
           min={0}
           placeholder="Enter value..."
         />
@@ -104,10 +104,10 @@ export function OutputPanel({
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
-                variant="ghost"
+                variant="default"
                 role="combobox"
                 aria-expanded={open}
-                className="h-8 w-full px-2 text-xs border-0 bg-transparent hover:bg-muted/50 justify-center"
+                className="h-8 w-full px-4 text-xs border-0 bg-transparent hover:bg-muted/50 justify-center"
               >
                 {selectedUnit ? (
                   <span className="font-medium text-primary truncate">
@@ -116,10 +116,10 @@ export function OutputPanel({
                 ) : (
                   <span className="text-muted-foreground">Unit</span>
                 )}
-                <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                <ChevronsUpDown className="ml-1 h-5 w-5 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
+            <PopoverContent className="w-60 p-0" align="end">
               <Command>
                 <CommandInput placeholder="Search units..." />
                 <CommandList>

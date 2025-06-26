@@ -52,7 +52,6 @@ export default function UnitConverter() {
           {/* Left Panel - Category Selection */}
           <div id="category-panel" className="lg:col-span-1">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Category</h3>
               <CategorySelector
                 selectedCategory={uiState.selectedCategory}
                 onCategoryChange={handlers.onCategoryChange}

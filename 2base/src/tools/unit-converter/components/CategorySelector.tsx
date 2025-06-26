@@ -1,14 +1,26 @@
-import { Combobox } from "./combobox";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { ChevronRight, ChevronDown, Search, Check } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import type { CategorySelectorProps } from "../types";
 
 /**
@@ -19,10 +31,11 @@ export function CategorySelector({
   selectedCategory,
   onCategoryChange,
 }: CategorySelectorProps) {
-  // State for collapsible sections
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(["common"])
-  );
+  // State for collapsible sections - only one can be expanded at a time
+  const [expandedSection, setExpandedSection] = useState<string>("common");
+
+  // State for search popover
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Category options for combobox
   const categoryOptions = [
@@ -102,15 +115,13 @@ export function CategorySelector({
     },
   ];
 
-  // Toggle section expansion
+  // Toggle section expansion - mutually exclusive
   const toggleSection = (sectionId: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(sectionId)) {
-      newExpanded.delete(sectionId);
+    if (expandedSection === sectionId) {
+      setExpandedSection(""); // Collapse current section
     } else {
-      newExpanded.add(sectionId);
+      setExpandedSection(sectionId); // Expand new section, auto-collapse others
     }
-    setExpandedSections(newExpanded);
   };
 
   // Handle category selection from vertical panel
@@ -118,36 +129,76 @@ export function CategorySelector({
     onCategoryChange(categoryId);
   };
 
+  // Handle category selection from search dropdown
+  const handleSearchSelect = (categoryId: string) => {
+    onCategoryChange(categoryId);
+    setSearchOpen(false);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Dropdown Selector - Current Style */}
-      <div id="category-dropdown" className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">
-          Quick Select
-        </h4>
-        <Combobox
-          value={selectedCategory}
-          onValueChange={onCategoryChange}
-          options={categoryOptions}
-          placeholder="Select category..."
-          className="w-full"
-        />
-      </div>
-
-      <Separator />
-
-      {/* Vertical Panel - Hierarchical Menu */}
+      {/* Vertical Panel - Hierarchical Menu with Mutual Exclusion */}
       <div id="category-vertical-panel" className="space-y-2">
-        <h4 className="text-sm font-medium text-muted-foreground">
-          Browse Categories
-        </h4>
+        {/* Header with Browse Categories title and Search button */}
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-medium text-muted-foreground">
+            Browse Categories
+          </h4>
+
+          {/* Search Icon Selector */}
+          <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={searchOpen}
+                className="w-8 h-8 p-0 rounded-full"
+              >
+                <Search className="h-4 w-4" />
+                <span className="sr-only">Search categories</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <Command>
+                <CommandInput placeholder="Search categories..." />
+                <CommandList>
+                  <CommandEmpty>No category found.</CommandEmpty>
+                  <CommandGroup>
+                    {categoryOptions.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        value={`${option.label} ${option.value}`}
+                        onSelect={() => handleSearchSelect(option.value)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedCategory === option.value
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        <div className="flex items-center justify-between w-full">
+                          <span>{option.label}</span>
+                          <span className="text-muted-foreground text-sm">
+                            {option.icon}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
 
         <ScrollArea className="h-[400px] w-full">
           <div className="space-y-1">
             {commonCategories.map((section) => (
               <Collapsible
                 key={section.id}
-                open={expandedSections.has(section.id)}
+                open={expandedSection === section.id}
                 onOpenChange={() => toggleSection(section.id)}
               >
                 {/* Section Header */}
@@ -157,7 +208,7 @@ export function CategorySelector({
                     className="w-full justify-between h-8 px-2 font-medium text-sm hover:bg-muted/50"
                   >
                     <span>{section.name}</span>
-                    {expandedSections.has(section.id) ? (
+                    {expandedSection === section.id ? (
                       <ChevronDown className="h-3 w-3" />
                     ) : (
                       <ChevronRight className="h-3 w-3" />
