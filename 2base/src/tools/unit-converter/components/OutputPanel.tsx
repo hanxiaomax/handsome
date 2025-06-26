@@ -101,10 +101,10 @@ export function OutputPanel({
                 variant="ghost"
                 role="combobox"
                 aria-expanded={open}
-                className="h-8 w-full px-4 text-sm border-0 bg-transparent hover:bg-muted/50 justify-center"
+                className="h-8  px-4 text-sm border-0 bg-transparent hover:bg-muted/30 "
               >
                 {selectedUnit ? (
-                  <span className="font-semibold text-primary truncate text-base">
+                  <span className="font-semibold text-primary truncate text-left">
                     {selectedUnit.symbol}
                   </span>
                 ) : (
@@ -170,7 +170,7 @@ export function OutputPanel({
                 </div>
               </TableHead>
               <TableHead className="text-right">Value</TableHead>
-              <TableHead className="w-[100px] text-center">Actions</TableHead>
+              <TableHead className="w-[80px] text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -280,12 +280,12 @@ function ResultRow({
 
       {/* Actions */}
       <TableCell>
-        <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggleFocus}
-            className="h-8 w-8 p-0"
+            className="h-6 w-6 p-0"
             title={isFocused ? "Remove focus" : "Focus unit"}
           >
             <Focus
@@ -298,7 +298,7 @@ function ResultRow({
             variant="ghost"
             size="sm"
             onClick={onSwapUnits}
-            className="h-8 w-8 p-0"
+            className="h-6 w-6 p-0"
             title="Swap units"
           >
             <ArrowRightLeft className="h-3 w-3" />
@@ -307,7 +307,7 @@ function ResultRow({
             variant="ghost"
             size="sm"
             onClick={onCopyValue}
-            className="h-8 w-8 p-0"
+            className="h-6 w-6 p-0"
             title="Copy value"
           >
             <Copy className="h-3 w-3" />
@@ -389,7 +389,7 @@ function CustomConversionRow({
             variant="ghost"
             size="sm"
             onClick={handleCopy}
-            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
             title="Copy value"
             disabled={result === null}
           >
