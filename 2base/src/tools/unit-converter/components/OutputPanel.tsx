@@ -104,17 +104,17 @@ export function OutputPanel({
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
-                variant="default"
+                variant="ghost"
                 role="combobox"
                 aria-expanded={open}
-                className="h-8 w-full px-4 text-xs border-0 bg-transparent hover:bg-muted/50 justify-center"
+                className="h-8 w-full px-4 text-sm border-0 bg-transparent hover:bg-muted/50 justify-center"
               >
                 {selectedUnit ? (
-                  <span className="font-medium text-primary truncate">
+                  <span className="font-semibold text-primary truncate text-base">
                     {selectedUnit.symbol}
                   </span>
                 ) : (
-                  <span className="text-muted-foreground">Unit</span>
+                  <span className="text-muted-foreground text-sm">Unit</span>
                 )}
                 <ChevronsUpDown className="ml-1 h-5 w-5 shrink-0 opacity-50" />
               </Button>

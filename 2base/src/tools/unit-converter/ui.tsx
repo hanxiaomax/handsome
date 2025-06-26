@@ -42,11 +42,6 @@ export default function UnitConverter() {
         id="unit-converter-main-container"
         className="w-full max-w-5xl mx-auto p-6"
       >
-        {/* Main Title */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold">Unit Converter</h2>
-        </div>
-
         {/* Main Layout - Category on left, Conversion area on right */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Panel - Category Selection */}
