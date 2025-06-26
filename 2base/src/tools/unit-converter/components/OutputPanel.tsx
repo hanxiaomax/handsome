@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -25,8 +24,6 @@ import {
 } from "@/components/ui/popover";
 import {
   Copy,
-  ChevronDown,
-  ChevronUp,
   ArrowRightLeft,
   Focus,
   Plus,
@@ -51,7 +48,6 @@ import { toast } from "sonner";
 export function OutputPanel({
   results,
   focusedUnits,
-  showAllUnits,
   customConversions,
   inputValue,
   inputUnit,
@@ -59,7 +55,6 @@ export function OutputPanel({
   onToggleFocus,
   onCopyValue,
   onSwapUnits,
-  onToggleShowAll,
   onCreateCustom,
   onInputValueChange,
   onInputUnitChange,
@@ -80,10 +75,9 @@ export function OutputPanel({
 
   const selectedUnit = allUnits.find((u) => u.id === inputUnit);
 
-  const displayResults = showAllUnits ? results : results.slice(0, 8);
-  const displayCustomConversions = showAllUnits
-    ? customConversions
-    : customConversions.slice(0, 2);
+  // Always show all results - no truncation
+  const displayResults = results;
+  const displayCustomConversions = customConversions;
 
   return (
     <div className="space-y-4">
@@ -119,7 +113,7 @@ export function OutputPanel({
                 <ChevronsUpDown className="ml-1 h-5 w-5 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-60 p-0" align="end">
+            <PopoverContent className="w-80 p-0" align="end">
               <Command>
                 <CommandInput placeholder="Search units..." />
                 <CommandList>
@@ -160,31 +154,21 @@ export function OutputPanel({
         </div>
       </div>
 
-      {/* Show All/Less Button - Only show if there are more than 8 results */}
-      {results.length > 8 && (
-        <div className="flex items-center justify-center">
-          <Button variant="ghost" size="sm" onClick={onToggleShowAll}>
-            {showAllUnits ? (
-              <>
-                <ChevronUp className="h-4 w-4 mr-1" />
-                Show Less
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4 mr-1" />
-                Show All ({results.length})
-              </>
-            )}
-          </Button>
-        </div>
-      )}
+      {/* Note: Showing all units by default - no "Show All/Less" button needed */}
 
       {/* Conversion Results Table */}
       <div className="border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[160px]">Unit</TableHead>
+              <TableHead className="w-[160px]">
+                <div className="flex items-center gap-2">
+                  <span>Unit</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {results.length + customConversions.length}
+                  </Badge>
+                </div>
+              </TableHead>
               <TableHead className="text-right">Value</TableHead>
               <TableHead className="w-[100px] text-center">Actions</TableHead>
             </TableRow>
@@ -211,22 +195,7 @@ export function OutputPanel({
               />
             ))}
 
-            {/* Show more row when not expanded */}
-            {!showAllUnits &&
-              (results.length > 8 || customConversions.length > 2) && (
-                <TableRow className="hover:bg-muted/30">
-                  <TableCell colSpan={3} className="text-center py-4">
-                    <Button variant="ghost" size="sm" onClick={onToggleShowAll}>
-                      <ChevronDown className="h-4 w-4 mr-1" />
-                      Show{" "}
-                      {results.length -
-                        8 +
-                        Math.max(0, customConversions.length - 2)}{" "}
-                      more units
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )}
+            {/* All units are now shown by default - no "Show more" row needed */}
 
             {/* Custom Conversion Creation Row - Simplified single line */}
             <TableRow
@@ -244,46 +213,16 @@ export function OutputPanel({
         </Table>
       </div>
 
-      {/* Custom conversions section when expanded */}
-      {showAllUnits &&
-        customConversions.length > displayCustomConversions.length && (
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              Additional Custom Conversions
-            </Label>
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[160px]">Custom Unit</TableHead>
-                    <TableHead className="text-right">Value</TableHead>
-                    <TableHead className="w-[100px] text-center">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customConversions
-                    .slice(displayCustomConversions.length)
-                    .map((conversion) => (
-                      <CustomConversionRow
-                        key={conversion.id}
-                        conversion={conversion}
-                        inputValue={inputValue}
-                      />
-                    ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
+      {/* Custom conversions section - always shown if any exist
+          Note: Since displayCustomConversions now equals customConversions, 
+          this section should not be needed */}
     </div>
   );
 }
 
 /**
  * Result Row Component
- * Displays a single conversion result with symbol prioritized
+ * Displays a single conversion result with unit name on left, value with symbol on right
  */
 function ResultRow({
   result,
@@ -298,39 +237,42 @@ function ResultRow({
         isFocused ? "bg-primary/5 border-l-2 border-l-primary" : ""
       }`}
     >
-      {/* Unit Information - Symbol prioritized */}
+      {/* Unit Information - Name prioritized */}
       <TableCell>
         <div className="flex items-center gap-2">
           <div>
-            <div className="font-bold text-base">{result.unit.symbol}</div>
+            <div className="font-medium text-base">{result.unit.name}</div>
             <div className="text-sm text-muted-foreground">
-              {result.unit.name}
+              {result.unit.description}
             </div>
           </div>
-          {isFocused && (
-            <Badge variant="secondary" className="text-xs">
-              Focused
-            </Badge>
-          )}
         </div>
       </TableCell>
 
-      {/* Value Display */}
+      {/* Value Display with Unit Symbol */}
       <TableCell className="text-right">
         <div className="space-y-1">
           <div
-            className="font-mono font-semibold text-sm"
+            className="font-mono font-semibold text-sm flex items-center justify-end gap-2"
             title={result.formattedValue}
           >
-            {result.isApproximate && (
-              <span className="text-muted-foreground mr-1">~</span>
-            )}
-            {result.formattedValue}
+            <span>
+              {result.isApproximate && (
+                <span className="text-muted-foreground mr-1">~</span>
+              )}
+              {result.formattedValue}
+            </span>
+            <span className="font-bold text-primary">{result.unit.symbol}</span>
           </div>
           {result.scientificValue && (
-            <div className="text-xs text-muted-foreground font-mono">
-              {result.isApproximate && <span className="mr-1">~</span>}
-              {result.scientificValue}
+            <div className="text-xs text-muted-foreground font-mono flex items-center justify-end gap-2">
+              <span>
+                {result.isApproximate && <span className="mr-1">~</span>}
+                {result.scientificValue}
+              </span>
+              <span className="font-bold text-primary">
+                {result.unit.symbol}
+              </span>
             </div>
           )}
         </div>
@@ -416,23 +358,23 @@ function CustomConversionRow({
               {conversion.name}
             </div>
             <div className="text-xs text-muted-foreground">
-              {conversion.symbol}
+              Custom conversion
             </div>
           </div>
-          <Badge variant="outline" className="text-xs">
-            Custom
-          </Badge>
         </div>
       </TableCell>
 
-      {/* Value Display */}
+      {/* Value Display with Unit Symbol */}
       <TableCell className="text-right">
         <div className="space-y-1">
           {error ? (
             <div className="text-xs text-destructive">Error</div>
           ) : result !== null ? (
-            <div className="font-mono font-semibold text-sm">
-              {result.toFixed(3)}
+            <div className="font-mono font-semibold text-sm flex items-center justify-end gap-2">
+              <span>{result.toFixed(3)}</span>
+              <span className="font-bold text-primary">
+                {conversion.symbol}
+              </span>
             </div>
           ) : (
             <div className="text-xs text-muted-foreground">Calculating...</div>

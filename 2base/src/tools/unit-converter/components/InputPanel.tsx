@@ -72,16 +72,16 @@ export function InputPanel({
                 variant="ghost"
                 role="combobox"
                 aria-expanded={open}
-                className="h-10 px-3 text-sm border-0 bg-transparent hover:bg-muted/50"
+                className="h-10 px-3 text-sm border-0 bg-transparent hover:bg-muted/50 justify-start"
               >
                 {selectedUnit ? (
-                  <span className="font-medium text-primary">
+                  <span className="font-medium text-primary text-left">
                     {selectedUnit.symbol}
                   </span>
                 ) : (
-                  <span className="text-muted-foreground">Unit</span>
+                  <span className="text-muted-foreground text-left">Unit</span>
                 )}
-                <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                <ChevronsUpDown className="ml-auto h-3 w-3 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="end">
@@ -108,8 +108,8 @@ export function InputPanel({
                                 : "opacity-0"
                             )}
                           />
-                          <div className="flex items-center justify-between w-full">
-                            <span>{unit.name}</span>
+                          <div className="flex items-center justify-between w-full text-left">
+                            <span className="text-left">{unit.name}</span>
                             <span className="text-muted-foreground text-sm">
                               {unit.symbol}
                             </span>

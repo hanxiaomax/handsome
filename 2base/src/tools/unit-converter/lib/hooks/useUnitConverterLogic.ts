@@ -152,10 +152,8 @@ export function useUnitConverterLogic(
             )
           : businessState.conversionInfo,
 
-      // Filter results based on display settings
-      displayResults: uiState.showAllUnits
-        ? businessState.results
-        : businessState.results.slice(0, 6),
+      // Always display all results - no filtering
+      displayResults: businessState.results,
 
       // Category options for combobox
       categoryOptions: unitCategories.map((category) => ({
@@ -231,14 +229,46 @@ export function useUnitConverterLogic(
           targetUnit.unit.id
         );
 
+        // Update the UI state
         uiActions.updateState({
           inputUnit: targetUnit.unit.id,
           inputValue: convertedValue,
         });
 
+        // Immediately trigger new conversion with the swapped units
+        try {
+          const newResults = engine.current.convertToAll(
+            convertedValue,
+            targetUnit.unit.id,
+            uiState.selectedCategory
+          );
+          const sortedResults = sortUnitsByRelevance(
+            newResults,
+            uiState.focusedUnits
+          );
+
+          setBusinessState((prev) => ({
+            ...prev,
+            results: sortedResults,
+            isProcessing: false,
+          }));
+        } catch (error) {
+          setBusinessState((prev) => ({
+            ...prev,
+            error: error instanceof Error ? error.message : "Conversion failed",
+            isProcessing: false,
+          }));
+        }
+
         toast.success(`Swapped to ${targetUnit.unit.name}`);
       },
-      [uiState.inputValue, uiState.inputUnit, uiActions]
+      [
+        uiState.inputValue,
+        uiState.inputUnit,
+        uiState.selectedCategory,
+        uiState.focusedUnits,
+        uiActions,
+      ]
     ),
 
     onCalculatorValue: useCallback(

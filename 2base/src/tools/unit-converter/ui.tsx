@@ -30,11 +30,6 @@ export default function UnitConverter() {
     setCustomDialogOpen(true);
   };
 
-  // Handle toggle show all units
-  const handleToggleShowAll = () => {
-    uiActions.setShowAllUnits(!uiState.showAllUnits);
-  };
-
   return (
     <ToolLayout toolName={toolInfo.name} toolDescription={toolInfo.description}>
       {/* Unit Converter Main Container - New layout with category on left */}
@@ -59,7 +54,6 @@ export default function UnitConverter() {
             <OutputPanel
               results={businessComputed.displayResults}
               focusedUnits={uiState.focusedUnits}
-              showAllUnits={uiState.showAllUnits}
               customConversions={businessState.customConversions}
               inputValue={uiState.inputValue}
               inputUnit={uiState.inputUnit}
@@ -67,7 +61,6 @@ export default function UnitConverter() {
               onToggleFocus={handlers.onToggleFocus}
               onCopyValue={handlers.onCopyValue}
               onSwapUnits={handlers.onSwapUnits}
-              onToggleShowAll={handleToggleShowAll}
               onCreateCustom={handleCreateCustom}
               onInputValueChange={handlers.onInputValueChange}
               onInputUnitChange={handlers.onInputUnitChange}

@@ -111,7 +111,6 @@ export interface InputPanelProps {
 export interface OutputPanelProps {
   results: ConversionResult[];
   focusedUnits: string[];
-  showAllUnits: boolean;
   customConversions: CustomConversion[];
   inputValue: number;
   inputUnit: string;
@@ -119,7 +118,6 @@ export interface OutputPanelProps {
   onToggleFocus: (unitId: string) => void;
   onCopyValue: (value: string) => void;
   onSwapUnits: (targetUnit: ConversionResult) => void;
-  onToggleShowAll: () => void;
   onCreateCustom: () => void;
   onInputValueChange: (value: number) => void;
   onInputUnitChange: (unitId: string) => void;

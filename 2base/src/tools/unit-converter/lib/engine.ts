@@ -143,17 +143,13 @@ export class UnitConverterEngine {
     const precision = options.precision ?? unit.precision;
     const format = options.format ?? "standard";
 
-    // Use scientific notation for very large or small numbers
-    if (
-      format === "scientific" ||
-      unit.scientificNotation ||
-      absValue >= 1e6 ||
-      (absValue < 0.001 && absValue > 0)
-    ) {
+    // Use scientific notation only when explicitly requested
+    // formattedValue should always show regular format with locale formatting
+    if (format === "scientific") {
       return value.toExponential(precision);
     }
 
-    // Use regular formatting with appropriate precision
+    // Use regular formatting with appropriate precision and locale support
     if (absValue >= 1000) {
       return value.toLocaleString("en-US", {
         minimumFractionDigits: 0,
