@@ -1,22 +1,19 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { ToolLayout } from "@/components/layout/tool-layout";
+import { useToolControls } from "@/hooks/use-tool-controls";
 import { AdvancedBitwiseVisualization } from "./components/AdvancedBitwiseVisualization";
 
 import { toolInfo } from "./toolInfo";
 import {
-  useMinimizedToolsActions,
   useIsToolMinimized,
   useToolState,
+  useMinimizedToolsActions,
 } from "@/stores/minimized-tools-store";
-import { useFavoriteActions, useIsFavorite } from "@/stores/favorites-store";
 import type { Base, BitWidth } from "./types";
 
 export default function ProgrammerCalculator() {
-  const navigate = useNavigate();
-
   // Current expression and result for synchronization
   const [currentExpression, setCurrentExpression] = useState("");
   const [currentResult, setCurrentResult] = useState<number | null>(null);
@@ -25,12 +22,21 @@ export default function ProgrammerCalculator() {
   const [calculatorBase, setCalculatorBase] = useState<Base>(10);
   const [calculatorBitWidth, setCalculatorBitWidth] = useState<BitWidth>(32);
 
-  // Store hooks for minimize and favorite functionality
-  const { minimizeTool, restoreTool } = useMinimizedToolsActions();
-  const { toggleFavorite } = useFavoriteActions();
-  const isFavorite = useIsFavorite(toolInfo.id);
+  // Store hooks for tool restoration
   const isMinimized = useIsToolMinimized(toolInfo.id);
   const savedState = useToolState(toolInfo.id);
+  const { restoreTool } = useMinimizedToolsActions();
+
+  // Tool controls for minimize and favorite functionality
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    state: {
+      currentExpression,
+      currentResult,
+      calculatorBase,
+      calculatorBitWidth,
+    },
+  });
 
   // Handle tool restoration from minimized state
   useEffect(() => {
@@ -63,39 +69,8 @@ export default function ProgrammerCalculator() {
     []
   );
 
-  // Handle minimize tool
-  const handleMinimize = useCallback(() => {
-    const toolState = {
-      currentExpression,
-      currentResult,
-      calculatorBase,
-      calculatorBitWidth,
-    };
-    minimizeTool(toolInfo, toolState);
-    // Navigate to tools page after minimizing
-    navigate("/tools");
-  }, [
-    currentExpression,
-    currentResult,
-    calculatorBase,
-    calculatorBitWidth,
-    minimizeTool,
-    navigate,
-  ]);
-
-  // Handle toggle favorite
-  const handleToggleFavorite = useCallback(() => {
-    toggleFavorite(toolInfo.id);
-  }, [toggleFavorite]);
-
   return (
-    <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
-      onMinimize={handleMinimize}
-      onToggleFavorite={handleToggleFavorite}
-      isFavorite={isFavorite}
-    >
+    <ToolLayout {...toolLayoutProps}>
       <div className="w-full p-6 space-y-6">
         {/* Main Content Layout */}
         <div className="flex justify-center">

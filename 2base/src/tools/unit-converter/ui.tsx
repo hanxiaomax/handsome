@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ToolLayout } from "@/components/layout/tool-layout";
+import { useToolControls } from "@/hooks/use-tool-controls";
 import { toolInfo } from "./toolInfo";
 
 // Import new architecture components and hooks
@@ -25,13 +26,25 @@ export default function UnitConverter() {
   // Local state for custom conversion dialog
   const [customDialogOpen, setCustomDialogOpen] = useState(false);
 
+  // Tool controls for minimize and favorite functionality
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    state: {
+      selectedCategory: uiState.selectedCategory,
+      inputValue: uiState.inputValue,
+      inputUnit: uiState.inputUnit,
+      focusedUnits: uiState.focusedUnits,
+      customConversions: businessState.customConversions,
+    },
+  });
+
   // Handle create custom conversion
   const handleCreateCustom = () => {
     setCustomDialogOpen(true);
   };
 
   return (
-    <ToolLayout toolName={toolInfo.name} toolDescription={toolInfo.description}>
+    <ToolLayout {...toolLayoutProps}>
       {/* Unit Converter Main Container - New layout with category on left */}
       <div
         id="unit-converter-main-container"
