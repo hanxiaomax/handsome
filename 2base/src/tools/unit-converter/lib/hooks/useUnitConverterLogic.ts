@@ -173,8 +173,39 @@ export function useUnitConverterLogic(
         const firstUnit = category?.groups[0]?.units[0];
 
         if (firstUnit) {
+          // 确保状态原子性更新
           uiActions.initializeForCategory(categoryId, firstUnit.id);
-          // Results will be updated by useEffect
+
+          // 立即触发转换，确保状态同步
+          setTimeout(() => {
+            try {
+              const results = engine.current.convertToAll(
+                1,
+                firstUnit.id,
+                categoryId
+              );
+              const sortedResults = sortUnitsByRelevance(results, []);
+
+              setBusinessState((prev) => ({
+                ...prev,
+                results: sortedResults,
+                isProcessing: false,
+                error: null,
+              }));
+            } catch (error) {
+              console.error(
+                `Conversion failed for category ${categoryId}:`,
+                error
+              );
+              setBusinessState((prev) => ({
+                ...prev,
+                results: [],
+                isProcessing: false,
+                error:
+                  error instanceof Error ? error.message : "Conversion failed",
+              }));
+            }
+          }, 0);
         }
       },
       [uiActions]
