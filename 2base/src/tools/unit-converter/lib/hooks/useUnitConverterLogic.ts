@@ -1,390 +1,170 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { toast } from "sonner";
-import type {
-  UnitConverterUIState,
-  UnitConverterBusinessState,
-  ConversionResult,
-  CustomConversion,
-  UnitConverterEventHandlers,
-} from "../../types";
-import type { UnitConverterStateActions } from "./useUnitConverterState";
-import { UnitConverterEngine } from "../engine";
-import { unitCategories } from "../data";
-import {
-  debounce,
-  sortUnitsByRelevance,
-  executeCustomFormula,
-  copyToClipboard,
-} from "../utils";
+import { useRef, useCallback } from 'react';
+import { UnitConverter } from '../graph-engine';
+import { createUnitConverter, categoryMapping, type CategoryId } from '../config';
+import type { UnitConverterState, ConversionResult } from '../../types';
 
-/**
- * Initial business state for the Unit Converter
- */
-const initialBusinessState: UnitConverterBusinessState = {
-  isProcessing: false,
-  results: [],
-  conversionInfo: {
-    formula: "",
-    explanation: "",
-    precision: "",
-  },
-  customConversions: [],
-  error: null,
-};
-
-/**
- * Unit Converter Business Logic Hook
- * Handles conversion logic, data processing, and side effects
- */
 export function useUnitConverterLogic(
-  uiState: UnitConverterUIState,
-  uiActions: UnitConverterStateActions
+  state: UnitConverterState,
+  setState: React.Dispatch<React.SetStateAction<UnitConverterState>>
 ) {
-  // Core engine instance
-  const engine = useRef(new UnitConverterEngine(unitCategories));
+  const engine = useRef<UnitConverter>(createUnitConverter());
 
-  // Business state
-  const [businessState, setBusinessState] =
-    useState<UnitConverterBusinessState>(initialBusinessState);
-
-  // Debounced conversion function
-  const debouncedConvert = useMemo(
-    () =>
-      debounce((value: number, unitId: string, categoryId: string) => {
-        if (value && unitId && categoryId) {
-          setBusinessState((prev) => ({
-            ...prev,
-            isProcessing: true,
-            error: null,
-          }));
-
-          try {
-            const results = engine.current.convertToAll(
-              value,
-              unitId,
-              categoryId
-            );
-            const sortedResults = sortUnitsByRelevance(
-              results,
-              uiState.focusedUnits
-            );
-
-            setBusinessState((prev) => ({
-              ...prev,
-              results: sortedResults,
-              isProcessing: false,
-            }));
-          } catch (error) {
-            setBusinessState((prev) => ({
-              ...prev,
-              error:
-                error instanceof Error ? error.message : "Conversion failed",
-              isProcessing: false,
-            }));
-          }
-        }
-      }, 150),
-    [uiState.focusedUnits]
-  );
-
-  // Initialize conversions on component mount
-  useEffect(() => {
-    const initialResults = engine.current.convertToAll(
-      uiState.inputValue,
-      uiState.inputUnit,
-      uiState.selectedCategory
-    );
-    setBusinessState((prev) => ({ ...prev, results: initialResults }));
+  const formatValue = useCallback((value: number): string => {
+    if (value === 0) return '0';
+    if (Math.abs(value) >= 1e15) return value.toExponential(6);
+    if (Math.abs(value) >= 1e6) return value.toExponential(6);
+    if (Math.abs(value) >= 1000) return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+    if (Math.abs(value) >= 1) return value.toFixed(6).replace(/\.?0+$/, '');
+    if (Math.abs(value) >= 0.001) return value.toFixed(6).replace(/\.?0+$/, '');
+    return value.toExponential(6);
   }, []);
 
-  // Re-run conversion when UI state changes
-  useEffect(() => {
-    debouncedConvert(
-      uiState.inputValue,
-      uiState.inputUnit,
-      uiState.selectedCategory
-    );
-  }, [
-    uiState.inputValue,
-    uiState.inputUnit,
-    uiState.selectedCategory,
-    debouncedConvert,
-  ]);
-
-  // Re-sort results when focused units change
-  useEffect(() => {
-    if (businessState.results.length > 0) {
-      const sortedResults = sortUnitsByRelevance(
-        businessState.results,
-        uiState.focusedUnits
-      );
-      setBusinessState((prev) => ({ ...prev, results: sortedResults }));
-    }
-  }, [uiState.focusedUnits, businessState.results]);
-
-  // Computed properties
-  const computed = useMemo(
-    () => ({
-      // Current category data
-      selectedCategory: unitCategories.find(
-        (c) => c.id === uiState.selectedCategory
-      ),
-
-      // Available units for current category
-      availableUnits:
-        unitCategories
-          .find((c) => c.id === uiState.selectedCategory)
-          ?.groups.flatMap((g) => g.units) || [],
-
-      // Check if conversion is ready
-      canConvert:
-        uiState.inputValue > 0 && uiState.inputUnit && uiState.selectedCategory,
-
-      // Check if there are results
-      hasResults: businessState.results.length > 0,
-
-      // Get conversion info for current conversion
-      currentConversionInfo:
-        businessState.results.length > 0
-          ? engine.current.getConversionInfo(
-              uiState.inputUnit,
-              businessState.results[0]?.unit.id || ""
-            )
-          : businessState.conversionInfo,
-
-      // Always display all results - no filtering
-      displayResults: businessState.results,
-
-      // Category options for combobox
-      categoryOptions: unitCategories.map((category) => ({
-        value: category.id,
-        label: category.name,
-        icon: category.icon,
-      })),
-    }),
-    [uiState, businessState]
-  );
-
-  // Event handlers
-  const handlers: UnitConverterEventHandlers = {
-    onCategoryChange: useCallback(
-      (categoryId: string) => {
-        console.log("🔍 Category change requested:", categoryId);
-
-        const category = unitCategories.find((c) => c.id === categoryId);
-        console.log("🔍 Found category:", category);
-
-        const firstUnit = category?.groups[0]?.units[0];
-        console.log("🔍 First unit:", firstUnit);
-
-        if (firstUnit) {
-          // 同步更新状态
-          uiActions.initializeForCategory(categoryId, firstUnit.id);
-          console.log("🔍 State initialized for category");
-
-          // 立即触发转换，无需setTimeout
-          try {
-            const results = engine.current.convertToAll(
-              1,
-              firstUnit.id,
-              categoryId
-            );
-            console.log("🔍 Conversion results:", results);
-
-            const sortedResults = sortUnitsByRelevance(results, []);
-
-            setBusinessState((prev) => ({
-              ...prev,
-              results: sortedResults,
-              isProcessing: false,
-              error: null,
-            }));
-
-            console.log("✅ Conversion completed successfully");
-          } catch (error) {
-            console.error("❌ Conversion failed:", error);
-            setBusinessState((prev) => ({
-              ...prev,
-              results: [],
-              isProcessing: false,
-              error:
-                error instanceof Error ? error.message : "Conversion failed",
-            }));
-          }
-        } else {
-          console.error("❌ No first unit found for category:", categoryId);
-        }
-      },
-      [uiActions]
-    ),
-
-    onInputValueChange: useCallback(
-      (value: number) => {
-        uiActions.setInputValue(value);
-        // Conversion will be triggered by useEffect
-      },
-      [uiActions]
-    ),
-
-    onInputUnitChange: useCallback(
-      (unitId: string) => {
-        uiActions.setInputUnit(unitId);
-        // Conversion will be triggered by useEffect
-      },
-      [uiActions]
-    ),
-
-    onToggleFocus: useCallback(
-      (unitId: string) => {
-        uiActions.toggleFocusedUnit(unitId);
-        const unitName = businessState.results.find((r) => r.unit.id === unitId)
-          ?.unit.name;
-        const isFocused = uiState.focusedUnits.includes(unitId);
-
-        toast.success(
-          isFocused
-            ? `Removed ${unitName} from focus`
-            : `Focused on ${unitName}`
-        );
-      },
-      [uiActions, businessState.results, uiState.focusedUnits]
-    ),
-
-    onCopyValue: useCallback(async (value: string) => {
-      const success = await copyToClipboard(value);
-      if (success) {
-        toast.success("Value copied to clipboard");
-      } else {
-        toast.error("Failed to copy value");
+  const handleCategoryChange = useCallback((categoryId: CategoryId) => {
+    try {
+      const units = engine.current.getUnitsInDimension(categoryId);
+      
+      if (units.length === 0) {
+        setState(prev => ({
+          ...prev,
+          selectedCategory: categoryId,
+          availableUnits: [],
+          results: [],
+          error: 'No units available for this category'
+        }));
+        return;
       }
-    }, []),
 
-    onSwapUnits: useCallback(
-      (targetUnit: ConversionResult) => {
-        const convertedValue = engine.current.convert(
-          uiState.inputValue,
-          uiState.inputUnit,
-          targetUnit.unit.id
-        );
+      const firstUnit = engine.current.getUnit(units[0]);
+      if (!firstUnit) {
+        setState(prev => ({
+          ...prev,
+          selectedCategory: categoryId,
+          availableUnits: [],
+          results: [],
+          error: 'Failed to load units'
+        }));
+        return;
+      }
 
-        // Update the UI state
-        uiActions.updateState({
-          inputUnit: targetUnit.unit.id,
-          inputValue: convertedValue,
-        });
+      const unitList = units.map(unitName => {
+        const unit = engine.current.getUnit(unitName)!;
+        return {
+          id: unit.name,
+          name: unit.description,
+          symbol: unit.symbol
+        };
+      });
 
-        // Immediately trigger new conversion with the swapped units
-        try {
-          const newResults = engine.current.convertToAll(
-            convertedValue,
-            targetUnit.unit.id,
-            uiState.selectedCategory
-          );
-          const sortedResults = sortUnitsByRelevance(
-            newResults,
-            uiState.focusedUnits
-          );
-
-          setBusinessState((prev) => ({
-            ...prev,
-            results: sortedResults,
-            isProcessing: false,
-          }));
-        } catch (error) {
-          setBusinessState((prev) => ({
-            ...prev,
-            error: error instanceof Error ? error.message : "Conversion failed",
-            isProcessing: false,
-          }));
-        }
-
-        toast.success(`Swapped to ${targetUnit.unit.name}`);
-      },
-      [
-        uiState.inputValue,
-        uiState.inputUnit,
-        uiState.selectedCategory,
-        uiState.focusedUnits,
-        uiActions,
-      ]
-    ),
-
-    onCalculatorValue: useCallback(
-      (value: number) => {
-        uiActions.setInputValue(value);
-        toast.success(`Value set to ${value}`);
-      },
-      [uiActions]
-    ),
-
-    onCreateCustomConversion: useCallback(() => {
-      // This will be handled by the parent component
-      console.log("Create custom conversion requested");
-    }, []),
-
-    onSaveCustomConversion: useCallback((conversion: CustomConversion) => {
-      setBusinessState((prev) => ({
-        ...prev,
-        customConversions: [...prev.customConversions, conversion],
+      const results = engine.current.convertToAll(1, firstUnit.name);
+      const sortedResults: ConversionResult[] = results.map(result => ({
+        unit: {
+          id: result.unit,
+          name: result.description,
+          symbol: result.symbol,
+          baseRatio: 1,
+          isBaseUnit: false,
+          precision: 6,
+          description: result.description,
+          context: ''
+        },
+        value: result.value,
+        formattedValue: formatValue(result.value),
+        isApproximate: false
       }));
-      toast.success(`Custom conversion "${conversion.name}" added!`);
-    }, []),
-  };
 
-  // Additional utility functions
-  const utils = {
-    /**
-     * Execute custom conversion
-     */
-    executeCustomConversion: useCallback(
-      (conversion: CustomConversion, inputValue: number) => {
-        return executeCustomFormula(
-          conversion.formula,
-          inputValue,
-          conversion.isJavaScript
-        );
-      },
-      []
-    ),
+      setState(prev => ({
+        ...prev,
+        selectedCategory: categoryId,
+        availableUnits: unitList,
+        inputUnit: firstUnit.name,
+        results: sortedResults,
+        isProcessing: false,
+        error: null
+      }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        selectedCategory: categoryId,
+        availableUnits: [],
+        results: [],
+        error: error instanceof Error ? error.message : 'Failed to change category'
+      }));
+    }
+  }, [setState, formatValue]);
 
-    /**
-     * Search units in current category
-     */
-    searchUnits: useCallback(
-      (query: string) => {
-        return engine.current.searchUnits(query, uiState.selectedCategory);
-      },
-      [uiState.selectedCategory]
-    ),
+  const handleInputChange = useCallback((value: string, unitId?: string) => {
+    const numericValue = parseFloat(value) || 0;
+    const currentUnit = unitId || state.inputUnit;
 
-    /**
-     * Get unit by ID
-     */
-    getUnit: useCallback((unitId: string) => {
-      return engine.current.getUnit(unitId);
-    }, []),
+    setState(prev => ({ ...prev, inputValue: value, isProcessing: true }));
 
-    /**
-     * Clear all conversions and reset
-     */
-    clearAll: useCallback(() => {
-      uiActions.resetState();
-      setBusinessState(initialBusinessState);
-      toast.success("Cleared all conversions");
-    }, [uiActions]),
-  };
+    try {
+      if (!currentUnit) {
+        setState(prev => ({
+          ...prev,
+          results: [],
+          isProcessing: false,
+          error: 'No input unit selected'
+        }));
+        return;
+      }
+
+      const results = engine.current.convertToAll(numericValue, currentUnit);
+      const sortedResults: ConversionResult[] = results.map(result => ({
+        unit: {
+          id: result.unit,
+          name: result.description,
+          symbol: result.symbol,
+          baseRatio: 1,
+          isBaseUnit: false,
+          precision: 6,
+          description: result.description,
+          context: ''
+        },
+        value: result.value,
+        formattedValue: formatValue(result.value),
+        isApproximate: false
+      }));
+
+      setState(prev => ({
+        ...prev,
+        inputUnit: currentUnit,
+        results: sortedResults,
+        isProcessing: false,
+        error: null
+      }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        results: [],
+        isProcessing: false,
+        error: error instanceof Error ? error.message : 'Conversion failed'
+      }));
+    }
+  }, [state.inputUnit, setState, formatValue]);
+
+  const handleUnitChange = useCallback((unitId: string) => {
+    handleInputChange(state.inputValue, unitId);
+  }, [state.inputValue, handleInputChange]);
+
+  const getCategories = useCallback(() => {
+    return Object.entries(categoryMapping).map(([id, name]) => ({
+      id: id as CategoryId,
+      name,
+      description: `Convert ${name.toLowerCase()} units`
+    }));
+  }, []);
+
+  const convertValue = useCallback((value: number, fromUnit: string, toUnit: string): number => {
+    return engine.current.convert(value, fromUnit, toUnit);
+  }, []);
 
   return {
-    businessState,
-    computed,
-    handlers,
-    utils,
+    handleCategoryChange,
+    handleInputChange,
+    handleUnitChange,
+    getCategories,
+    convertValue,
+    formatValue
   };
 }
-
-export type UnitConverterLogicHandlers = ReturnType<
-  typeof useUnitConverterLogic
->["handlers"];
-export type UnitConverterLogicUtils = ReturnType<
-  typeof useUnitConverterLogic
->["utils"];

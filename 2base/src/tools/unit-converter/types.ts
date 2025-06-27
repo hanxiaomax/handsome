@@ -138,6 +138,17 @@ export interface CustomConversionRowProps {
   inputValue: number;
 }
 
+// New simplified state type for graph engine
+export interface UnitConverterState {
+  selectedCategory: string;
+  inputValue: string;
+  inputUnit: string;
+  availableUnits: Array<{ id: string; name: string; symbol: string }>;
+  results: ConversionResult[];
+  isProcessing: boolean;
+  error: string | null;
+}
+
 // Legacy compatibility type (will be removed after refactoring)
 export interface ConverterState extends UnitConverterUIState {
   results: ConversionResult[];

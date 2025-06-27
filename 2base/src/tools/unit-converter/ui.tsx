@@ -1,94 +1,50 @@
 "use client";
 
-import { useState } from "react";
 import { ToolLayout } from "@/components/layout/tool-layout";
+import { CategorySelector } from "./components/CategorySelector";
+import { OutputPanel } from "./components/OutputPanel";
 import { useToolControls } from "@/hooks/use-tool-controls";
-import { toolInfo } from "./toolInfo";
-
-// Import new architecture components and hooks
 import { useUnitConverterState } from "./lib/hooks/useUnitConverterState";
 import { useUnitConverterLogic } from "./lib/hooks/useUnitConverterLogic";
-import { OutputPanel } from "./components/OutputPanel";
-import { CategorySelector } from "./components/CategorySelector";
-import { CustomConversionDialog } from "./components/custom-conversion-dialog";
+import { toolInfo } from "./toolInfo";
+import type { CategoryId } from "./lib/config";
 
 export default function UnitConverter() {
-  // Initialize state management
-  const { state: uiState, actions: uiActions } = useUnitConverterState();
-
-  // Initialize business logic
-  const {
-    businessState,
-    computed: businessComputed,
-    handlers,
-  } = useUnitConverterLogic(uiState, uiActions);
-
-  // Local state for custom conversion dialog
-  const [customDialogOpen, setCustomDialogOpen] = useState(false);
-
-  // Tool controls for minimize and favorite functionality
-  const { toolLayoutProps } = useToolControls({
-    toolInfo,
-    state: {
-      selectedCategory: uiState.selectedCategory,
-      inputValue: uiState.inputValue,
-      inputUnit: uiState.inputUnit,
-      focusedUnits: uiState.focusedUnits,
-      customConversions: businessState.customConversions,
-    },
-  });
-
-  // Handle create custom conversion
-  const handleCreateCustom = () => {
-    setCustomDialogOpen(true);
-  };
+  const { toolLayoutProps } = useToolControls({ toolInfo });
+  const { state, setState } = useUnitConverterState();
+  const logic = useUnitConverterLogic(state, setState);
 
   return (
     <ToolLayout {...toolLayoutProps}>
-      {/* Unit Converter Main Container - New layout with category on left */}
-      <div
-        id="unit-converter-main-container"
-        className="w-full max-w-5xl mx-auto p-6"
-      >
-        {/* Main Layout - Category on left, Conversion area on right */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      {/* Main Tool Container - Left-Right Layout */}
+      <div className="w-full max-w-7xl mx-auto p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
           {/* Left Panel - Category Selection */}
           <div id="category-panel" className="lg:col-span-1">
-            <div className="space-y-4">
-              <CategorySelector
-                selectedCategory={uiState.selectedCategory}
-                onCategoryChange={handlers.onCategoryChange}
-              />
-            </div>
+            <CategorySelector
+              selectedCategory={state.selectedCategory}
+              onCategoryChange={(categoryId: string) =>
+                logic.handleCategoryChange(categoryId as CategoryId)
+              }
+            />
           </div>
 
-          {/* Right Panel - Conversion Area */}
-          <div id="conversion-area" className="lg:col-span-3">
+          {/* Right Panel - Input and Conversion Results */}
+          <div id="conversion-panel" className="lg:col-span-2">
             <OutputPanel
-              results={businessComputed.displayResults}
-              focusedUnits={uiState.focusedUnits}
-              customConversions={businessState.customConversions}
-              inputValue={uiState.inputValue}
-              inputUnit={uiState.inputUnit}
-              category={uiState.selectedCategory}
-              isProcessing={businessState.isProcessing}
-              error={businessState.error}
-              onToggleFocus={handlers.onToggleFocus}
-              onCopyValue={handlers.onCopyValue}
-              onSwapUnits={handlers.onSwapUnits}
-              onCreateCustom={handleCreateCustom}
-              onInputValueChange={handlers.onInputValueChange}
-              onInputUnitChange={handlers.onInputUnitChange}
+              inputValue={state.inputValue}
+              inputUnit={state.inputUnit}
+              availableUnits={state.availableUnits}
+              results={state.results}
+              isProcessing={state.isProcessing}
+              error={state.error}
+              onInputValueChange={(value: string) =>
+                logic.handleInputChange(value)
+              }
+              onInputUnitChange={logic.handleUnitChange}
             />
           </div>
         </div>
-
-        {/* Custom Conversion Dialog - Advanced conversion creation */}
-        <CustomConversionDialog
-          isOpen={customDialogOpen}
-          onOpenChange={setCustomDialogOpen}
-          onSave={handlers.onSaveCustomConversion}
-        />
       </div>
     </ToolLayout>
   );
