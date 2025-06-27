@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback } from 'react';
 import { UnitConverter } from '../graph-engine';
 import { createUnitConverter, categoryMapping, type CategoryId } from '../config';
 import type { UnitConverterState, ConversionResult } from '../../types';
@@ -8,38 +8,6 @@ export function useUnitConverterLogic(
   setState: React.Dispatch<React.SetStateAction<UnitConverterState>>
 ) {
   const engine = useRef<UnitConverter>(createUnitConverter());
-
-  // 验证转换器初始化
-  const verifyConverterInitialization = useCallback(() => {
-    console.log('🔍 Verifying converter initialization...');
-    
-    const allDimensions = engine.current.getAllDimensions();
-    console.log('📋 All available dimensions:', allDimensions);
-    
-    // 检查关键分类
-    const testCategories = ['pressure', 'angle', 'frequency'];
-    testCategories.forEach(category => {
-      const units = engine.current.getUnitsInDimension(category);
-      console.log(`📊 ${category} units:`, units);
-      
-      if (units.length > 0) {
-        try {
-          const firstUnit = units[0];
-          const results = engine.current.convertToAll(1, firstUnit);
-          console.log(`✅ ${category} conversions working: ${results.length} results`);
-        } catch (error) {
-          console.error(`❌ ${category} conversion failed:`, error);
-        }
-      } else {
-        console.warn(`⚠️ No units found for ${category}`);
-      }
-    });
-  }, []);
-
-  // 在组件初始化时验证
-  useEffect(() => {
-    verifyConverterInitialization();
-  }, [verifyConverterInitialization]);
 
   const formatValue = useCallback((value: number): string => {
     if (value === 0) return '0';
@@ -52,14 +20,10 @@ export function useUnitConverterLogic(
   }, []);
 
   const handleCategoryChange = useCallback((categoryId: CategoryId) => {
-    console.log(`🔄 Category change requested: ${categoryId}`);
-    
     try {
       const units = engine.current.getUnitsInDimension(categoryId);
-      console.log(`📋 Units in dimension '${categoryId}':`, units);
       
       if (units.length === 0) {
-        console.log(`❌ No units found for category: ${categoryId}`);
         setState(prev => ({
           ...prev,
           selectedCategory: categoryId,
@@ -72,7 +36,6 @@ export function useUnitConverterLogic(
 
       const firstUnit = engine.current.getUnit(units[0]);
       if (!firstUnit) {
-        console.log(`❌ Failed to get first unit: ${units[0]}`);
         setState(prev => ({
           ...prev,
           selectedCategory: categoryId,
@@ -83,8 +46,6 @@ export function useUnitConverterLogic(
         return;
       }
 
-      console.log(`✅ First unit loaded:`, firstUnit);
-
       const unitList = units.map(unitName => {
         const unit = engine.current.getUnit(unitName)!;
         return {
@@ -94,12 +55,7 @@ export function useUnitConverterLogic(
         };
       });
 
-      console.log(`📝 Unit list created:`, unitList);
-
-      console.log(`🔄 Converting 1 ${firstUnit.name} to all other units...`);
       const results = engine.current.convertToAll(1, firstUnit.name);
-      console.log(`✅ Conversion results:`, results);
-
       const sortedResults: ConversionResult[] = results.map(result => ({
         unit: {
           id: result.unit,
@@ -116,8 +72,6 @@ export function useUnitConverterLogic(
         isApproximate: false
       }));
 
-      console.log(`📊 Final sorted results:`, sortedResults);
-
       setState(prev => ({
         ...prev,
         selectedCategory: categoryId,
@@ -127,10 +81,7 @@ export function useUnitConverterLogic(
         isProcessing: false,
         error: null
       }));
-
-      console.log(`✅ State updated successfully for category: ${categoryId}`);
     } catch (error) {
-      console.error(`❌ Error in handleCategoryChange for ${categoryId}:`, error);
       setState(prev => ({
         ...prev,
         selectedCategory: categoryId,

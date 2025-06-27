@@ -40,6 +40,7 @@ interface OutputPanelProps {
   isProcessing: boolean;
   error: string | null;
   focusedUnits?: string[];
+  selectedCategory?: string;
   onInputValueChange: (value: string) => void;
   onInputUnitChange: (unitId: string) => void;
   onToggleFocus?: (unitId: string) => void;
@@ -54,6 +55,7 @@ export function OutputPanel({
   isProcessing,
   error,
   focusedUnits = [],
+  selectedCategory = "",
   onInputValueChange,
   onInputUnitChange,
   onToggleFocus,
@@ -173,8 +175,21 @@ export function OutputPanel({
 
       {results.length === 0 && !isProcessing && !error && (
         <div className="text-center py-8 text-muted-foreground">
-          <p>No conversion results available</p>
-          <p className="text-sm">Try selecting a different category or unit</p>
+          {!selectedCategory ? (
+            <>
+              <p className="text-lg font-medium">Welcome to Unit Converter</p>
+              <p className="text-sm mt-2">
+                Select a category from the left panel to start converting units
+              </p>
+            </>
+          ) : (
+            <>
+              <p>No conversion results available</p>
+              <p className="text-sm">
+                Try selecting a different category or unit
+              </p>
+            </>
+          )}
         </div>
       )}
 

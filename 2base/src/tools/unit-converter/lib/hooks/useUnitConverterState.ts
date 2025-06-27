@@ -2,9 +2,9 @@ import { useState } from "react";
 import type { UnitConverterState } from "../../types";
 
 const initialState: UnitConverterState = {
-  selectedCategory: "length",
+  selectedCategory: "",
   inputValue: "1",
-  inputUnit: "meter",
+  inputUnit: "",
   availableUnits: [],
   results: [],
   isProcessing: false,

@@ -59,6 +59,7 @@ export default function UnitConverter() {
               isProcessing={state.isProcessing}
               error={state.error}
               focusedUnits={focusedUnits}
+              selectedCategory={state.selectedCategory}
               onInputValueChange={(value: string) =>
                 logic.handleInputChange(value)
               }
