@@ -12,6 +12,8 @@ export function createUnitConverter(): UnitConverter {
   converter.addUnit("foot", "length", "ft", "Foot");
   converter.addUnit("yard", "length", "yd", "Yard");
   converter.addUnit("mile", "length", "mi", "Mile");
+  converter.addUnit("nanometer", "length", "nm", "Nanometer");
+  converter.addUnit("micrometer", "length", "μm", "Micrometer");
 
   // Length conversions
   converter.addLinearConversion("meter", "centimeter", 100);
@@ -21,6 +23,8 @@ export function createUnitConverter(): UnitConverter {
   converter.addLinearConversion("meter", "foot", 3.28084);
   converter.addLinearConversion("meter", "yard", 1.09361);
   converter.addLinearConversion("meter", "mile", 0.000621371);
+  converter.addLinearConversion("meter", "nanometer", 1e9);
+  converter.addLinearConversion("meter", "micrometer", 1e6);
 
   // Weight units
   converter.addUnit("kilogram", "weight", "kg", "Kilogram");
@@ -194,6 +198,57 @@ export function createUnitConverter(): UnitConverter {
   converter.addLinearConversion("watt", "megawatt", 0.000001);
   converter.addLinearConversion("watt", "horsepower", 0.00134102);
 
+  // Pressure units
+  converter.addUnit("pascal", "pressure", "Pa", "Pascal");
+  converter.addUnit("kilopascal", "pressure", "kPa", "Kilopascal");
+  converter.addUnit("megapascal", "pressure", "MPa", "Megapascal");
+  converter.addUnit("bar", "pressure", "bar", "Bar");
+  converter.addUnit("millibar", "pressure", "mbar", "Millibar");
+  converter.addUnit("atmosphere", "pressure", "atm", "Atmosphere");
+  converter.addUnit("psi", "pressure", "psi", "Pounds per square inch");
+  converter.addUnit("torr", "pressure", "Torr", "Torr");
+  converter.addUnit("mmhg", "pressure", "mmHg", "Millimeter of mercury");
+
+  // Pressure conversions
+  converter.addLinearConversion("pascal", "kilopascal", 0.001);
+  converter.addLinearConversion("pascal", "megapascal", 0.000001);
+  converter.addLinearConversion("pascal", "bar", 0.00001);
+  converter.addLinearConversion("pascal", "millibar", 0.01);
+  converter.addLinearConversion("pascal", "atmosphere", 0.00000986923);
+  converter.addLinearConversion("pascal", "psi", 0.000145038);
+  converter.addLinearConversion("pascal", "torr", 0.00750062);
+  converter.addLinearConversion("pascal", "mmhg", 0.00750062);
+
+  // Angle units
+  converter.addUnit("degree", "angle", "°", "Degree");
+  converter.addUnit("radian", "angle", "rad", "Radian");
+  converter.addUnit("gradian", "angle", "gon", "Gradian");
+  converter.addUnit("turn", "angle", "tr", "Turn");
+  converter.addUnit("arcminute", "angle", "'", "Arcminute");
+  converter.addUnit("arcsecond", "angle", '"', "Arcsecond");
+
+  // Angle conversions
+  converter.addLinearConversion("degree", "radian", Math.PI / 180);
+  converter.addLinearConversion("degree", "gradian", 10 / 9);
+  converter.addLinearConversion("degree", "turn", 1 / 360);
+  converter.addLinearConversion("degree", "arcminute", 60);
+  converter.addLinearConversion("degree", "arcsecond", 3600);
+
+  // Frequency units
+  converter.addUnit("hertz", "frequency", "Hz", "Hertz");
+  converter.addUnit("kilohertz", "frequency", "kHz", "Kilohertz");
+  converter.addUnit("megahertz", "frequency", "MHz", "Megahertz");
+  converter.addUnit("gigahertz", "frequency", "GHz", "Gigahertz");
+  converter.addUnit("terahertz", "frequency", "THz", "Terahertz");
+  converter.addUnit("rpm", "frequency", "rpm", "Revolutions per minute");
+
+  // Frequency conversions
+  converter.addLinearConversion("hertz", "kilohertz", 0.001);
+  converter.addLinearConversion("hertz", "megahertz", 0.000001);
+  converter.addLinearConversion("hertz", "gigahertz", 0.000000001);
+  converter.addLinearConversion("hertz", "terahertz", 0.000000000001);
+  converter.addLinearConversion("hertz", "rpm", 60);
+
   return converter;
 }
 
@@ -208,6 +263,9 @@ export const categoryMapping = {
   time: "Time",
   energy: "Energy",
   power: "Power",
+  pressure: "Pressure",
+  angle: "Angle",
+  frequency: "Frequency",
 } as const;
 
 export type CategoryId = keyof typeof categoryMapping;
