@@ -8,11 +8,31 @@ import { useUnitConverterState } from "./lib/hooks/useUnitConverterState";
 import { useUnitConverterLogic } from "./lib/hooks/useUnitConverterLogic";
 import { toolInfo } from "./toolInfo";
 import type { CategoryId } from "./lib/config";
+import type { ConversionResult } from "./types";
+import { useState } from "react";
 
 export default function UnitConverter() {
   const { toolLayoutProps } = useToolControls({ toolInfo });
   const { state, setState } = useUnitConverterState();
   const logic = useUnitConverterLogic(state, setState);
+
+  // 用于管理焦点单位的状态
+  const [focusedUnits, setFocusedUnits] = useState<string[]>([]);
+
+  // 切换单位焦点状态
+  const handleToggleFocus = (unitId: string) => {
+    setFocusedUnits((prev) =>
+      prev.includes(unitId)
+        ? prev.filter((id) => id !== unitId)
+        : [...prev, unitId]
+    );
+  };
+
+  // 交换单位
+  const handleSwapUnits = (result: ConversionResult) => {
+    // 将选中的单位设为输入单位，并使用当前的转换值作为新的输入值
+    logic.handleInputChange(result.formattedValue, result.unit.id);
+  };
 
   return (
     <ToolLayout {...toolLayoutProps}>
@@ -38,10 +58,13 @@ export default function UnitConverter() {
               results={state.results}
               isProcessing={state.isProcessing}
               error={state.error}
+              focusedUnits={focusedUnits}
               onInputValueChange={(value: string) =>
                 logic.handleInputChange(value)
               }
               onInputUnitChange={logic.handleUnitChange}
+              onToggleFocus={handleToggleFocus}
+              onSwapUnits={handleSwapUnits}
             />
           </div>
         </div>

@@ -22,7 +22,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Copy, Check, ChevronsUpDown } from "lucide-react";
+import {
+  Copy,
+  Check,
+  ChevronsUpDown,
+  Focus,
+  ArrowRightLeft,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ConversionResult } from "../types";
 
@@ -33,8 +39,11 @@ interface OutputPanelProps {
   results: ConversionResult[];
   isProcessing: boolean;
   error: string | null;
+  focusedUnits?: string[];
   onInputValueChange: (value: string) => void;
   onInputUnitChange: (unitId: string) => void;
+  onToggleFocus?: (unitId: string) => void;
+  onSwapUnits?: (result: ConversionResult) => void;
 }
 
 export function OutputPanel({
@@ -44,8 +53,11 @@ export function OutputPanel({
   results,
   isProcessing,
   error,
+  focusedUnits = [],
   onInputValueChange,
   onInputUnitChange,
+  onToggleFocus,
+  onSwapUnits,
 }: OutputPanelProps) {
   const [open, setOpen] = useState(false);
 
@@ -56,6 +68,18 @@ export function OutputPanel({
       await navigator.clipboard.writeText(value);
     } catch (err) {
       console.error("Failed to copy:", err);
+    }
+  };
+
+  const handleToggleFocus = (unitId: string) => {
+    if (onToggleFocus) {
+      onToggleFocus(unitId);
+    }
+  };
+
+  const handleSwapUnits = (result: ConversionResult) => {
+    if (onSwapUnits) {
+      onSwapUnits(result);
     }
   };
 
@@ -169,44 +193,109 @@ export function OutputPanel({
                   </div>
                 </TableHead>
                 <TableHead className="text-right">Value</TableHead>
-                <TableHead className="w-[80px] text-center">Actions</TableHead>
+                <TableHead className="w-[120px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {results.map((result) => (
-                <TableRow key={result.unit.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <div className="font-medium">{result.unit.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {result.unit.symbol}
+              {results.map((result) => {
+                const isFocused = focusedUnits.includes(result.unit.id);
+                return (
+                  <TableRow
+                    key={result.unit.id}
+                    className={`group hover:bg-muted/50 transition-colors ${
+                      isFocused
+                        ? "bg-primary/5 border-l-2 border-l-primary"
+                        : ""
+                    }`}
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div>
+                          {/* 优先显示单位符号，然后是单位名 */}
+                          <div className="font-medium text-base">
+                            {result.unit.symbol}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {result.unit.name}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-lg font-semibold">
-                        {result.formattedValue}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {result.unit.symbol}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopy(result.formattedValue)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell className="text-right font-mono">
+                      {/* 数值显示为两行 */}
+                      <div className="space-y-1">
+                        <div className="font-mono font-semibold text-sm flex items-center justify-end gap-2">
+                          <span>
+                            {result.isApproximate && (
+                              <span className="text-muted-foreground mr-1">
+                                ~
+                              </span>
+                            )}
+                            {result.formattedValue}
+                          </span>
+                          <span className="font-bold text-primary">
+                            {result.unit.symbol}
+                          </span>
+                        </div>
+                        {/* 第二行显示科学计数法或其他格式 */}
+                        {result.value !== parseFloat(result.formattedValue) && (
+                          <div className="text-xs text-muted-foreground font-mono flex items-center justify-end gap-2">
+                            <span>
+                              {result.isApproximate && (
+                                <span className="mr-1">~</span>
+                              )}
+                              {result.value.toExponential(3)}
+                            </span>
+                            <span className="font-bold text-primary">
+                              {result.unit.symbol}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Focus Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleFocus(result.unit.id)}
+                          className="h-6 w-6 p-0"
+                          title={isFocused ? "Remove focus" : "Focus unit"}
+                        >
+                          <Focus
+                            className={`h-3 w-3 ${
+                              isFocused
+                                ? "text-primary"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        </Button>
+                        {/* Swap Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSwapUnits(result)}
+                          className="h-6 w-6 p-0"
+                          title="Swap units"
+                        >
+                          <ArrowRightLeft className="h-3 w-3" />
+                        </Button>
+                        {/* Copy Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopy(result.formattedValue)}
+                          className="h-6 w-6 p-0"
+                          title="Copy value"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
