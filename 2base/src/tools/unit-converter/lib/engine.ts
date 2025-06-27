@@ -51,7 +51,7 @@ export class UnitConverterEngine {
   }
 
   private isTemperatureUnit(unit: Unit): boolean {
-    return ["celsius", "fahrenheit", "kelvin"].includes(unit.id);
+    return ["celsius", "fahrenheit", "kelvin", "rankine"].includes(unit.id);
   }
 
   /**
@@ -71,6 +71,8 @@ export class UnitConverterEngine {
       kelvin = (value + 459.67) * (5 / 9);
     } else if (fromUnit.id === "kelvin") {
       kelvin = value;
+    } else if (fromUnit.id === "rankine") {
+      kelvin = value * (5 / 9);
     } else {
       throw new Error("Unsupported temperature unit");
     }
@@ -82,6 +84,8 @@ export class UnitConverterEngine {
       return kelvin * (9 / 5) - 459.67;
     } else if (toUnit.id === "kelvin") {
       return kelvin;
+    } else if (toUnit.id === "rankine") {
+      return kelvin * (9 / 5);
     } else {
       throw new Error("Unsupported temperature unit");
     }
@@ -174,7 +178,13 @@ export class UnitConverterEngine {
       ["meter", "foot"],
       ["meter", "yard"],
       ["kilogram", "pound"],
-      ["liter", "gallon"],
+      ["liter", "gallon_us"],
+      ["joule", "calorie"],
+      ["joule", "btu"],
+      ["watt_hour", "btu"],
+      ["kilocalorie", "btu"],
+      ["celsius", "fahrenheit"],
+      ["kelvin", "rankine"],
     ];
 
     return approximateConversions.some(

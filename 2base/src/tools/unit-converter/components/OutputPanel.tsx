@@ -52,6 +52,8 @@ export function OutputPanel({
   inputValue,
   inputUnit,
   category,
+  isProcessing,
+  error,
   onToggleFocus,
   onCopyValue,
   onSwapUnits,
@@ -155,6 +157,28 @@ export function OutputPanel({
       </div>
 
       {/* Note: Showing all units by default - no "Show All/Less" button needed */}
+
+      {/* Status Messages */}
+      {error && (
+        <div className="text-center py-4 text-destructive bg-destructive/10 rounded-md">
+          <p className="font-medium">Conversion Error</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      {isProcessing && (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Converting...</p>
+        </div>
+      )}
+
+      {results.length === 0 && !isProcessing && !error && (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>No conversion results available</p>
+          <p className="text-sm">Try selecting a different category or unit</p>
+        </div>
+      )}
 
       {/* Conversion Results Table */}
       <div className="border rounded-md">

@@ -71,6 +71,8 @@ export default function UnitConverter() {
               inputValue={uiState.inputValue}
               inputUnit={uiState.inputUnit}
               category={uiState.selectedCategory}
+              isProcessing={businessState.isProcessing}
+              error={businessState.error}
               onToggleFocus={handlers.onToggleFocus}
               onCopyValue={handlers.onCopyValue}
               onSwapUnits={handlers.onSwapUnits}

@@ -169,43 +169,50 @@ export function useUnitConverterLogic(
   const handlers: UnitConverterEventHandlers = {
     onCategoryChange: useCallback(
       (categoryId: string) => {
+        console.log("🔍 Category change requested:", categoryId);
+
         const category = unitCategories.find((c) => c.id === categoryId);
+        console.log("🔍 Found category:", category);
+
         const firstUnit = category?.groups[0]?.units[0];
+        console.log("🔍 First unit:", firstUnit);
 
         if (firstUnit) {
-          // 确保状态原子性更新
+          // 同步更新状态
           uiActions.initializeForCategory(categoryId, firstUnit.id);
+          console.log("🔍 State initialized for category");
 
-          // 立即触发转换，确保状态同步
-          setTimeout(() => {
-            try {
-              const results = engine.current.convertToAll(
-                1,
-                firstUnit.id,
-                categoryId
-              );
-              const sortedResults = sortUnitsByRelevance(results, []);
+          // 立即触发转换，无需setTimeout
+          try {
+            const results = engine.current.convertToAll(
+              1,
+              firstUnit.id,
+              categoryId
+            );
+            console.log("🔍 Conversion results:", results);
 
-              setBusinessState((prev) => ({
-                ...prev,
-                results: sortedResults,
-                isProcessing: false,
-                error: null,
-              }));
-            } catch (error) {
-              console.error(
-                `Conversion failed for category ${categoryId}:`,
-                error
-              );
-              setBusinessState((prev) => ({
-                ...prev,
-                results: [],
-                isProcessing: false,
-                error:
-                  error instanceof Error ? error.message : "Conversion failed",
-              }));
-            }
-          }, 0);
+            const sortedResults = sortUnitsByRelevance(results, []);
+
+            setBusinessState((prev) => ({
+              ...prev,
+              results: sortedResults,
+              isProcessing: false,
+              error: null,
+            }));
+
+            console.log("✅ Conversion completed successfully");
+          } catch (error) {
+            console.error("❌ Conversion failed:", error);
+            setBusinessState((prev) => ({
+              ...prev,
+              results: [],
+              isProcessing: false,
+              error:
+                error instanceof Error ? error.message : "Conversion failed",
+            }));
+          }
+        } else {
+          console.error("❌ No first unit found for category:", categoryId);
         }
       },
       [uiActions]

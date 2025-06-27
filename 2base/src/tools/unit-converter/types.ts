@@ -115,6 +115,8 @@ export interface OutputPanelProps {
   inputValue: number;
   inputUnit: string;
   category: string;
+  isProcessing: boolean;
+  error: string | null;
   onToggleFocus: (unitId: string) => void;
   onCopyValue: (value: string) => void;
   onSwapUnits: (targetUnit: ConversionResult) => void;

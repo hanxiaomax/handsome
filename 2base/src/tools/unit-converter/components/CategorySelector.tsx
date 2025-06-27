@@ -49,7 +49,7 @@ export function CategorySelector({
     { value: "pressure", label: "Pressure", icon: "P" },
     { value: "energy", label: "Energy", icon: "E" },
     { value: "power", label: "Power", icon: "P" },
-    { value: "data", label: "Data Storage", icon: "D" },
+    { value: "digital", label: "Data Storage", icon: "D" },
     { value: "angle", label: "Angle", icon: "A" },
     { value: "frequency", label: "Frequency", icon: "F" },
   ];
@@ -101,7 +101,7 @@ export function CategorySelector({
       name: "Digital",
       items: [
         {
-          id: "data",
+          id: "digital",
           name: "Data Storage",
           description: "File size and storage",
         },
