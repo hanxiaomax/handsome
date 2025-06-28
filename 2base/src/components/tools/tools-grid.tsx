@@ -113,13 +113,6 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
     setCategoryDropdownOpen(true);
   };
 
-  const clearCategoryFilters = () => {
-    setSelectedCategories([]);
-    const column = table.getColumn("category");
-    column?.setFilterValue(undefined);
-    setCategoryDropdownOpen(false);
-  };
-
   const clearAllFilters = () => {
     setGlobalFilter("");
     setSelectedCategories([]);
@@ -549,21 +542,7 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                     {category.name}
                   </DropdownMenuCheckboxItem>
                 ))}
-              {categories.filter((cat) => cat.id !== "all").length > 0 && (
-                <>
-                  <DropdownMenuSeparator />
-                  <div className="px-2 py-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full h-8"
-                      onClick={() => setCategoryDropdownOpen(false)}
-                    >
-                      Done
-                    </Button>
-                  </div>
-                </>
-              )}
+              {categories.filter((cat) => cat.id !== "all").length > 0 && <></>}
             </DropdownMenuContent>
           </DropdownMenu>
 
