@@ -109,11 +109,19 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
       column?.setFilterValue(newSelectedCategories);
     }
 
-    // Keep dropdown open for multi-selection
-    // The dropdown will remain open until user clicks outside or presses escape
+    // Explicitly keep dropdown open for multi-selection
+    setCategoryDropdownOpen(true);
   };
 
   const clearCategoryFilters = () => {
+    setSelectedCategories([]);
+    const column = table.getColumn("category");
+    column?.setFilterValue(undefined);
+    setCategoryDropdownOpen(false);
+  };
+
+  const clearAllFilters = () => {
+    setGlobalFilter("");
     setSelectedCategories([]);
     const column = table.getColumn("category");
     column?.setFilterValue(undefined);
@@ -483,6 +491,19 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
             />
           </div>
 
+          {/* Clear All Filters Button */}
+          {(globalFilter || selectedCategories.length > 0) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearAllFilters}
+              className="flex items-center gap-2"
+            >
+              <X className="h-4 w-4" />
+              Clear All
+            </Button>
+          )}
+
           {/* Category Filter */}
           <DropdownMenu
             open={categoryDropdownOpen}
@@ -507,19 +528,6 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  {selectedCategories.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        clearCategoryFilters();
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
                   <ChevronDown className="h-4 w-4" />
                 </div>
               </Button>
@@ -533,6 +541,10 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                     className="capitalize"
                     checked={selectedCategories.includes(category.id)}
                     onCheckedChange={() => handleCategoryToggle(category.id)}
+                    onSelect={(e) => {
+                      // Prevent dropdown from closing on selection
+                      e.preventDefault();
+                    }}
                   >
                     {category.name}
                   </DropdownMenuCheckboxItem>
@@ -647,13 +659,7 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                 Try adjusting your search or filters
               </p>
               {(globalFilter || selectedCategories.length > 0) && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setGlobalFilter("");
-                    clearCategoryFilters();
-                  }}
-                >
+                <Button variant="outline" onClick={clearAllFilters}>
                   Clear all filters
                 </Button>
               )}
