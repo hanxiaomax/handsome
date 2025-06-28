@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { tools, categories } from "@/data/tools";
 import { useToolSearch } from "@/hooks/use-tool-search";
+import { useToolIntro } from "@/hooks/use-tool-intro";
 import type { ToolInfo } from "@/types/tool";
 import { getToolVersionInfo } from "@/lib/tool-utils";
 import { useFavoritesList, useFavoriteActions } from "@/stores/favorites-store";
@@ -40,6 +41,7 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
 
   const favorites = useFavoritesList();
   const { toggleFavorite } = useFavoriteActions();
+  const { handleToolClick: handleToolIntroClick } = useToolIntro();
 
   const {
     results: filteredTools,
@@ -74,7 +76,13 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
   }, {} as Record<string, { name: string; tools: ToolInfo[]; count: number }>);
 
   const handleToolClick = (tool: ToolInfo) => {
-    setSelectedDialogTool(tool);
+    const shouldShowIntro = handleToolIntroClick(tool.id);
+
+    if (shouldShowIntro) {
+      setSelectedDialogTool(tool);
+    } else {
+      onUseTool(tool.id);
+    }
   };
 
   const handleFavoriteClick = (tool: ToolInfo, event: React.MouseEvent) => {

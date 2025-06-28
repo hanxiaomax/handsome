@@ -2,9 +2,10 @@
 
 ## 概述
 
-这个封装系统提供了两个强大的 hooks 来简化工具开发：
+这个封装系统提供了多个强大的 hooks 来简化工具开发：
 - `useToolButtons` - 管理工具按钮和标准化功能
 - `useToolDialogs` - 管理 Dialog 状态和交互
+- `useToolIntro` - 管理工具介绍 Dialog 的显示逻辑，基于 Cookie 跟踪首次访问
 
 ## 核心特性
 
