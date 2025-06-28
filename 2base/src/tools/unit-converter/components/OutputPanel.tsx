@@ -28,9 +28,20 @@ import {
   ChevronsUpDown,
   Focus,
   ArrowRightLeft,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ConversionResult } from "../types";
+import { MoreCard } from "./more-card";
+import { CustomConversionDialog, type CustomConversion } from "./custom-conversion-dialog";
+
+// Extended result type for custom conversions
+interface ExtendedConversionResult extends ConversionResult {
+  isCustom?: boolean;
+  hasError?: boolean;
+  customConversion?: CustomConversion;
+}
 
 interface OutputPanelProps {
   inputValue: string;
@@ -41,10 +52,14 @@ interface OutputPanelProps {
   error: string | null;
   focusedUnits?: string[];
   selectedCategory?: string;
+  customConversions?: CustomConversion[];
   onInputValueChange: (value: string) => void;
   onInputUnitChange: (unitId: string) => void;
   onToggleFocus?: (unitId: string) => void;
   onSwapUnits?: (result: ConversionResult) => void;
+  onSaveCustomConversion?: (conversion: CustomConversion) => void;
+  onEditCustomConversion?: (conversion: CustomConversion) => void;
+  onDeleteCustomConversion?: (conversionId: string) => void;
 }
 
 export function OutputPanel({
@@ -56,12 +71,64 @@ export function OutputPanel({
   error,
   focusedUnits = [],
   selectedCategory = "",
+  customConversions = [],
   onInputValueChange,
   onInputUnitChange,
   onToggleFocus,
   onSwapUnits,
+  onSaveCustomConversion,
+  onEditCustomConversion,
+  onDeleteCustomConversion,
 }: OutputPanelProps) {
   const [open, setOpen] = useState(false);
+  const [customDialogOpen, setCustomDialogOpen] = useState(false);
+
+  // Calculate custom conversion results
+  const customResults: ExtendedConversionResult[] = customConversions.map((conversion) => {
+    let convertedValue = 0;
+    let formattedValue = "0";
+    let hasError = false;
+    
+    try {
+      const inputVal = parseFloat(inputValue) || 0;
+      if (conversion.isJavaScript) {
+        const func = new Function('value', conversion.formula + '\nreturn convert(value);');
+        convertedValue = func(inputVal);
+      } else {
+        const func = new Function('value', `return ${conversion.formula.replace(/x/g, 'value')};`);
+        convertedValue = func(inputVal);
+      }
+      formattedValue = convertedValue.toFixed(6).replace(/\.?0+$/, '');
+    } catch {
+      hasError = true;
+      formattedValue = "Error";
+    }
+
+    return {
+      unit: {
+        id: conversion.id,
+        name: conversion.name,
+        symbol: conversion.symbol,
+        description: conversion.description,
+        baseRatio: 1,
+        isBaseUnit: false,
+        precision: 6,
+        context: "Custom conversion",
+      },
+      value: convertedValue,
+      formattedValue,
+      isApproximate: false,
+      isCustom: true,
+      hasError,
+      customConversion: conversion,
+    };
+  });
+
+  // Combine standard and custom results
+  const allResults: ExtendedConversionResult[] = [
+    ...results.map(r => ({ ...r, isCustom: false })),
+    ...customResults
+  ];
 
   const selectedUnit = availableUnits.find((u) => u.id === inputUnit);
 
@@ -82,6 +149,28 @@ export function OutputPanel({
   const handleSwapUnits = (result: ConversionResult) => {
     if (onSwapUnits) {
       onSwapUnits(result);
+    }
+  };
+
+  const handleCreateCustom = () => {
+    setCustomDialogOpen(true);
+  };
+
+  const handleSaveCustomConversion = (conversion: CustomConversion) => {
+    if (onSaveCustomConversion) {
+      onSaveCustomConversion(conversion);
+    }
+  };
+
+  const handleEditCustomConversion = (conversion: CustomConversion) => {
+    if (onEditCustomConversion) {
+      onEditCustomConversion(conversion);
+    }
+  };
+
+  const handleDeleteCustomConversion = (conversionId: string) => {
+    if (onDeleteCustomConversion) {
+      onDeleteCustomConversion(conversionId);
     }
   };
 
@@ -173,7 +262,7 @@ export function OutputPanel({
         </div>
       )}
 
-      {results.length === 0 && !isProcessing && !error && (
+      {allResults.length === 0 && !isProcessing && !error && (
         <div className="text-center py-8 text-muted-foreground">
           {!selectedCategory ? (
             <>
@@ -194,7 +283,7 @@ export function OutputPanel({
       )}
 
       {/* Conversion Results Table */}
-      {results.length > 0 && (
+      {allResults.length > 0 && (
         <div className="border rounded-md">
           <Table>
             <TableHeader>
@@ -203,7 +292,7 @@ export function OutputPanel({
                   <div className="flex items-center gap-2">
                     <span>Unit</span>
                     <Badge variant="secondary" className="text-xs">
-                      {results.length}
+                      {allResults.length}
                     </Badge>
                   </div>
                 </TableHead>
@@ -212,8 +301,12 @@ export function OutputPanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {results.map((result) => {
+              {allResults.map((result) => {
                 const isFocused = focusedUnits.includes(result.unit.id);
+                const isCustom = result.isCustom || false;
+                const hasError = result.hasError || false;
+                const customConversion = result.customConversion;
+                
                 return (
                   <TableRow
                     key={result.unit.id}
@@ -221,26 +314,21 @@ export function OutputPanel({
                       isFocused
                         ? "bg-primary/5 border-l-2 border-l-primary"
                         : ""
-                    }`}
+                    } ${hasError ? "bg-destructive/5" : ""}`}
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div>
-                          {/* 优先显示单位符号，然后是单位名 */}
                           <div className="font-medium text-base">
-                            {result.unit.symbol}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
                             {result.unit.name}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {/* 数值显示为两行 */}
                       <div className="space-y-1">
-                        <div className="font-mono font-semibold text-sm flex items-center justify-end gap-2">
-                          <span>
+                        <div className="font-mono font-semibold text-base flex items-center justify-end gap-2">
+                          <span className={hasError ? "text-destructive" : ""}>
                             {result.isApproximate && (
                               <span className="text-muted-foreground mr-1">
                                 ~
@@ -252,8 +340,10 @@ export function OutputPanel({
                             {result.unit.symbol}
                           </span>
                         </div>
-                        {/* 第二行显示科学计数法或其他格式 */}
-                        {result.value !== parseFloat(result.formattedValue) && (
+                        {/* Show scientific notation for large/small values */}
+                        {!hasError && (Math.abs(result.value) >= 1e6 ||
+                          (Math.abs(result.value) < 0.001 &&
+                            result.value !== 0)) && (
                           <div className="text-xs text-muted-foreground font-mono flex items-center justify-end gap-2">
                             <span>
                               {result.isApproximate && (
@@ -261,7 +351,7 @@ export function OutputPanel({
                               )}
                               {result.value.toExponential(3)}
                             </span>
-                            <span className="font-bold text-primary">
+                            <span className="text-muted-foreground">
                               {result.unit.symbol}
                             </span>
                           </div>
@@ -286,16 +376,46 @@ export function OutputPanel({
                             }`}
                           />
                         </Button>
-                        {/* Swap Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSwapUnits(result)}
-                          className="h-6 w-6 p-0"
-                          title="Swap units"
-                        >
-                          <ArrowRightLeft className="h-3 w-3" />
-                        </Button>
+                        
+                        {/* Standard conversion: Swap Button */}
+                        {!isCustom && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSwapUnits(result)}
+                            className="h-6 w-6 p-0"
+                            title="Swap units"
+                          >
+                            <ArrowRightLeft className="h-3 w-3" />
+                          </Button>
+                        )}
+                        
+                        {/* Custom conversion: Edit Button */}
+                        {isCustom && customConversion && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditCustomConversion(customConversion)}
+                            className="h-6 w-6 p-0"
+                            title="Edit conversion"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        )}
+                        
+                        {/* Custom conversion: Delete Button */}
+                        {isCustom && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteCustomConversion(result.unit.id)}
+                            className="h-6 w-6 p-0"
+                            title="Delete conversion"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                        
                         {/* Copy Button */}
                         <Button
                           variant="ghost"
@@ -315,6 +435,22 @@ export function OutputPanel({
           </Table>
         </div>
       )}
+
+      
+
+      {/* More Card - Show when category is selected */}
+      {selectedCategory && (
+        <div className="mt-3">
+          <MoreCard onCreateCustom={handleCreateCustom} />
+        </div>
+      )}
+
+      {/* Custom Conversion Dialog */}
+      <CustomConversionDialog
+        isOpen={customDialogOpen}
+        onOpenChange={setCustomDialogOpen}
+        onSave={handleSaveCustomConversion}
+      />
     </div>
   );
 }

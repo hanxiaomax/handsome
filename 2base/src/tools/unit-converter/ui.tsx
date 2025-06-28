@@ -10,6 +10,7 @@ import { toolInfo } from "./toolInfo";
 import type { CategoryId } from "./lib/config";
 import type { ConversionResult } from "./types";
 import { useState } from "react";
+import type { CustomConversion } from "./components/custom-conversion-dialog";
 
 export default function UnitConverter() {
   const { toolLayoutProps } = useToolControls({ toolInfo });
@@ -18,6 +19,11 @@ export default function UnitConverter() {
 
   // 用于管理焦点单位的状态
   const [focusedUnits, setFocusedUnits] = useState<string[]>([]);
+
+  // Custom conversions state
+  const [customConversions, setCustomConversions] = useState<
+    CustomConversion[]
+  >([]);
 
   // 切换单位焦点状态
   const handleToggleFocus = (unitId: string) => {
@@ -32,6 +38,21 @@ export default function UnitConverter() {
   const handleSwapUnits = (result: ConversionResult) => {
     // 将选中的单位设为输入单位，并使用当前的转换值作为新的输入值
     logic.handleInputChange(result.formattedValue, result.unit.id);
+  };
+
+  // Custom conversion handlers
+  const handleSaveCustomConversion = (conversion: CustomConversion) => {
+    setCustomConversions((prev) => [...prev, conversion]);
+  };
+
+  const handleEditCustomConversion = (conversion: CustomConversion) => {
+    setCustomConversions((prev) =>
+      prev.map((c) => (c.id === conversion.id ? conversion : c))
+    );
+  };
+
+  const handleDeleteCustomConversion = (conversionId: string) => {
+    setCustomConversions((prev) => prev.filter((c) => c.id !== conversionId));
   };
 
   return (
@@ -60,12 +81,16 @@ export default function UnitConverter() {
               error={state.error}
               focusedUnits={focusedUnits}
               selectedCategory={state.selectedCategory}
+              customConversions={customConversions}
               onInputValueChange={(value: string) =>
                 logic.handleInputChange(value)
               }
               onInputUnitChange={logic.handleUnitChange}
               onToggleFocus={handleToggleFocus}
               onSwapUnits={handleSwapUnits}
+              onSaveCustomConversion={handleSaveCustomConversion}
+              onEditCustomConversion={handleEditCustomConversion}
+              onDeleteCustomConversion={handleDeleteCustomConversion}
             />
           </div>
         </div>
