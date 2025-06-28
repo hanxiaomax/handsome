@@ -1,9 +1,33 @@
 import { useState } from "react";
-import { Search, Star, Grid3X3, List } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+} from "@tanstack/react-table";
+import {
+  Search,
+  Star,
+  ExternalLink,
+  ArrowUpDown,
+  ChevronDown,
+  Settings2,
+  Filter,
+  X,
+  Grid3X3,
+  List,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Dialog,
@@ -12,15 +36,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { tools, categories } from "@/data/tools";
-import { useToolSearch } from "@/hooks/use-tool-search";
 import { useToolIntro } from "@/hooks/use-tool-intro";
 import type { ToolInfo } from "@/types/tool";
 import { getToolVersionInfo } from "@/lib/tool-utils";
@@ -32,8 +64,12 @@ interface ToolsGridProps {
 }
 
 export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedDialogTool, setSelectedDialogTool] = useState<ToolInfo | null>(
     null
@@ -42,38 +78,6 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
   const favorites = useFavoritesList();
   const { toggleFavorite } = useFavoriteActions();
   const { handleToolClick: handleToolIntroClick } = useToolIntro();
-
-  const {
-    results: filteredTools,
-    hasQuery,
-    filteredCount,
-  } = useToolSearch({
-    tools,
-    searchQuery,
-    filters: {
-      categories: selectedCategory === "all" ? [] : [selectedCategory],
-      pricing: [],
-      isNew: null,
-      requiresBackend: null,
-    },
-  });
-
-  // Group tools by category for layout
-  const groupedTools = categories.reduce((acc, category) => {
-    if (category.id === "all") return acc;
-
-    const categoryTools = filteredTools.filter(
-      (tool) => tool.category === category.id
-    );
-    if (categoryTools.length > 0) {
-      acc[category.id] = {
-        name: category.name,
-        tools: categoryTools,
-        count: categoryTools.length,
-      };
-    }
-    return acc;
-  }, {} as Record<string, { name: string; tools: ToolInfo[]; count: number }>);
 
   const handleToolClick = (tool: ToolInfo) => {
     const shouldShowIntro = handleToolIntroClick(tool.id);
@@ -90,6 +94,239 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
     toggleFavorite(tool.id);
   };
 
+  const handleCategoryToggle = (categoryId: string) => {
+    const newSelectedCategories = selectedCategories.includes(categoryId)
+      ? selectedCategories.filter((id) => id !== categoryId)
+      : [...selectedCategories, categoryId];
+
+    setSelectedCategories(newSelectedCategories);
+
+    // Update table filter
+    const column = table.getColumn("category");
+    if (newSelectedCategories.length === 0) {
+      column?.setFilterValue(undefined);
+    } else {
+      column?.setFilterValue(newSelectedCategories);
+    }
+
+    // Keep dropdown open for multi-selection
+    // The dropdown will remain open until user clicks outside or presses escape
+  };
+
+  const clearCategoryFilters = () => {
+    setSelectedCategories([]);
+    const column = table.getColumn("category");
+    column?.setFilterValue(undefined);
+    setCategoryDropdownOpen(false);
+  };
+
+  // Define columns for the data table
+  const columns: ColumnDef<ToolInfo>[] = [
+    {
+      accessorKey: "icon",
+      header: "",
+      cell: ({ row }) => {
+        const tool = row.original;
+        return (
+          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+            <tool.icon className="h-4 w-4 text-primary" />
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 p-0 font-medium"
+          >
+            Tool Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const tool = row.original;
+        const versionInfo = getToolVersionInfo(tool);
+        const isSelected = selectedTool === tool.id;
+
+        return (
+          <div className={`space-y-1 ${isSelected ? "font-medium" : ""}`}>
+            <div className="font-medium text-sm">{tool.name}</div>
+            <div className="text-xs text-muted-foreground">
+              {versionInfo.isNew && "NEW"} {tool.requiresBackend && "API"}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => {
+        const tool = row.original;
+        return (
+          <div className="max-w-[300px]">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+              {tool.description}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "category",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 p-0 font-medium"
+          >
+            Category
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const tool = row.original;
+        return (
+          <span className="text-sm capitalize text-muted-foreground">
+            {tool.category}
+          </span>
+        );
+      },
+      filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id));
+      },
+    },
+    {
+      accessorKey: "version",
+      header: "Version",
+      cell: ({ row }) => {
+        const tool = row.original;
+        const versionInfo = getToolVersionInfo(tool);
+        return (
+          <span className="text-xs text-muted-foreground">
+            v{versionInfo.version}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "tags",
+      header: "Tags",
+      cell: ({ row }) => {
+        const tool = row.original;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {tool.tags.slice(0, 2).map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-muted text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
+            {tool.tags.length > 2 && (
+              <span className="text-xs text-muted-foreground">
+                +{tool.tags.length - 2}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const tool = row.original;
+        const isFavorite = favorites.includes(tool.id);
+
+        return (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => handleFavoriteClick(tool, e)}
+              className="h-7 w-7 p-0"
+            >
+              <Star
+                className={`h-3.5 w-3.5 ${
+                  isFavorite
+                    ? "fill-primary text-primary"
+                    : "text-muted-foreground"
+                }`}
+              />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onUseTool(tool.id);
+              }}
+              className="h-7 w-7 p-0"
+            >
+              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+          </div>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ];
+
+  const table = useReactTable({
+    data: tools,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: "includesString",
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      globalFilter,
+    },
+  });
+
+  // Get filtered tools from table
+  const filteredTools = table
+    .getFilteredRowModel()
+    .rows.map((row) => row.original);
+
+  // Group tools by category for grid view
+  const groupedTools = categories.reduce((acc, category) => {
+    if (category.id === "all") return acc;
+
+    const categoryTools = filteredTools.filter(
+      (tool) => tool.category === category.id
+    );
+    if (categoryTools.length > 0) {
+      acc[category.id] = {
+        name: category.name,
+        tools: categoryTools,
+        count: categoryTools.length,
+      };
+    }
+    return acc;
+  }, {} as Record<string, { name: string; tools: ToolInfo[]; count: number }>);
+
+  // Grid view renderer
   const renderGridView = (tools: ToolInfo[]) => (
     <div
       className="grid gap-4"
@@ -110,20 +347,6 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
             }`}
             onClick={() => handleToolClick(tool)}
           >
-            {/* Corner Status Badge */}
-            <div className="absolute top-3 right-3 z-10">
-              {versionInfo.isNew && (
-                <Badge className="bg-primary text-primary-foreground text-xs font-medium px-2 py-1">
-                  New
-                </Badge>
-              )}
-              {tool.requiresBackend && !versionInfo.isNew && (
-                <Badge className="bg-secondary text-secondary-foreground text-xs font-medium px-2 py-1">
-                  API
-                </Badge>
-              )}
-            </div>
-
             {/* Horizontal Layout Content */}
             <div className="flex items-start gap-3 p-4 min-h-[120px]">
               {/* Tool Icon */}
@@ -140,6 +363,10 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                     <h3 className="font-semibold text-foreground text-base leading-tight truncate">
                       {tool.name}
                     </h3>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {versionInfo.isNew && "NEW"}{" "}
+                      {tool.requiresBackend && "API"}
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
@@ -168,114 +395,165 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
     </div>
   );
 
-  const renderListView = (tools: ToolInfo[]) => (
-    <div className="space-y-2">
-      {tools.map((tool) => {
-        const versionInfo = getToolVersionInfo(tool);
-        const isFavorite = favorites.includes(tool.id);
-        const isSelected = selectedTool === tool.id;
+  // List view renderer (table)
+  const renderListView = () => (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => {
+                return (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => {
+              const tool = row.original;
+              const isSelected = selectedTool === tool.id;
 
-        return (
-          <Card
-            key={tool.id}
-            className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.01] ${
-              isSelected ? "ring-2 ring-primary" : ""
-            }`}
-            onClick={() => handleToolClick(tool)}
-          >
-            <div className="flex items-center gap-4 p-4">
-              {/* Tool Icon */}
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <tool.icon className="h-5 w-5 text-primary" />
-                </div>
-              </div>
-
-              {/* Tool Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground text-sm break-words leading-tight">
-                    {tool.name}
-                  </h3>
-                  {versionInfo.isNew && (
-                    <Badge className="bg-primary text-primary-foreground text-xs px-2 py-0.5">
-                      Live
-                    </Badge>
-                  )}
-                  {tool.requiresBackend && !versionInfo.isNew && (
-                    <Badge className="bg-secondary text-secondary-foreground text-xs px-2 py-0.5">
-                      API
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground truncate mt-1">
-                  {tool.description}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => handleFavoriteClick(tool, e)}
-                  className="h-8 w-8 p-0"
+              return (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className={`cursor-pointer transition-colors hover:bg-muted/50 ${
+                    isSelected ? "bg-muted" : ""
+                  }`}
+                  onClick={() => handleToolClick(tool)}
                 >
-                  <Star
-                    className={`h-4 w-4 ${
-                      isFavorite
-                        ? "fill-primary text-primary"
-                        : "text-muted-foreground"
-                    }`}
-                  />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        );
-      })}
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                No tools found.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 
   return (
     <div className="p-6 space-y-6">
-      {/* Tools Grid Header */}
-      <div id="tools-grid-header" className="space-y-4">
+      {/* Tools Table Header */}
+      <div id="tools-table-header" className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
+            <h2 className="text-2xl font-bold">Tools</h2>
             <p className="text-muted-foreground">
-              {filteredCount} tool{filteredCount !== 1 ? "s" : ""} available
+              {table.getFilteredRowModel().rows.length} tool
+              {table.getFilteredRowModel().rows.length !== 1 ? "s" : ""}{" "}
+              available
             </p>
           </div>
         </div>
 
-        {/* Search and Filter Bar */}
-        <div id="search-filter-bar" className="flex flex-col sm:flex-row gap-4">
-          {/* Search Input */}
+        {/* Search and Filter Controls */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Global Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search tools..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={globalFilter ?? ""}
+              onChange={(event) => setGlobalFilter(String(event.target.value))}
               className="pl-9"
             />
           </div>
 
-          {/* Category Select */}
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                  {category.id !== "all" && ` (${category.count})`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Category Filter */}
+          <DropdownMenu
+            open={categoryDropdownOpen}
+            onOpenChange={setCategoryDropdownOpen}
+          >
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-48 justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  <span>
+                    {selectedCategories.length === 0
+                      ? "All Categories"
+                      : selectedCategories.length === 1
+                      ? categories.find(
+                          (cat) => cat.id === selectedCategories[0]
+                        )?.name
+                      : `${selectedCategories.length} categories`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {selectedCategories.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearCategoryFilters();
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                  <ChevronDown className="h-4 w-4" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[200px]">
+              {categories
+                .filter((cat) => cat.id !== "all")
+                .map((category) => (
+                  <DropdownMenuCheckboxItem
+                    key={category.id}
+                    className="capitalize"
+                    checked={selectedCategories.includes(category.id)}
+                    onCheckedChange={() => handleCategoryToggle(category.id)}
+                  >
+                    {category.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              {categories.filter((cat) => cat.id !== "all").length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-8"
+                      onClick={() => setCategoryDropdownOpen(false)}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* View Mode Toggle */}
           <ToggleGroup
@@ -294,63 +572,124 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
               <List className="h-4 w-4" />
             </ToggleGroupItem>
           </ToggleGroup>
+
+          {/* Column Visibility Toggle (only show in list mode) */}
+          {viewMode === "list" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto hidden h-8 lg:flex"
+                >
+                  <Settings2 className="mr-2 h-4 w-4" />
+                  View
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[150px]">
+                {table
+                  .getAllColumns()
+                  .filter(
+                    (column) =>
+                      typeof column.accessorFn !== "undefined" &&
+                      column.getCanHide()
+                  )
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
+                        }
+                      >
+                        {column.id}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
-
-        {/* Search Results Summary */}
-        {(hasQuery || selectedCategory !== "all") && (
-          <div className="text-sm text-muted-foreground">
-            {hasQuery && `Results for "${searchQuery}"`}
-            {selectedCategory !== "all" &&
-              ` in ${categories.find((c) => c.id === selectedCategory)?.name}`}
-          </div>
-        )}
       </div>
 
-      {/* Tools by Category */}
-      <div id="tools-by-category" className="space-y-8">
-        {Object.entries(groupedTools).map(([categoryId, categoryData]) => (
-          <div key={categoryId} className="space-y-4">
-            {/* Category Header */}
-            <div className="flex items-center gap-3">
-              <h3 className="text-xl font-semibold text-foreground">
-                {categoryData.name}
-              </h3>
-              <Badge variant="outline" className="text-sm">
-                {categoryData.count} tool{categoryData.count !== 1 ? "s" : ""}
-              </Badge>
+      {/* Tools Display */}
+      {viewMode === "grid" ? (
+        /* Grid View by Category */
+        <div id="tools-by-category" className="space-y-8">
+          {Object.entries(groupedTools).map(([categoryId, categoryData]) => (
+            <div key={categoryId} className="space-y-4">
+              {/* Category Header */}
+              <div className="flex items-center gap-3">
+                <h3 className="text-xl font-semibold text-foreground">
+                  {categoryData.name}
+                </h3>
+                <span className="text-sm text-muted-foreground">
+                  {categoryData.count} tool{categoryData.count !== 1 ? "s" : ""}
+                </span>
+              </div>
+
+              {/* Category Tools Grid */}
+              {renderGridView(categoryData.tools)}
             </div>
+          ))}
 
-            {/* Category Tools Display */}
-            {viewMode === "grid"
-              ? renderGridView(categoryData.tools)
-              : renderListView(categoryData.tools)}
-          </div>
-        ))}
-      </div>
+          {/* Empty State for Grid */}
+          {Object.keys(groupedTools).length === 0 && (
+            <div id="empty-state" className="text-center py-12">
+              <div className="p-4 bg-muted/50 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Search className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium mb-2">No tools found</h3>
+              <p className="text-muted-foreground mb-4">
+                Try adjusting your search or filters
+              </p>
+              {(globalFilter || selectedCategories.length > 0) && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setGlobalFilter("");
+                    clearCategoryFilters();
+                  }}
+                >
+                  Clear all filters
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* List View (Table) */
+        renderListView()
+      )}
 
-      {/* Empty State */}
-      {Object.keys(groupedTools).length === 0 && (
-        <div id="empty-state" className="text-center py-12">
-          <div className="p-4 bg-muted/50 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <Search className="h-8 w-8 text-muted-foreground" />
+      {/* Pagination (only in list mode) */}
+      {viewMode === "list" && (
+        <div className="flex items-center justify-between space-x-2 py-4">
+          <div className="text-sm text-muted-foreground">
+            {table.getFilteredRowModel().rows.length} tool
+            {table.getFilteredRowModel().rows.length !== 1 ? "s" : ""} found
           </div>
-          <h3 className="text-lg font-medium mb-2">No tools found</h3>
-          <p className="text-muted-foreground mb-4">
-            {hasQuery
-              ? `No tools match "${searchQuery}"`
-              : "Try adjusting your search or filters"}
-          </p>
-          {(hasQuery || selectedCategory !== "all") && (
+          <div className="flex items-center space-x-2">
             <Button
               variant="outline"
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedCategory("all");
-              }}
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
             >
-              Clear all filters
+              Previous
             </Button>
-          )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
 
@@ -381,9 +720,12 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                     <h4 className="font-medium text-sm mb-2">Tags</h4>
                     <div className="flex flex-wrap gap-1">
                       {selectedDialogTool.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
+                        <span
+                          key={tag}
+                          className="inline-flex items-center px-2 py-1 rounded text-xs bg-muted text-muted-foreground"
+                        >
                           {tag}
-                        </Badge>
+                        </span>
                       ))}
                     </div>
                   </div>
@@ -416,7 +758,7 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                     }}
                     className="flex-1"
                   >
-                    Open
+                    Open Tool
                   </Button>
                   <Button
                     variant="outline"
