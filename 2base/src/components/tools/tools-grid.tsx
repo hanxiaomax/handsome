@@ -41,7 +41,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -525,24 +524,33 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-[200px]">
+            <DropdownMenuContent align="start" className="w-[240px]">
               {categories
                 .filter((cat) => cat.id !== "all")
-                .map((category) => (
-                  <DropdownMenuCheckboxItem
-                    key={category.id}
-                    className="capitalize"
-                    checked={selectedCategories.includes(category.id)}
-                    onCheckedChange={() => handleCategoryToggle(category.id)}
-                    onSelect={(e) => {
-                      // Prevent dropdown from closing on selection
-                      e.preventDefault();
-                    }}
-                  >
-                    {category.name}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              {categories.filter((cat) => cat.id !== "all").length > 0 && <></>}
+                .map((category) => {
+                  // Calculate tool count for this category
+                  const categoryToolCount = tools.filter(
+                    (tool) => tool.category === category.id
+                  ).length;
+
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={category.id}
+                      className="capitalize flex justify-between items-center"
+                      checked={selectedCategories.includes(category.id)}
+                      onCheckedChange={() => handleCategoryToggle(category.id)}
+                      onSelect={(e) => {
+                        // Prevent dropdown from closing on selection
+                        e.preventDefault();
+                      }}
+                    >
+                      <span>{category.name}</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        {categoryToolCount}
+                      </span>
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
             </DropdownMenuContent>
           </DropdownMenu>
 
