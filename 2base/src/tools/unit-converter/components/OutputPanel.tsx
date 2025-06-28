@@ -30,7 +30,9 @@ import {
   ArrowRightLeft,
   Edit,
   Trash2,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { ConversionResult } from "../types";
 import { MoreCard } from "./more-card";
@@ -41,6 +43,8 @@ interface ExtendedConversionResult extends ConversionResult {
   isCustom?: boolean;
   hasError?: boolean;
   customConversion?: CustomConversion;
+  needsScientific?: boolean;
+  scientificValue?: string;
 }
 
 interface OutputPanelProps {
@@ -61,6 +65,40 @@ interface OutputPanelProps {
   onEditCustomConversion?: (conversion: CustomConversion) => void;
   onDeleteCustomConversion?: (conversionId: string) => void;
 }
+
+// Helper function to format numbers and determine if scientific notation is needed
+const formatNumber = (value: number, hasError: boolean = false) => {
+  if (hasError || isNaN(value) || !isFinite(value)) {
+    return {
+      originalValue: "Error",
+      formattedValue: "Error",
+      needsScientific: false,
+      scientificValue: ""
+    };
+  }
+
+  // Convert to string to check digit count
+  const originalStr = value.toString();
+  
+  // Remove decimal point and scientific notation for digit counting
+  const digitsOnly = originalStr.replace(/[.-]/g, '').replace(/e[+-]?\d+/i, '');
+  const hasMoreThan11Digits = digitsOnly.length > 11;
+  
+  // Format the original value (clean up trailing zeros)
+  let formattedValue = value.toFixed(6).replace(/\.?0+$/, '');
+  
+  // If the formatted value is still very long, use a more reasonable precision
+  if (formattedValue.length > 15) {
+    formattedValue = value.toPrecision(6);
+  }
+  
+  return {
+    originalValue: formattedValue,
+    formattedValue,
+    needsScientific: hasMoreThan11Digits,
+    scientificValue: hasMoreThan11Digits ? value.toExponential(3) : ""
+  };
+};
 
 export function OutputPanel({
   inputValue,
@@ -86,7 +124,6 @@ export function OutputPanel({
   // Calculate custom conversion results
   const customResults: ExtendedConversionResult[] = customConversions.map((conversion) => {
     let convertedValue = 0;
-    let formattedValue = "0";
     let hasError = false;
     
     try {
@@ -98,11 +135,11 @@ export function OutputPanel({
         const func = new Function('value', `return ${conversion.formula.replace(/x/g, 'value')};`);
         convertedValue = func(inputVal);
       }
-      formattedValue = convertedValue.toFixed(6).replace(/\.?0+$/, '');
     } catch {
       hasError = true;
-      formattedValue = "Error";
     }
+
+    const numberFormat = formatNumber(convertedValue, hasError);
 
     return {
       unit: {
@@ -116,39 +153,79 @@ export function OutputPanel({
         context: "Custom conversion",
       },
       value: convertedValue,
-      formattedValue,
+      formattedValue: numberFormat.formattedValue,
       isApproximate: false,
       isCustom: true,
       hasError,
       customConversion: conversion,
+      needsScientific: numberFormat.needsScientific,
+      scientificValue: numberFormat.scientificValue,
     };
   });
 
   // Combine standard and custom results
+  const standardResults: ExtendedConversionResult[] = results.map(r => {
+    const numberFormat = formatNumber(r.value);
+    return {
+      ...r,
+      isCustom: false,
+      formattedValue: numberFormat.formattedValue,
+      needsScientific: numberFormat.needsScientific,
+      scientificValue: numberFormat.scientificValue
+    };
+  });
+  
   const allResults: ExtendedConversionResult[] = [
-    ...results.map(r => ({ ...r, isCustom: false })),
+    ...standardResults,
     ...customResults
   ];
 
+  // Sort results: focused units first, then others
+  const sortedResults = allResults.sort((a, b) => {
+    const aIsFocused = focusedUnits.includes(a.unit.id);
+    const bIsFocused = focusedUnits.includes(b.unit.id);
+    
+    if (aIsFocused && !bIsFocused) return -1;
+    if (!aIsFocused && bIsFocused) return 1;
+    
+    // If both are focused or both are not focused, maintain original order
+    return 0;
+  });
+
   const selectedUnit = availableUnits.find((u) => u.id === inputUnit);
 
-  const handleCopy = async (value: string) => {
+  const handleCopy = async (value: string, unitName: string) => {
     try {
       await navigator.clipboard.writeText(value);
+      toast.success(`Copied ${unitName} value`, {
+        description: `${value} copied to clipboard`
+      });
     } catch (err) {
       console.error("Failed to copy:", err);
+      toast.error("Failed to copy to clipboard");
     }
   };
 
-  const handleToggleFocus = (unitId: string) => {
+  const handleToggleFocus = (unitId: string, unitName: string) => {
     if (onToggleFocus) {
       onToggleFocus(unitId);
+      const isFocused = focusedUnits.includes(unitId);
+      if (isFocused) {
+        toast.info(`Removed focus from ${unitName}`);
+      } else {
+        toast.success(`Focused on ${unitName}`, {
+          description: "This unit will appear at the top of the list"
+        });
+      }
     }
   };
 
   const handleSwapUnits = (result: ConversionResult) => {
     if (onSwapUnits) {
       onSwapUnits(result);
+      toast.success(`Swapped to ${result.unit.name}`, {
+        description: `Input unit changed to ${result.unit.name}`
+      });
     }
   };
 
@@ -171,7 +248,13 @@ export function OutputPanel({
   const handleDeleteCustomConversion = (conversionId: string) => {
     if (onDeleteCustomConversion) {
       onDeleteCustomConversion(conversionId);
+      toast.success("Custom conversion deleted");
     }
+  };
+
+  const handleClearInput = () => {
+    onInputValueChange("");
+    toast.info("Input cleared");
   };
 
   return (
@@ -185,65 +268,81 @@ export function OutputPanel({
           type="number"
           value={inputValue || ""}
           onChange={(e) => onInputValueChange(e.target.value)}
-          className="w-full h-10 rounded-md border border-input bg-background pl-16 pr-32 text-right text-lg font-mono ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+          className="w-full h-10 rounded-md border border-input bg-background pl-16 pr-40 text-right text-lg font-mono ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
           min={0}
           placeholder="Enter value..."
         />
-        <div className="absolute right-1 top-1 bottom-1 w-30">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                role="combobox"
-                aria-expanded={open}
-                className="h-8 px-4 text-sm border-0 bg-transparent hover:bg-muted/30"
-              >
-                {selectedUnit ? (
-                  <span className="font-semibold text-primary truncate text-left">
-                    {selectedUnit.symbol}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground text-sm">Unit</span>
-                )}
-                <ChevronsUpDown className="ml-1 h-5 w-5 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
-              <Command>
-                <CommandInput placeholder="Search units..." />
-                <CommandList>
-                  <CommandEmpty>No unit found.</CommandEmpty>
-                  <CommandGroup>
-                    {availableUnits.map((unit) => (
-                      <CommandItem
-                        key={unit.id}
-                        value={`${unit.name} ${unit.symbol}`}
-                        onSelect={() => {
-                          onInputUnitChange(unit.id);
-                          setOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            unit.id === selectedUnit?.id
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                        <div className="flex items-center justify-between w-full">
-                          <span>{unit.name}</span>
-                          <span className="text-muted-foreground text-sm">
-                            {unit.symbol}
-                          </span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+        <div className="absolute right-1 top-1 bottom-1 flex items-center">
+          {/* Unit Selector */}
+          <div className="w-30">
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="h-8 px-4 text-sm border-0 bg-transparent hover:bg-muted/30"
+                >
+                  {selectedUnit ? (
+                    <span className="font-semibold text-primary truncate text-left">
+                      {selectedUnit.symbol}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">Unit</span>
+                  )}
+                  <ChevronsUpDown className="ml-1 h-5 w-5 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="end">
+                <Command>
+                  <CommandInput placeholder="Search units..." />
+                  <CommandList>
+                    <CommandEmpty>No unit found.</CommandEmpty>
+                    <CommandGroup>
+                      {availableUnits.map((unit) => (
+                        <CommandItem
+                          key={unit.id}
+                          value={`${unit.name} ${unit.symbol}`}
+                          onSelect={() => {
+                            onInputUnitChange(unit.id);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              unit.id === selectedUnit?.id
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          <div className="flex items-center justify-between w-full">
+                            <span>{unit.name}</span>
+                            <span className="text-muted-foreground text-sm">
+                              {unit.symbol}
+                            </span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+          
+          {/* Clear Button - 在最右侧 */}
+          {inputValue && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearInput}
+              className="h-8 w-8 p-0 hover:bg-muted/30 ml-1"
+              title="Clear input"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -262,7 +361,7 @@ export function OutputPanel({
         </div>
       )}
 
-      {allResults.length === 0 && !isProcessing && !error && (
+      {sortedResults.length === 0 && !isProcessing && !error && (
         <div className="text-center py-8 text-muted-foreground">
           {!selectedCategory ? (
             <>
@@ -283,7 +382,7 @@ export function OutputPanel({
       )}
 
       {/* Conversion Results Table */}
-      {allResults.length > 0 && (
+      {sortedResults.length > 0 && (
         <div className="border rounded-md">
           <Table>
             <TableHeader>
@@ -292,7 +391,7 @@ export function OutputPanel({
                   <div className="flex items-center gap-2">
                     <span>Unit</span>
                     <Badge variant="secondary" className="text-xs">
-                      {allResults.length}
+                      {sortedResults.length}
                     </Badge>
                   </div>
                 </TableHead>
@@ -301,7 +400,7 @@ export function OutputPanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {allResults.map((result) => {
+              {sortedResults.map((result) => {
                 const isFocused = focusedUnits.includes(result.unit.id);
                 const isCustom = result.isCustom || false;
                 const hasError = result.hasError || false;
@@ -340,16 +439,14 @@ export function OutputPanel({
                             {result.unit.symbol}
                           </span>
                         </div>
-                        {/* Show scientific notation for large/small values */}
-                        {!hasError && (Math.abs(result.value) >= 1e6 ||
-                          (Math.abs(result.value) < 0.001 &&
-                            result.value !== 0)) && (
+                        {/* Show scientific notation when number has more than 11 digits */}
+                        {!hasError && result.needsScientific && result.scientificValue && (
                           <div className="text-xs text-muted-foreground font-mono flex items-center justify-end gap-2">
                             <span>
                               {result.isApproximate && (
                                 <span className="mr-1">~</span>
                               )}
-                              {result.value.toExponential(3)}
+                              {result.scientificValue}
                             </span>
                             <span className="text-muted-foreground">
                               {result.unit.symbol}
@@ -364,7 +461,7 @@ export function OutputPanel({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleToggleFocus(result.unit.id)}
+                          onClick={() => handleToggleFocus(result.unit.id, result.unit.name)}
                           className="h-6 w-6 p-0"
                           title={isFocused ? "Remove focus" : "Focus unit"}
                         >
@@ -420,7 +517,7 @@ export function OutputPanel({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleCopy(result.formattedValue)}
+                          onClick={() => handleCopy(result.formattedValue, result.unit.name)}
                           className="h-6 w-6 p-0"
                           title="Copy value"
                         >

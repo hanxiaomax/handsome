@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+
 import { Plus, Code, Sparkles, Crown, Save, Play } from "lucide-react";
 import { toast } from "sonner";
 
@@ -202,8 +202,6 @@ function convert(value) {
             />
           </div>
 
-          <Separator className="my-6" />
-
           {/* Tab content with fixed height and increased top margin */}
           <div className="min-h-[300px] mt-8">
             <TabsContent value="basic" className="space-y-4 mt-0">
@@ -224,39 +222,6 @@ function convert(value) {
                   Use 'x' to represent the input value. Example: x * 2.54, x /
                   100, x + 273.15
                 </p>
-              </div>
-
-              {/* Example formulas */}
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <h5 className="font-medium text-sm mb-3">
-                  Common Formula Examples:
-                </h5>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <code className="bg-background px-2 py-1 rounded text-xs">
-                      x * 2.54
-                    </code>{" "}
-                    - Convert inches to cm
-                  </div>
-                  <div>
-                    <code className="bg-background px-2 py-1 rounded text-xs">
-                      x / 2.54
-                    </code>{" "}
-                    - Convert cm to inches
-                  </div>
-                  <div>
-                    <code className="bg-background px-2 py-1 rounded text-xs">
-                      x + 273.15
-                    </code>{" "}
-                    - Convert Celsius to Kelvin
-                  </div>
-                  <div>
-                    <code className="bg-background px-2 py-1 rounded text-xs">
-                      x * 1.609344
-                    </code>{" "}
-                    - Convert miles to km
-                  </div>
-                </div>
               </div>
             </TabsContent>
 
