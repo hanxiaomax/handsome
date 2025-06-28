@@ -79,7 +79,7 @@ const formatNumber = (value: number, hasError: boolean = false) => {
 
   // Convert to string to check digit count
   const originalStr = value.toString();
-  
+
   // Remove decimal point and scientific notation for digit counting
   const digitsOnly = originalStr.replace(/[.-]/g, '').replace(/e[+-]?\d+/i, '');
   const hasMoreThan11Digits = digitsOnly.length > 11;
@@ -275,29 +275,29 @@ export function OutputPanel({
         <div className="absolute right-1 top-1 bottom-1 flex items-center">
           {/* Unit Selector */}
           <div className="w-30">
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  role="combobox"
-                  aria-expanded={open}
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                role="combobox"
+                aria-expanded={open}
                   className="h-8 px-4 text-sm border-0 bg-transparent hover:bg-muted/30"
-                >
-                  {selectedUnit ? (
+              >
+                {selectedUnit ? (
                     <span className="font-semibold text-primary truncate text-left">
-                      {selectedUnit.symbol}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground text-sm">Unit</span>
-                  )}
-                  <ChevronsUpDown className="ml-1 h-5 w-5 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
+                    {selectedUnit.symbol}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground text-sm">Unit</span>
+                )}
+                <ChevronsUpDown className="ml-1 h-5 w-5 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
               <PopoverContent className="w-80 p-0" align="end">
-                <Command>
-                  <CommandInput placeholder="Search units..." />
-                  <CommandList>
-                    <CommandEmpty>No unit found.</CommandEmpty>
+              <Command>
+                <CommandInput placeholder="Search units..." />
+                <CommandList>
+                  <CommandEmpty>No unit found.</CommandEmpty>
                     <CommandGroup>
                       {availableUnits.map((unit) => (
                         <CommandItem
@@ -325,10 +325,10 @@ export function OutputPanel({
                         </CommandItem>
                       ))}
                     </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           </div>
           
           {/* Clear Button - 在最右侧 */}
@@ -369,76 +369,76 @@ export function OutputPanel({
               <p className="text-sm mt-2">
                 Select a category from the left panel to start converting units
               </p>
-            </>
-          ) : (
-            <>
+              </>
+            ) : (
+              <>
               <p>No conversion results available</p>
               <p className="text-sm">
                 Try selecting a different category or unit
               </p>
-            </>
-          )}
+              </>
+            )}
         </div>
       )}
 
       {/* Conversion Results Table */}
       {sortedResults.length > 0 && (
-        <div className="border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
                 <TableHead className="w-[160px]">
                   <div className="flex items-center gap-2">
                     <span>Unit</span>
                     <Badge variant="secondary" className="text-xs">
                       {sortedResults.length}
                     </Badge>
-                  </div>
+                </div>
                 </TableHead>
-                <TableHead className="text-right">Value</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
                 <TableHead className="w-[120px] text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
               {sortedResults.map((result) => {
                 const isFocused = focusedUnits.includes(result.unit.id);
                 const isCustom = result.isCustom || false;
                 const hasError = result.hasError || false;
                 const customConversion = result.customConversion;
                 
-                return (
-                  <TableRow
+  return (
+    <TableRow
                     key={result.unit.id}
-                    className={`group hover:bg-muted/50 transition-colors ${
+      className={`group hover:bg-muted/50 transition-colors ${
                       isFocused
                         ? "bg-primary/5 border-l-2 border-l-primary"
                         : ""
                     } ${hasError ? "bg-destructive/5" : ""}`}
                   >
-                    <TableCell>
+      <TableCell>
                       <div className="flex items-center gap-3">
-                        <div>
+          <div>
                           <div className="font-medium text-base">
-                            {result.unit.name}
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
+              {result.unit.name}
+            </div>
+          </div>
+        </div>
+      </TableCell>
                     <TableCell className="text-right font-mono">
-                      <div className="space-y-1">
+        <div className="space-y-1">
                         <div className="font-mono font-semibold text-base flex items-center justify-end gap-2">
                           <span className={hasError ? "text-destructive" : ""}>
-                            {result.isApproximate && (
+            {result.isApproximate && (
                               <span className="text-muted-foreground mr-1">
                                 ~
                               </span>
-                            )}
-                            {result.formattedValue}
+            )}
+            {result.formattedValue}
                           </span>
                           <span className="font-bold text-primary">
                             {result.unit.symbol}
                           </span>
-                        </div>
+          </div>
                         {/* Show scientific notation when number has more than 11 digits */}
                         {!hasError && result.needsScientific && result.scientificValue && (
                           <div className="text-xs text-muted-foreground font-mono flex items-center justify-end gap-2">
@@ -446,45 +446,45 @@ export function OutputPanel({
                               {result.isApproximate && (
                                 <span className="mr-1">~</span>
                               )}
-                              {result.scientificValue}
+              {result.scientificValue}
                             </span>
                             <span className="text-muted-foreground">
                               {result.unit.symbol}
                             </span>
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
+            </div>
+          )}
+        </div>
+      </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         {/* Focus Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
+          <Button
+            variant="ghost"
+            size="sm"
                           onClick={() => handleToggleFocus(result.unit.id, result.unit.name)}
                           className="h-6 w-6 p-0"
-                          title={isFocused ? "Remove focus" : "Focus unit"}
-                        >
-                          <Focus
-                            className={`h-3 w-3 ${
+            title={isFocused ? "Remove focus" : "Focus unit"}
+          >
+            <Focus
+              className={`h-3 w-3 ${
                               isFocused
                                 ? "text-primary"
                                 : "text-muted-foreground"
-                            }`}
-                          />
-                        </Button>
+              }`}
+            />
+          </Button>
                         
                         {/* Standard conversion: Swap Button */}
                         {!isCustom && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
+          <Button
+            variant="ghost"
+            size="sm"
                             onClick={() => handleSwapUnits(result)}
                             className="h-6 w-6 p-0"
-                            title="Swap units"
-                          >
-                            <ArrowRightLeft className="h-3 w-3" />
-                          </Button>
+            title="Swap units"
+          >
+            <ArrowRightLeft className="h-3 w-3" />
+          </Button>
                         )}
                         
                         {/* Custom conversion: Edit Button */}
@@ -514,19 +514,19 @@ export function OutputPanel({
                         )}
                         
                         {/* Copy Button */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
+          <Button
+            variant="ghost"
+            size="sm"
                           onClick={() => handleCopy(result.formattedValue, result.unit.name)}
                           className="h-6 w-6 p-0"
-                          title="Copy value"
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
+            title="Copy value"
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
               })}
             </TableBody>
           </Table>
@@ -548,6 +548,6 @@ export function OutputPanel({
         onOpenChange={setCustomDialogOpen}
         onSave={handleSaveCustomConversion}
       />
-    </div>
+        </div>
   );
 }

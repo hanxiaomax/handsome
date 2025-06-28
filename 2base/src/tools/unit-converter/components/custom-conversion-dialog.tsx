@@ -13,13 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Plus,
   Code,
   Sparkles,
@@ -160,63 +153,42 @@ function convert(value) {
 
   const renderModeSelection = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="flex justify-center gap-8">
         {/* Basic Formula */}
-        <Card
-          className="cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/50"
+        <div
+          className="cursor-pointer hover:scale-105 transition-transform text-center"
           onClick={() => setMode("basic")}
         >
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-2">
-              <Calculator className="h-6 w-6 text-blue-600" />
-            </div>
-            <CardTitle className="text-base">Basic Formula</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center pt-0">
-            <CardDescription className="text-sm">
-              Simple math expressions using x as input variable
-            </CardDescription>
-          </CardContent>
-        </Card>
+          <div className="w-20 h-20 rounded-full bg-blue-100 hover:bg-blue-200 flex items-center justify-center mb-3 mx-auto transition-colors">
+            <Calculator className="h-8 w-8 text-blue-600" />
+          </div>
+          <p className="text-sm font-medium">Basic Formula</p>
+        </div>
 
         {/* JavaScript */}
-        <Card
-          className="cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/50"
+        <div
+          className="cursor-pointer hover:scale-105 transition-transform text-center"
           onClick={() => setMode("javascript")}
         >
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-2">
-              <Code className="h-6 w-6 text-green-600" />
-            </div>
-            <CardTitle className="text-base">JavaScript</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center pt-0">
-            <CardDescription className="text-sm">
-              Advanced logic with custom JavaScript functions
-            </CardDescription>
-          </CardContent>
-        </Card>
+          <div className="w-20 h-20 rounded-full bg-green-100 hover:bg-green-200 flex items-center justify-center mb-3 mx-auto transition-colors">
+            <Code className="h-8 w-8 text-green-600" />
+          </div>
+          <p className="text-sm font-medium">JavaScript</p>
+        </div>
 
         {/* AI Generate */}
-        <Card
-          className="cursor-pointer hover:shadow-md transition-all border-2 hover:border-primary/50"
+        <div
+          className="cursor-pointer hover:scale-105 transition-transform text-center"
           onClick={() => setMode("ai")}
         >
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-2">
-              <Sparkles className="h-6 w-6 text-purple-600" />
-            </div>
-            <CardTitle className="text-base flex items-center justify-center gap-1">
-              AI Generate
-              <Crown className="h-3 w-3 text-primary" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center pt-0">
-            <CardDescription className="text-sm">
-              Describe your needs and let AI create the conversion
-            </CardDescription>
-          </CardContent>
-        </Card>
+          <div className="w-20 h-20 rounded-full bg-purple-100 hover:bg-purple-200 flex items-center justify-center mb-3 mx-auto transition-colors">
+            <Sparkles className="h-8 w-8 text-purple-600" />
+          </div>
+          <div className="flex items-center justify-center gap-1">
+            <p className="text-sm font-medium">AI Generate</p>
+            <Crown className="h-3 w-3 text-primary" />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -436,7 +408,7 @@ function convert(value) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />

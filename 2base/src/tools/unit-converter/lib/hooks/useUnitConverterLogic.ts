@@ -37,7 +37,7 @@ export function useUnitConverterLogic(
       const firstUnit = engine.current.getUnit(units[0]);
       if (!firstUnit) {
         setState(prev => ({
-          ...prev,
+            ...prev,
           selectedCategory: categoryId,
           availableUnits: [],
           results: [],
@@ -73,23 +73,23 @@ export function useUnitConverterLogic(
       }));
 
       setState(prev => ({
-        ...prev,
+              ...prev,
         selectedCategory: categoryId,
         availableUnits: unitList,
         inputUnit: firstUnit.name,
-        results: sortedResults,
-        isProcessing: false,
+              results: sortedResults,
+              isProcessing: false,
         error: null
-      }));
-    } catch (error) {
+            }));
+          } catch (error) {
       setState(prev => ({
-        ...prev,
+              ...prev,
         selectedCategory: categoryId,
         availableUnits: [],
         results: [],
         error: error instanceof Error ? error.message : 'Failed to change category'
-      }));
-    }
+            }));
+        }
   }, [setState, formatValue]);
 
   const handleInputChange = useCallback((value: string, unitId?: string) => {
