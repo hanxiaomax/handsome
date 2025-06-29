@@ -43,6 +43,8 @@ interface LeftPanelToolbarProps {
   onClear: () => void;
   hasContent: boolean;
   inputMode: "file" | "text";
+  onFileSelect: () => void;
+  onFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export function LeftPanelToolbar({
@@ -60,6 +62,8 @@ export function LeftPanelToolbar({
   onClear,
   hasContent,
   inputMode,
+  onFileSelect,
+  onFileInputChange,
 }: LeftPanelToolbarProps) {
   return (
     <div className="flex items-center justify-between h-full">
@@ -82,9 +86,9 @@ export function LeftPanelToolbar({
           </>
         ) : (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Upload className="w-4 h-4" />
+            <FileText className="w-4 h-4" />
             <span className="text-sm">
-              {inputMode === "file" ? "No file selected" : "No content"}
+              {inputMode === "file" ? "File loaded" : "Text input mode"}
             </span>
           </div>
         )}
@@ -92,6 +96,36 @@ export function LeftPanelToolbar({
 
       {/* Control buttons */}
       <div className="flex items-center gap-1">
+        {/* File upload button */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept=".xml,.arxml,.xsd,.svg"
+                  onChange={onFileInputChange}
+                  className="hidden"
+                />
+                <Button
+                  onClick={onFileSelect}
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                >
+                  <Upload className="w-3 h-3" />
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Upload XML file</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <Separator orientation="vertical" className="h-6" />
+
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

@@ -22,7 +22,7 @@ export function FileUploadArea({
       className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer ${
         isDragOver
           ? "border-primary bg-primary/5"
-          : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-muted/20"
+          : "border-border hover:border-primary/50 hover:bg-muted/20"
       }`}
       onDrop={onDrop}
       onDragOver={onDragOver}

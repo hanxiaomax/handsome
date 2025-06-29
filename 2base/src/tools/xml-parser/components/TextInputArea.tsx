@@ -1,4 +1,4 @@
-import { FileCode, Play, Loader2 } from "lucide-react";
+import { Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,15 +20,6 @@ export function TextInputArea({
 }: TextInputAreaProps) {
   return (
     <div className="space-y-4">
-      <div className="text-center mb-4">
-        <FileCode className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-        <h3 className="text-lg font-medium text-foreground mb-2">
-          Paste XML Content
-        </h3>
-        <p className="text-muted-foreground">
-          Paste your XML content directly into the text area below
-        </p>
-      </div>
       <ScrollArea className="h-[400px] w-full border rounded-md">
         <Textarea
           placeholder="Paste your XML content here..."

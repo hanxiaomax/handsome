@@ -135,16 +135,16 @@ export function useXMLParserLogic(
   const handleStartParsing = useCallback(async () => {
     if (uiState.inputMode === "text") {
       if (!uiState.textInput.trim()) {
-        toast.error("请输入XML内容", {
-          description: "文本输入区域不能为空",
+        toast.error("Please enter XML content", {
+          description: "Text input area cannot be empty",
         });
         return;
       }
       await parseXMLContent(uiState.textInput, "text");
     } else {
       if (!uiState.fileUpload.selectedFile) {
-        toast.error("请选择文件", {
-          description: "需要先上传XML文件",
+        toast.error("Please select a file", {
+          description: "You need to upload an XML file first",
         });
         return;
       }

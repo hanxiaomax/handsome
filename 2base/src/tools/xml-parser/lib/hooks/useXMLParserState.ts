@@ -29,7 +29,7 @@ export interface XMLParserUIState {
 const initialState: XMLParserUIState = {
   displayMode: "beautified",
   showLineNumbers: true,
-  inputMode: "file",
+  inputMode: "text",
   autoParseEnabled: true,
   selectedElement: null,
   expandedNodes: new Set(),

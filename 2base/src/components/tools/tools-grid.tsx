@@ -554,7 +554,6 @@ export function ToolsGrid({ onUseTool, selectedTool }: ToolsGridProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* View Mode Toggle */}
           <ToggleGroup
             type="single"
             value={viewMode}
