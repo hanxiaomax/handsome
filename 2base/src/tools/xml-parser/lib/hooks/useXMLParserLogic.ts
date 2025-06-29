@@ -4,7 +4,7 @@
  * Handles all business logic operations for the XML parser tool
  */
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useEffect } from "react";
 import { toast } from "sonner";
 
 import {
@@ -37,6 +37,7 @@ interface UIActions {
   toggleExpandedNode: (elementId: string) => void;
   expandAllNodes: (elementIds: string[]) => void;
   collapseAllNodes: () => void;
+  setTextInput: (text: string) => void;
 }
 
 export function useXMLParserLogic(
@@ -46,6 +47,45 @@ export function useXMLParserLogic(
   // Core XML parsing functionality
   const { elements, parserState, parseXMLContent, searchElements } =
     useXMLParser();
+
+  // Debounce timer for real-time parsing
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const DEBOUNCE_DELAY = 1000; // 1 second delay for real-time parsing
+
+  // Real-time text input handler with debouncing
+  const handleTextInputChange = useCallback(
+    (value: string) => {
+      // Update text input immediately for responsive UI
+      uiActions.setTextInput(value);
+
+      // If auto-parse is enabled, debounce the parsing
+      if (uiState.autoParseEnabled && value.trim()) {
+        // Clear existing timer
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+
+        // Set new timer for debounced parsing
+        debounceTimerRef.current = setTimeout(() => {
+          // Only parse if the content looks like XML (basic validation)
+          const trimmedValue = value.trim();
+          if (trimmedValue.startsWith("<") && trimmedValue.includes(">")) {
+            parseXMLContent(trimmedValue, "text");
+          }
+        }, DEBOUNCE_DELAY);
+      }
+    },
+    [uiState.autoParseEnabled, uiActions.setTextInput, parseXMLContent]
+  );
+
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // File handling
   const handleFileSelect = useCallback(
@@ -236,6 +276,12 @@ export function useXMLParserLogic(
   }, [uiState.fileUpload, uiState.textInput, uiState.displayMode, elements]);
 
   const handleClear = useCallback(() => {
+    // Clear debounce timer when clearing content
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
     uiActions.clearContent();
     if (uiState.inputMode === "file") {
       toast.success("File cleared!", {
@@ -275,6 +321,10 @@ export function useXMLParserLogic(
           ? !!uiState.fileUpload.fileInfo
           : !!uiState.textInput.trim(),
 
+      // Real-time parsing status
+      isRealTimeParsing:
+        uiState.autoParseEnabled && uiState.inputMode === "text",
+
       // Display content based on mode
       displayContent: (() => {
         if (!sourceContent) return null;
@@ -301,6 +351,9 @@ export function useXMLParserLogic(
     onFileDrop: handleFileDrop,
     onDragOver: handleDragOver,
     onDragLeave: handleDragLeave,
+
+    // Text input operations
+    onTextInputChange: handleTextInputChange,
 
     // Parsing operations
     onParse: handleStartParsing,

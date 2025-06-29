@@ -20,8 +20,6 @@ import {
   TreePine,
   Brackets,
   Download,
-  Zap,
-  Search,
   FileX,
 } from "lucide-react";
 
@@ -67,7 +65,10 @@ export default function XMLParser() {
   const { state: uiState, actions: uiActions } = useXMLParserState();
   const { elements, parserState, computed, handlers } = useXMLParserLogic(
     uiState,
-    uiActions
+    {
+      ...uiActions,
+      setTextInput: uiActions.setTextInput,
+    }
   );
 
   // Settings panel state
@@ -274,7 +275,7 @@ export default function XMLParser() {
           {/* Left Panel - Source XML Input */}
           <ResizablePanel defaultSize={50} minSize={30}>
             <div className="flex flex-col h-full overflow-hidden">
-              {/* Left Panel Status Bar - Input file information */}
+              {/* Left Panel Status Bar - XML Editor status */}
               <div
                 id="left-status-bar"
                 className="border-b bg-background p-3 h-14 flex-shrink-0"
@@ -283,28 +284,40 @@ export default function XMLParser() {
                   <div className="flex items-center gap-2">
                     <FileCode className="w-4 h-4 text-primary" />
                     <h3 className="font-medium text-sm text-foreground">
-                      Input XML
+                      XML Editor
                     </h3>
-                    {uiState.fileUpload.fileInfo && (
-                      <Badge variant="secondary" className="text-xs">
-                        {uiState.fileUpload.fileInfo.name}
-                      </Badge>
-                    )}
+                    {uiState.inputMode === "file" &&
+                      uiState.fileUpload.fileInfo && (
+                        <Badge variant="secondary" className="text-xs">
+                          {uiState.fileUpload.fileInfo.name}
+                        </Badge>
+                      )}
                     {parserState.status === "parsing" && (
                       <Badge variant="outline" className="text-xs">
                         Parsing... {Math.round(parserState.progress)}%
                       </Badge>
                     )}
+                    {computed.hasContent && parserState.status === "complete" && (
+                      <Badge variant="secondary" className="text-xs">
+                        Ready
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    {uiState.fileUpload.fileInfo ? (
+                    {uiState.inputMode === "file" &&
+                    uiState.fileUpload.fileInfo ? (
                       <span className="text-sm">
+                        {uiState.fileUpload.fileInfo.name} •{" "}
                         {(uiState.fileUpload.fileInfo.size / 1024).toFixed(1)}{" "}
                         KB
                       </span>
+                    ) : computed.hasContent ? (
+                      <span className="text-sm">
+                        {uiState.textInput.length} characters
+                      </span>
                     ) : (
-                      <span className="text-sm">No file loaded</span>
+                      <span className="text-sm">Ready for input</span>
                     )}
                   </div>
                 </div>
@@ -316,7 +329,6 @@ export default function XMLParser() {
                 className="border-b bg-muted/20 p-3 h-12 flex-shrink-0"
               >
                 <LeftPanelToolbar
-                  fileInfo={uiState.fileUpload.fileInfo}
                   parserState={parserState}
                   showLineNumbers={uiState.showLineNumbers}
                   onToggleLineNumbers={uiActions.setShowLineNumbers}
@@ -329,7 +341,6 @@ export default function XMLParser() {
                   canClear={computed.canClear}
                   onClear={handlers.onClear}
                   hasContent={computed.hasContent}
-                  inputMode={uiState.inputMode}
                   onFileSelect={() =>
                     document.getElementById("file-input")?.click()
                   }
@@ -337,30 +348,39 @@ export default function XMLParser() {
                 />
               </div>
 
-              {/* Left Panel Content - Source code display or text input */}
+              {/* Left Panel Content - Editable text area or file content */}
               <div
                 id="left-content-area"
-                className="flex-1 relative overflow-hidden"
+                className="flex-1 overflow-hidden p-4"
               >
-                {computed.hasContent ? (
-                  <SourceCodeDisplay
-                    content={
-                      uiState.inputMode === "text"
-                        ? uiState.textInput
-                        : uiState.fileUpload.originalContent
-                    }
-                    showLineNumbers={uiState.showLineNumbers}
+                {uiState.inputMode === "file" &&
+                uiState.fileUpload.originalContent ? (
+                  // Show file content in editable text area
+                  <TextInputArea
+                    textInput={uiState.fileUpload.originalContent}
+                    onTextInputChange={(value) => {
+                      // Update the file content when editing
+                      uiActions.setFileUpload({
+                        ...uiState.fileUpload,
+                        originalContent: value,
+                        content: value,
+                      });
+                      // Also update text input for consistency
+                      uiActions.setTextInput(value);
+                    }}
+                    onParse={handlers.onParse}
+                    isParsingMode={!uiState.autoParseEnabled}
+                    isLoading={parserState.status === "parsing"}
                   />
                 ) : (
-                  <div className="absolute inset-0 p-4">
-                    <TextInputArea
-                      textInput={uiState.textInput}
-                      onTextInputChange={uiActions.setTextInput}
-                      onParse={handlers.onParse}
-                      isParsingMode={!uiState.autoParseEnabled}
-                      isLoading={parserState.status === "parsing"}
-                    />
-                  </div>
+                  // Show regular text input area
+                  <TextInputArea
+                    textInput={uiState.textInput}
+                    onTextInputChange={handlers.onTextInputChange}
+                    onParse={handlers.onParse}
+                    isParsingMode={!uiState.autoParseEnabled}
+                    isLoading={parserState.status === "parsing"}
+                  />
                 )}
               </div>
             </div>

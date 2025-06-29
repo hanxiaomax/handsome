@@ -19,14 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface FileInfo {
-  name: string;
-  size: number;
-  type: string;
-}
-
 interface LeftPanelToolbarProps {
-  fileInfo?: FileInfo | null;
   parserState: {
     status: "idle" | "parsing" | "loading" | "complete" | "error";
     progress: number;
@@ -42,13 +35,11 @@ interface LeftPanelToolbarProps {
   canClear: boolean;
   onClear: () => void;
   hasContent: boolean;
-  inputMode: "file" | "text";
   onFileSelect: () => void;
   onFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export function LeftPanelToolbar({
-  fileInfo,
   parserState,
   showLineNumbers,
   onToggleLineNumbers,
@@ -61,34 +52,22 @@ export function LeftPanelToolbar({
   canClear,
   onClear,
   hasContent,
-  inputMode,
   onFileSelect,
   onFileInputChange,
 }: LeftPanelToolbarProps) {
   return (
     <div className="flex items-center justify-between h-full">
       <div className="flex items-center gap-2">
-        {fileInfo ? (
-          <>
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">{fileInfo.name}</span>
-            </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <FileText className="w-4 h-4" />
+          <span className="text-sm">XML Editor</span>
+        </div>
 
-            {parserState.status === "parsing" && (
-              <div className="flex items-center gap-2 ml-4">
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                <span className="text-sm text-muted-foreground">
-                  Parsing... {Math.round(parserState.progress)}%
-                </span>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <FileText className="w-4 h-4" />
-            <span className="text-sm">
-              {inputMode === "file" ? "File loaded" : "Text input mode"}
+        {parserState.status === "parsing" && (
+          <div className="flex items-center gap-2 ml-4">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">
+              Parsing... {Math.round(parserState.progress)}%
             </span>
           </div>
         )}
@@ -126,6 +105,7 @@ export function LeftPanelToolbar({
 
         <Separator orientation="vertical" className="h-6" />
 
+        {/* Line numbers toggle */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -135,7 +115,7 @@ export function LeftPanelToolbar({
                 size="sm"
                 className={`h-7 w-7 p-0 ${
                   showLineNumbers
-                    ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    ? "bg-accent text-accent-foreground hover:bg-accent/90"
                     : ""
                 }`}
               >
@@ -148,6 +128,7 @@ export function LeftPanelToolbar({
           </Tooltip>
         </TooltipProvider>
 
+        {/* Auto parse toggle */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -157,7 +138,7 @@ export function LeftPanelToolbar({
                 size="sm"
                 className={`h-7 w-7 p-0 ${
                   autoParseEnabled
-                    ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    ? "bg-accent text-accent-foreground hover:bg-accent/90"
                     : ""
                 }`}
               >
@@ -165,11 +146,12 @@ export function LeftPanelToolbar({
               </Toggle>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Auto parse on file load</p>
+              <p>Auto parse on text change</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
+        {/* Manual parse button */}
         {!autoParseEnabled && canParse && (
           <TooltipProvider>
             <Tooltip>
@@ -188,7 +170,7 @@ export function LeftPanelToolbar({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Parse XML {inputMode === "file" ? "file" : "text"}</p>
+                <p>Parse XML text</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -196,6 +178,7 @@ export function LeftPanelToolbar({
 
         <Separator orientation="vertical" className="h-6" />
 
+        {/* Copy button */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -210,11 +193,12 @@ export function LeftPanelToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Copy source</p>
+              <p>Copy content</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
+        {/* Download button */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -229,33 +213,32 @@ export function LeftPanelToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Download source</p>
+              <p>Download content</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
 
-        {canClear && (
-          <>
-            <Separator orientation="vertical" className="h-6" />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={onClear}
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 hover:bg-muted/50"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Clear {inputMode === "file" ? "file" : "text"}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </>
-        )}
+        <Separator orientation="vertical" className="h-6" />
+
+        {/* Clear button */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onClear}
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                disabled={!canClear}
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Clear content</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );
