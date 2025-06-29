@@ -38,6 +38,8 @@ interface UIActions {
   expandAllNodes: (elementIds: string[]) => void;
   collapseAllNodes: () => void;
   setTextInput: (text: string) => void;
+  setOriginalTextInput: (text: string) => void;
+  resetEditState: () => void;
 }
 
 export function useXMLParserLogic(
@@ -58,8 +60,9 @@ export function useXMLParserLogic(
       // Update text input immediately for responsive UI
       uiActions.setTextInput(value);
 
-      // If auto-parse is enabled, debounce the parsing
-      if (uiState.autoParseEnabled && value.trim()) {
+      // Only enable auto-parse if user hasn't manually edited the content
+      // and auto-parse is enabled
+      if (uiState.autoParseEnabled && !uiState.hasUserEdited && value.trim()) {
         // Clear existing timer
         if (debounceTimerRef.current) {
           clearTimeout(debounceTimerRef.current);
@@ -75,7 +78,12 @@ export function useXMLParserLogic(
         }, DEBOUNCE_DELAY);
       }
     },
-    [uiState.autoParseEnabled, uiActions.setTextInput, parseXMLContent]
+    [
+      uiState.autoParseEnabled,
+      uiState.hasUserEdited,
+      uiActions.setTextInput,
+      parseXMLContent,
+    ]
   );
 
   // Clean up debounce timer on unmount
@@ -101,6 +109,10 @@ export function useXMLParserLogic(
           content: beautifyXML(content),
           originalContent: content,
         });
+
+        // Set original text input to track edits
+        uiActions.setOriginalTextInput(content);
+        uiActions.setTextInput(content);
 
         uiActions.setInputMode("file");
 

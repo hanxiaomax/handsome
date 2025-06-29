@@ -24,6 +24,10 @@ export interface XMLParserUIState {
   // Input content
   textInput: string;
   fileUpload: FileUploadState;
+
+  // Edit tracking
+  hasUserEdited: boolean;
+  originalTextInput: string;
 }
 
 const initialState: XMLParserUIState = {
@@ -43,6 +47,8 @@ const initialState: XMLParserUIState = {
     content: "",
     originalContent: "",
   },
+  hasUserEdited: false,
+  originalTextInput: "",
 };
 
 export function useXMLParserState() {
@@ -108,13 +114,38 @@ export function useXMLParserState() {
 
     // Input content actions
     setTextInput: useCallback((text: string) => {
-      setState((prev) => ({ ...prev, textInput: text }));
+      setState((prev) => {
+        // Check if user has edited the content
+        const hasEdited = text !== prev.originalTextInput;
+        return {
+          ...prev,
+          textInput: text,
+          hasUserEdited: hasEdited,
+        };
+      });
     }, []),
 
     setFileUpload: useCallback((fileUpload: Partial<FileUploadState>) => {
       setState((prev) => ({
         ...prev,
         fileUpload: { ...prev.fileUpload, ...fileUpload },
+      }));
+    }, []),
+
+    // Edit tracking actions
+    setOriginalTextInput: useCallback((text: string) => {
+      setState((prev) => ({
+        ...prev,
+        originalTextInput: text,
+        hasUserEdited: false,
+      }));
+    }, []),
+
+    resetEditState: useCallback(() => {
+      setState((prev) => ({
+        ...prev,
+        hasUserEdited: false,
+        originalTextInput: prev.textInput,
       }));
     }, []),
 
@@ -128,6 +159,8 @@ export function useXMLParserState() {
         expandedNodes: new Set(),
         searchQuery: "",
         breadcrumb: [],
+        hasUserEdited: false,
+        originalTextInput: "",
       }));
     }, []),
 

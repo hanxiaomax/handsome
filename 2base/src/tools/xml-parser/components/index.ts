@@ -6,3 +6,4 @@ export { SourceCodeDisplay } from "./SourceCodeDisplay";
 export { TreeView } from "./TreeView";
 export { BreadcrumbNavigation } from "./BreadcrumbNavigation";
 export { InputModeSelector } from "./InputModeSelector";
+export { ErrorDisplay } from "./ErrorDisplay";

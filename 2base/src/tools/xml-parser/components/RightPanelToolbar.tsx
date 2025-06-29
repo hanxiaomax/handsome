@@ -32,6 +32,7 @@ interface RightPanelToolbarProps {
   onCopy: () => void;
   onDownload: () => void;
   hasContent: boolean;
+  disabled?: boolean;
 }
 
 export function RightPanelToolbar({
@@ -44,6 +45,7 @@ export function RightPanelToolbar({
   onCopy,
   onDownload,
   hasContent,
+  disabled = false,
 }: RightPanelToolbarProps) {
   return (
     <div className="flex items-center gap-2 h-full">
@@ -53,8 +55,11 @@ export function RightPanelToolbar({
             <TooltipTrigger asChild>
               <Toggle
                 pressed={displayMode === "beautified"}
-                onPressedChange={() => onDisplayModeChange("beautified")}
+                onPressedChange={() =>
+                  !disabled && onDisplayModeChange("beautified")
+                }
                 size="sm"
+                disabled={disabled}
                 className={`h-6 w-6 p-0 ${
                   displayMode === "beautified"
                     ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -75,8 +80,9 @@ export function RightPanelToolbar({
             <TooltipTrigger asChild>
               <Toggle
                 pressed={displayMode === "tree"}
-                onPressedChange={() => onDisplayModeChange("tree")}
+                onPressedChange={() => !disabled && onDisplayModeChange("tree")}
                 size="sm"
+                disabled={disabled}
                 className={`h-6 w-6 p-0 ${
                   displayMode === "tree"
                     ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -97,8 +103,11 @@ export function RightPanelToolbar({
             <TooltipTrigger asChild>
               <Toggle
                 pressed={displayMode === "compressed"}
-                onPressedChange={() => onDisplayModeChange("compressed")}
+                onPressedChange={() =>
+                  !disabled && onDisplayModeChange("compressed")
+                }
                 size="sm"
+                disabled={disabled}
                 className={`h-6 w-6 p-0 ${
                   displayMode === "compressed"
                     ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -119,8 +128,9 @@ export function RightPanelToolbar({
             <TooltipTrigger asChild>
               <Toggle
                 pressed={displayMode === "json"}
-                onPressedChange={() => onDisplayModeChange("json")}
+                onPressedChange={() => !disabled && onDisplayModeChange("json")}
                 size="sm"
+                disabled={disabled}
                 className={`h-6 w-6 p-0 ${
                   displayMode === "json"
                     ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -146,6 +156,7 @@ export function RightPanelToolbar({
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
+              disabled={disabled}
               className="pl-6 h-7 text-xs"
             />
           </div>
@@ -157,6 +168,7 @@ export function RightPanelToolbar({
                   variant="ghost"
                   size="sm"
                   onClick={onExpandAll}
+                  disabled={disabled}
                   className="h-7 w-7 p-0"
                 >
                   <ExpandIcon className="w-3 h-3" />
@@ -175,6 +187,7 @@ export function RightPanelToolbar({
                   variant="ghost"
                   size="sm"
                   onClick={onCollapseAll}
+                  disabled={disabled}
                   className="h-7 w-7 p-0"
                 >
                   <ShrinkIcon className="w-3 h-3" />

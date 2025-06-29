@@ -6,7 +6,7 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { XMLStreamParser, xmlParser } from "./index";
+import { XMLStreamParser } from "./index";
 import type { XMLElement, ParserState } from "../types";
 
 interface UseXMLParserReturn {
@@ -52,6 +52,7 @@ export function useXMLParser(): UseXMLParserReturn {
       }
 
       try {
+        // Clear previous state
         setParserState((prev) => ({
           ...prev,
           status: "parsing",
@@ -62,34 +63,57 @@ export function useXMLParser(): UseXMLParserReturn {
           warnings: [],
         }));
 
-        setParserState((prev) => ({
-          ...prev,
-          progress: 30,
-          currentSection: "Parsing XML structure...",
-        }));
+        // Use the new parseText method with validation
+        await parser.parseText(
+          content,
+          {
+            packages: [],
+            elementTypes: ["ELEMENT"],
+            maxDepth: 100,
+            maxElements: 10000,
+            validateSchema: true,
+            enableReferences: true,
+            memoryLimit: 500 * 1024 * 1024, // 500MB
+          },
+          // Progress callback
+          (state: ParserState) => {
+            setParserState(state);
+          },
+          // Complete callback
+          (parsedElements: XMLElement[]) => {
+            setElements(parsedElements);
 
-        const treeNodes = xmlParser.parseXMLToTree(content);
+            // Show validation results
+            const currentState = parser.getState();
+            if (currentState.errors.length > 0) {
+              toast.error("XML validation errors found", {
+                description: `Found ${currentState.errors.length} validation errors. Check the status bar for details.`,
+              });
+            } else if (currentState.warnings.length > 0) {
+              toast.warning("XML validation warnings", {
+                description: `Found ${currentState.warnings.length} validation warnings. Check the status bar for details.`,
+              });
+            } else {
+              toast.success("XML parsed successfully!", {
+                description: `Found ${parsedElements.length} elements in the XML structure`,
+              });
+            }
+          },
+          // Error callback
+          (error) => {
+            console.error("Failed to parse XML:", error);
 
-        setParserState((prev) => ({
-          ...prev,
-          progress: 70,
-          currentSection: "Converting to elements...",
-        }));
+            setParserState((prev) => ({
+              ...prev,
+              status: "error",
+              errors: [...prev.errors, error],
+            }));
 
-        const parsedElements = xmlParser.convertToXMLElements(treeNodes);
-
-        setParserState((prev) => ({
-          ...prev,
-          progress: 100,
-          currentSection: "Complete",
-          status: "complete",
-        }));
-
-        setElements(parsedElements);
-
-        toast.success("XML parsed successfully!", {
-          description: `Found ${parsedElements.length} elements in the XML structure`,
-        });
+            toast.error("Failed to parse XML", {
+              description: error.message,
+            });
+          }
+        );
       } catch (error) {
         console.error("Failed to parse XML:", error);
 
@@ -115,7 +139,7 @@ export function useXMLParser(): UseXMLParserReturn {
         });
       }
     },
-    []
+    [parser]
   );
 
   /**

@@ -14,6 +14,7 @@ import type {
   WorkerProgressMessage,
   WorkerCompleteMessage,
 } from "../types";
+import { xmlValidator, type ValidationResult } from "./xmlValidator";
 
 /**
  * High-performance XML Stream Parser Engine
@@ -239,6 +240,70 @@ export class XMLStreamParser {
   }
 
   /**
+   * Parse XML text content with validation
+   */
+  async parseText(
+    text: string,
+    options: ParseOptions,
+    onProgress?: (state: ParserState) => void,
+    onComplete?: (elements: XMLElement[]) => void,
+    onError?: (error: ParseError) => void
+  ): Promise<void> {
+    const startTime = performance.now();
+
+    try {
+      this.state = {
+        ...this.state,
+        status: "parsing",
+        progress: 0,
+        currentSection: "Initializing text parsing",
+        elementsProcessed: 0,
+        errors: [],
+        warnings: [],
+      };
+
+      onProgress?.(this.state);
+
+      // Parse XML text with validation
+      const elements = this.parseXMLText(text, options, onProgress);
+
+      // Update final state
+      this.state.status = "complete";
+      this.state.progress = 100;
+      this.state.currentSection = "Parsing completed";
+      this.state.elementsProcessed = elements.length;
+
+      // Store elements in internal map
+      this.elements.clear();
+      elements.forEach(element => {
+        this.elements.set(element.id, element);
+      });
+
+      // Build search index
+      this.buildSearchIndex(elements);
+
+      this.metrics.parseTime = performance.now() - startTime;
+      this.metrics.nodeCount = elements.length;
+
+      onProgress?.(this.state);
+      onComplete?.(elements);
+
+    } catch (error) {
+      const parseError: ParseError = {
+        id: Date.now().toString(),
+        type: "syntax",
+        message:
+          error instanceof Error ? error.message : "Unknown parsing error",
+        severity: "error",
+      };
+
+      this.state.status = "error";
+      this.state.errors.push(parseError);
+      onError?.(parseError);
+    }
+  }
+
+  /**
    * Parse XML text content with improved tree structure
    */
   private parseXMLText(
@@ -247,6 +312,71 @@ export class XMLStreamParser {
     onProgress?: (state: ParserState) => void
   ): XMLElement[] {
     console.log("parseXMLText: Starting with options:", options);
+    
+    // Step 1: Validate XML format before parsing
+    this.state.currentSection = "Validating XML format";
+    onProgress?.(this.state);
+    
+    const validationResult: ValidationResult = xmlValidator.validateXML(text);
+    
+    // Add validation errors to parser state
+    if (!validationResult.isValid) {
+      console.log("parseXMLText: XML validation failed with errors:", validationResult.errors);
+      
+      // Convert validation errors to parse errors
+      const parseErrors: ParseError[] = validationResult.errors.map(error => ({
+        id: error.id,
+        type: error.type as ParseError['type'],
+        message: error.message,
+        line: error.line,
+        column: error.column,
+        severity: error.severity as ParseError['severity']
+      }));
+      
+      this.state.errors.push(...parseErrors);
+      
+      // For critical errors, stop parsing
+      const criticalErrors = parseErrors.filter(err => err.severity === 'error');
+      if (criticalErrors.length > 0) {
+        this.state.status = "error";
+        console.log("parseXMLText: Stopping due to critical XML format errors");
+        return [];
+      }
+    }
+    
+    // Add validation warnings to parser state
+    if (validationResult.warnings.length > 0) {
+      console.log("parseXMLText: XML validation warnings:", validationResult.warnings);
+      
+      const parseWarnings = validationResult.warnings.map(warning => {
+        // Map validation warning types to parser warning types
+        let warningType: "deprecated" | "missing" | "performance" | "memory";
+        switch (warning.type) {
+          case 'performance':
+            warningType = 'performance';
+            break;
+          case 'format':
+          case 'recommendation':
+          default:
+            warningType = 'missing';
+            break;
+        }
+        
+        return {
+          id: warning.id,
+          type: warningType,
+          message: warning.message,
+          line: warning.line,
+          path: undefined
+        };
+      });
+      
+      this.state.warnings.push(...parseWarnings);
+    }
+    
+    console.log(`parseXMLText: XML validation completed. Valid: ${validationResult.isValid}, Errors: ${validationResult.errors.length}, Warnings: ${validationResult.warnings.length}`);
+    
+    // Step 2: Continue with parsing if validation passed
     const elements: XMLElement[] = [];
 
     // Parse XML with improved DOM-like approach

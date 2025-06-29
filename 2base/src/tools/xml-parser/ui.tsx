@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 // Framework UI Components
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -49,6 +48,7 @@ import {
   TreeView,
   BreadcrumbNavigation,
   TextInputArea,
+  ErrorDisplay,
 } from "./components";
 
 export default function XMLParser() {
@@ -191,6 +191,17 @@ export default function XMLParser() {
 
   // Get right panel content based on display mode
   const getRightPanelContent = () => {
+    // Show error display if there are parsing errors or warnings
+    if (parserState.errors.length > 0 || parserState.warnings.length > 0) {
+      return (
+        <ErrorDisplay
+          errors={parserState.errors}
+          warnings={parserState.warnings}
+          className="h-full flex flex-col"
+        />
+      );
+    }
+
     if (!computed.hasContent) {
       return (
         <div className="flex items-center justify-center h-full text-center">
@@ -302,6 +313,11 @@ export default function XMLParser() {
                         Ready
                       </Badge>
                     )}
+                    {uiState.hasUserEdited && (
+                      <Badge variant="outline" className="text-xs">
+                        Edited
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -369,7 +385,9 @@ export default function XMLParser() {
                       uiActions.setTextInput(value);
                     }}
                     onParse={handlers.onParse}
-                    isParsingMode={!uiState.autoParseEnabled}
+                    isParsingMode={
+                      !uiState.autoParseEnabled || uiState.hasUserEdited
+                    }
                     isLoading={parserState.status === "parsing"}
                   />
                 ) : (
@@ -378,7 +396,9 @@ export default function XMLParser() {
                     textInput={uiState.textInput}
                     onTextInputChange={handlers.onTextInputChange}
                     onParse={handlers.onParse}
-                    isParsingMode={!uiState.autoParseEnabled}
+                    isParsingMode={
+                      !uiState.autoParseEnabled || uiState.hasUserEdited
+                    }
                     isLoading={parserState.status === "parsing"}
                   />
                 )}
@@ -398,31 +418,67 @@ export default function XMLParser() {
               >
                 <div className="flex items-center justify-between h-full">
                   <div className="flex items-center gap-2">
-                    {uiState.displayMode === "tree" ? (
+                    {parserState.errors.length > 0 ||
+                    parserState.warnings.length > 0 ? (
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                    ) : uiState.displayMode === "tree" ? (
                       <TreePine className="w-4 h-4 text-primary" />
                     ) : (
                       <Brackets className="w-4 h-4 text-primary" />
                     )}
                     <h3 className="font-medium text-sm text-foreground">
-                      {uiState.displayMode === "beautified" && "Beautified XML"}
-                      {uiState.displayMode === "tree" && "XML Tree Structure"}
-                      {uiState.displayMode === "compressed" && "Compressed XML"}
-                      {uiState.displayMode === "json" && "JSON Format"}
+                      {parserState.errors.length > 0 ||
+                      parserState.warnings.length > 0
+                        ? "Validation Results"
+                        : uiState.displayMode === "beautified" &&
+                          "Beautified XML"}
+                      {parserState.errors.length === 0 &&
+                        parserState.warnings.length === 0 &&
+                        uiState.displayMode === "tree" &&
+                        "XML Tree Structure"}
+                      {parserState.errors.length === 0 &&
+                        parserState.warnings.length === 0 &&
+                        uiState.displayMode === "compressed" &&
+                        "Compressed XML"}
+                      {parserState.errors.length === 0 &&
+                        parserState.warnings.length === 0 &&
+                        uiState.displayMode === "json" &&
+                        "JSON Format"}
                     </h3>
-                    {elements.length > 0 && uiState.displayMode === "tree" && (
+                    {elements.length > 0 &&
+                      uiState.displayMode === "tree" &&
+                      parserState.errors.length === 0 && (
+                        <Badge variant="outline" className="text-xs">
+                          {elements.length} elements
+                        </Badge>
+                      )}
+                    {parserState.errors.length > 0 && (
+                      <Badge variant="destructive" className="text-xs">
+                        {parserState.errors.length} Error
+                        {parserState.errors.length !== 1 ? "s" : ""}
+                      </Badge>
+                    )}
+                    {parserState.warnings.length > 0 && (
                       <Badge variant="outline" className="text-xs">
-                        {elements.length} elements
+                        {parserState.warnings.length} Warning
+                        {parserState.warnings.length !== 1 ? "s" : ""}
                       </Badge>
                     )}
                   </div>
 
                   <div className="flex items-center gap-2">
                     {parserState.status === "complete" &&
-                      elements.length > 0 && (
+                      elements.length > 0 &&
+                      parserState.errors.length === 0 && (
                         <span className="text-xs text-muted-foreground">
                           Parsed successfully
                         </span>
                       )}
+                    {parserState.errors.length > 0 && (
+                      <span className="text-xs text-destructive">
+                        Validation failed
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -442,12 +498,14 @@ export default function XMLParser() {
                   onCopy={handlers.onCopy}
                   onDownload={handlers.onDownload}
                   hasContent={computed.hasContent}
+                  disabled={parserState.errors.length > 0}
                 />
               </div>
 
               {/* Breadcrumb Navigation - Element path navigation */}
               {uiState.displayMode === "tree" &&
-                uiState.breadcrumb.length > 0 && (
+                uiState.breadcrumb.length > 0 &&
+                parserState.errors.length === 0 && (
                   <BreadcrumbNavigation
                     breadcrumb={uiState.breadcrumb}
                     onBreadcrumbClick={uiActions.setBreadcrumb}
@@ -461,30 +519,6 @@ export default function XMLParser() {
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
-
-        {/* Error Status Bar - Parser errors and warnings */}
-        {(parserState.errors.length > 0 || parserState.warnings.length > 0) && (
-          <div id="error-status-bar" className="border-t p-2 bg-background">
-            {parserState.errors.length > 0 && (
-              <Alert variant="destructive" className="mb-2">
-                <AlertCircle className="w-4 h-4" />
-                <AlertDescription className="text-xs">
-                  {parserState.errors.length} parsing error(s) occurred. Check
-                  the console for details.
-                </AlertDescription>
-              </Alert>
-            )}
-            {parserState.warnings.length > 0 && (
-              <Alert className="mb-0">
-                <AlertCircle className="w-4 h-4" />
-                <AlertDescription className="text-xs">
-                  {parserState.warnings.length} warning(s) detected during
-                  parsing.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        )}
       </div>
     </ToolLayout>
   );
