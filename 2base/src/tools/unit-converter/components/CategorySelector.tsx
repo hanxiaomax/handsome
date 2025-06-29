@@ -225,7 +225,7 @@ export function CategorySelector({
                       onClick={() => handleCategorySelect(item.id)}
                       className={`w-full justify-start h-auto p-2 ml-2 text-left hover:bg-muted/50 ${
                         selectedCategory === item.id
-                          ? "bg-primary/10 text-primary border-l-2 border-primary"
+                          ? "text-primary border-primary"
                           : "text-foreground"
                       }`}
                     >
