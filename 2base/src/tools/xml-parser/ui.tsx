@@ -350,6 +350,7 @@ export default function XMLParser() {
                   onToggleLineNumbers={uiActions.setShowLineNumbers}
                   autoParseEnabled={uiState.autoParseEnabled}
                   onToggleAutoParse={uiActions.setAutoParseEnabled}
+                  autoParseDisabled={uiState.hasUserEdited}
                   canParse={computed.canParse}
                   onParse={handlers.onParse}
                   onCopy={handlers.onCopy}

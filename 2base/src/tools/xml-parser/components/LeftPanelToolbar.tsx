@@ -28,6 +28,7 @@ interface LeftPanelToolbarProps {
   onToggleLineNumbers: (value: boolean) => void;
   autoParseEnabled: boolean;
   onToggleAutoParse: (value: boolean) => void;
+  autoParseDisabled?: boolean;
   canParse: boolean;
   onParse: () => void;
   onCopy: () => void;
@@ -45,6 +46,7 @@ export function LeftPanelToolbar({
   onToggleLineNumbers,
   autoParseEnabled,
   onToggleAutoParse,
+  autoParseDisabled,
   canParse,
   onParse,
   onCopy,
@@ -135,6 +137,7 @@ export function LeftPanelToolbar({
               <Toggle
                 pressed={autoParseEnabled}
                 onPressedChange={onToggleAutoParse}
+                disabled={autoParseDisabled}
                 size="sm"
                 className={`h-7 w-7 p-0 ${
                   autoParseEnabled
@@ -146,7 +149,11 @@ export function LeftPanelToolbar({
               </Toggle>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Auto parse on text change</p>
+              <p>
+                {autoParseDisabled
+                  ? "Auto parse disabled (content edited)"
+                  : "Auto parse on text change"}
+              </p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
