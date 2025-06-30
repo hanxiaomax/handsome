@@ -19,6 +19,65 @@ export function useUnitConverterLogic(
     return value.toExponential(6);
   }, []);
 
+  const performConversion = useCallback((value: number, unit: string, category: CategoryId): ConversionResult[] => {
+    const standardResults: ConversionResult[] = engine.current.convertToAll(value, unit).map(result => ({
+      unit: {
+        id: result.unit,
+        name: result.description,
+        symbol: result.symbol,
+        baseRatio: 1,
+        isBaseUnit: false,
+        precision: 6,
+        description: result.description,
+        context: ''
+      },
+      value: result.value,
+      formattedValue: formatValue(result.value),
+      isApproximate: false
+    }));
+
+    if (category !== 'timestamp') {
+      return standardResults;
+    }
+
+    let msTimestamp = value;
+    if (unit === 'second_timestamp') {
+      msTimestamp = value * 1000;
+    } else if (unit === 'microsecond_timestamp') {
+      msTimestamp = value / 1000;
+    } else if (unit === 'nanosecond_timestamp') {
+      msTimestamp = value / 1e6;
+    }
+
+    const date = new Date(msTimestamp);
+
+    if (isNaN(date.getTime())) {
+      return standardResults;
+    }
+
+    const dateFormats = [
+      { id: 'iso_8601', name: 'ISO 8601 (UTC)', symbol: 'ISO', value: date.toISOString()},
+      { id: 'utc_string', name: 'UTC String', symbol: 'UTC', value: date.toUTCString()},
+      { id: 'local_string', name: 'Local String', symbol: 'Local', value: date.toString()},
+      { id: 'date_string', name: 'Local Date', symbol: 'Date', value: date.toDateString()},
+      { id: 'time_string', name: 'Local Time', symbol: 'Time', value: date.toTimeString()},
+    ];
+
+    const formattedDateResults: ConversionResult[] = dateFormats.map(format => ({
+      unit: {
+        id: format.id,
+        name: format.name,
+        symbol: format.symbol,
+        baseRatio: 0, isBaseUnit: false, precision: 0, description: format.name, context: ''
+      },
+      value: msTimestamp,
+      formattedValue: format.value,
+      isApproximate: false,
+    }));
+
+    return [...standardResults, ...formattedDateResults];
+  }, [formatValue]);
+
   const handleCategoryChange = useCallback((categoryId: CategoryId) => {
     try {
       const units = engine.current.getUnitsInDimension(categoryId);
@@ -55,30 +114,19 @@ export function useUnitConverterLogic(
         };
       });
 
-      const results = engine.current.convertToAll(1, firstUnit.name);
-      const sortedResults: ConversionResult[] = results.map(result => ({
-        unit: {
-          id: result.unit,
-          name: result.description,
-          symbol: result.symbol,
-          baseRatio: 1,
-          isBaseUnit: false,
-          precision: 6,
-          description: result.description,
-          context: ''
-        },
-        value: result.value,
-        formattedValue: formatValue(result.value),
-        isApproximate: false
-      }));
+      const initialValue = categoryId === 'timestamp' ? Date.now() / 1000 : 1;
+      const initialUnit = categoryId === 'timestamp' ? 'second_timestamp' : firstUnit.name;
+
+      const results = performConversion(initialValue, initialUnit, categoryId);
 
       setState(prev => ({
               ...prev,
         selectedCategory: categoryId,
         availableUnits: unitList,
-        inputUnit: firstUnit.name,
-              results: sortedResults,
-              isProcessing: false,
+        inputValue: String(initialValue),
+        inputUnit: initialUnit,
+        results: results,
+        isProcessing: false,
         error: null
             }));
           } catch (error) {
@@ -90,7 +138,7 @@ export function useUnitConverterLogic(
         error: error instanceof Error ? error.message : 'Failed to change category'
             }));
         }
-  }, [setState, formatValue]);
+  }, [setState, performConversion]);
 
   const handleInputChange = useCallback((value: string, unitId?: string) => {
     const numericValue = parseFloat(value) || 0;
@@ -109,27 +157,12 @@ export function useUnitConverterLogic(
         return;
       }
 
-      const results = engine.current.convertToAll(numericValue, currentUnit);
-      const sortedResults: ConversionResult[] = results.map(result => ({
-        unit: {
-          id: result.unit,
-          name: result.description,
-          symbol: result.symbol,
-          baseRatio: 1,
-          isBaseUnit: false,
-          precision: 6,
-          description: result.description,
-          context: ''
-        },
-        value: result.value,
-        formattedValue: formatValue(result.value),
-        isApproximate: false
-      }));
+      const results = performConversion(numericValue, currentUnit, state.selectedCategory as CategoryId);
 
       setState(prev => ({
         ...prev,
         inputUnit: currentUnit,
-        results: sortedResults,
+        results: results,
         isProcessing: false,
         error: null
       }));
@@ -141,7 +174,7 @@ export function useUnitConverterLogic(
         error: error instanceof Error ? error.message : 'Conversion failed'
       }));
     }
-  }, [state.inputUnit, setState, formatValue]);
+  }, [state.inputUnit, state.selectedCategory, setState, performConversion]);
 
   const handleUnitChange = useCallback((unitId: string) => {
     handleInputChange(state.inputValue, unitId);

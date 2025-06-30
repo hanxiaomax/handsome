@@ -50,6 +50,7 @@ export function CategorySelector({
     { value: "energy", label: "Energy", icon: "E" },
     { value: "power", label: "Power", icon: "P" },
     { value: "digital", label: "Data Storage", icon: "D" },
+    { value: "timestamp", label: "Timestamp", icon: "T" },
     { value: "angle", label: "Angle", icon: "A" },
     { value: "frequency", label: "Frequency", icon: "F" },
   ];
@@ -104,6 +105,11 @@ export function CategorySelector({
           id: "digital",
           name: "Data Storage",
           description: "File size and storage",
+        },
+        {
+          id: "timestamp",
+          name: "Timestamp",
+          description: "Convert Unix timestamps",
         },
         {
           id: "frequency",

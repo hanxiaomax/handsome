@@ -249,6 +249,29 @@ export function createUnitConverter(): UnitConverter {
   converter.addLinearConversion("hertz", "terahertz", 0.000000000001);
   converter.addLinearConversion("hertz", "rpm", 60);
 
+  // Timestamp units
+  converter.addUnit("second_timestamp", "timestamp", "s", "Seconds");
+  converter.addUnit("millisecond_timestamp", "timestamp", "ms", "Milliseconds");
+  converter.addUnit("microsecond_timestamp", "timestamp", "μs", "Microseconds");
+  converter.addUnit("nanosecond_timestamp", "timestamp", "ns", "Nanoseconds");
+
+  // Timestamp conversions
+  converter.addLinearConversion(
+    "second_timestamp",
+    "millisecond_timestamp",
+    1000
+  );
+  converter.addLinearConversion(
+    "second_timestamp",
+    "microsecond_timestamp",
+    1e6
+  );
+  converter.addLinearConversion(
+    "second_timestamp",
+    "nanosecond_timestamp",
+    1e9
+  );
+
   return converter;
 }
 
@@ -266,6 +289,7 @@ export const categoryMapping = {
   pressure: "Pressure",
   angle: "Angle",
   frequency: "Frequency",
+  timestamp: "Timestamp",
 } as const;
 
 export type CategoryId = keyof typeof categoryMapping;

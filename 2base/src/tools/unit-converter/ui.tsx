@@ -17,7 +17,7 @@ export default function UnitConverter() {
   const { state, setState } = useUnitConverterState();
   const logic = useUnitConverterLogic(state, setState);
 
-  // 用于管理焦点单位的状态
+  // State for focused units
   const [focusedUnits, setFocusedUnits] = useState<string[]>([]);
 
   // Custom conversions state
@@ -25,7 +25,7 @@ export default function UnitConverter() {
     CustomConversion[]
   >([]);
 
-  // 切换单位焦点状态
+  // Toggle unit focus state
   const handleToggleFocus = (unitId: string) => {
     setFocusedUnits((prev) =>
       prev.includes(unitId)
