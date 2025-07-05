@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +34,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useToolControls } from "@/hooks/use-tool-controls";
 import { toolInfo } from "./toolInfo";
 import {
   UnixTimestampEngine,
@@ -43,12 +43,6 @@ import {
   formatDateTime,
 } from "./lib/engine";
 import type { ConverterState, ConversionResult } from "./types";
-import {
-  useMinimizedToolsActions,
-  useIsToolMinimized,
-  useToolState,
-} from "@/stores/minimized-tools-store";
-import { useFavoriteActions, useIsFavorite } from "@/stores/favorites-store";
 import type { CustomToolButton } from "@/components/layout/tool-layout";
 
 // Custom DateTimePicker component
@@ -119,14 +113,11 @@ const DateTimePicker = ({
 };
 
 export default function UnixTimestampConverter() {
-  const navigate = useNavigate();
-
-  // Standard ToolLayout state management
-  const { minimizeTool, restoreTool } = useMinimizedToolsActions();
-  const { toggleFavorite } = useFavoriteActions();
-  const isFavorite = useIsFavorite(toolInfo.id);
-  const isMinimized = useIsToolMinimized(toolInfo.id);
-  const savedState = useToolState(toolInfo.id);
+  // Standard tool controls (no state preservation needed)
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    // No state parameter - we don't want to save state on minimize
+  });
 
   // Tool state
   const [state, setState] = useState<ConverterState>({
@@ -143,44 +134,17 @@ export default function UnixTimestampConverter() {
   // Settings panel state
   const [showSettings, setShowSettings] = useState(false);
 
-  // Standard ToolLayout handlers
-  const handleMinimize = useCallback(() => {
-    console.log("Minimize button clicked!"); // Debug log
-    console.log("Tool Info:", toolInfo); // Debug log
-    const toolState = {
-      inputValue: state.inputValue,
-      inputType: state.inputType,
-      selectedFormat: state.selectedFormat,
-      datetimeFormat: state.datetimeFormat,
-      customFormat: state.customFormat,
-    };
-    console.log("Tool State to save:", toolState); // Debug log
-    minimizeTool(toolInfo, toolState);
-    console.log("Called minimizeTool"); // Debug log
-    navigate("/tools");
-  }, [minimizeTool, navigate, state]);
+  // Additional component states (moved before handleMinimize)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [result, setResult] = useState<ConversionResult | null>(null);
 
-  const handleToggleFavorite = useCallback(() => {
-    toggleFavorite(toolInfo.id);
-  }, [toggleFavorite]);
-
+  // Custom documentation handler
   const handleShowDocumentation = useCallback(() => {
     toast.info("Documentation", {
       description: "Opening Unix Timestamp Converter documentation...",
     });
     // Could open a modal or navigate to docs
   }, []);
-
-  // Restore state when returning from minimized
-  useEffect(() => {
-    if (isMinimized && savedState) {
-      setState((prevState) => ({
-        ...prevState,
-        ...savedState,
-      }));
-      restoreTool(toolInfo.id);
-    }
-  }, [isMinimized, savedState, restoreTool]);
 
   // Settings panel content
   const settingsContent = (
@@ -222,9 +186,6 @@ export default function UnixTimestampConverter() {
       </div>
     </div>
   );
-
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [result, setResult] = useState<ConversionResult | null>(null);
 
   // Custom tool buttons
   const customButtons: CustomToolButton[] = [
@@ -272,6 +233,8 @@ export default function UnixTimestampConverter() {
           isProcessing: false,
           error: null,
         });
+        setSelectedDate(undefined);
+        setResult(null);
         toast.success("Cleared", {
           description: "All input and results cleared",
         });
@@ -461,12 +424,8 @@ export default function UnixTimestampConverter() {
 
   return (
     <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
+      {...toolLayoutProps}
       customButtons={customButtons}
-      onMinimize={handleMinimize}
-      onToggleFavorite={handleToggleFavorite}
-      isFavorite={isFavorite}
       onShowDocumentation={handleShowDocumentation}
       rightSidebarContent={showSettings ? settingsContent : undefined}
       rightSidebarTitle="Converter Settings"
