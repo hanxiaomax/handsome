@@ -128,30 +128,94 @@ export default function MyTool() {
 
 ## 如何使用系统
 
-### 1. 使用默认标准按钮
+### 最小化按钮行为说明
 
-最简单的工具只需要提供基本的回调函数：
+**重要：最小化按钮的默认行为是不保存状态**
+
+- ✅ **默认行为**: 工具最小化时不保存任何状态，恢复时为初始状态
+- ⚠️ **状态保存**: 只有当工具明确需要保存状态时，才需要额外实现状态管理
+- 🎯 **设计原则**: 遵循"简单优先"原则，避免不必要的状态管理复杂度
+
+#### 什么时候需要保存状态？
+
+**✅ 需要保存状态的场景：**
+- 用户输入了大量文本内容
+- 进行了复杂的计算或配置
+- 有重要的工作进度或结果
+- 表单填写到一半
+
+**❌ 不需要保存状态的场景：**
+- 简单的转换工具（如编码转换）
+- 计算器类工具（每次重新开始）
+- 纯展示类工具
+- 无用户输入的工具
+
+#### 实现原则
+
+1. **默认不保存**: 优先使用不保存状态的实现
+2. **按需保存**: 只在真正需要时才添加状态管理
+3. **最小状态**: 只保存必要的状态，避免保存衍生状态
+4. **类型安全**: 使用 TypeScript 确保状态恢复的类型安全
+
+### 1. 标准用法（推荐）
+
+使用 `useToolControls` hook，默认不保存状态：
+
+```typescript
+import { useToolControls } from "@/hooks/use-tool-controls";
+import { ToolLayout } from "@/components/layout/tool-layout";
+import { toolInfo } from "./toolInfo";
+
+export default function SimpleTool() {
+  // 使用标准化工具控制（默认不保存状态）
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    // 不传递 state 参数 = 不保存状态
+  });
+
+  return (
+    <ToolLayout {...toolLayoutProps}>
+      {/* 工具内容 */}
+    </ToolLayout>
+  );
+}
+```
+
+### 2. 使用传统方式（手动实现）
+
+如果需要手动实现控制逻辑：
 
 ```typescript
 import { ToolLayout } from "@/components/layout/tool-layout";
+import { useMinimizedToolsActions } from "@/stores/minimized-tools-store";
+import { useFavoriteActions, useIsFavorite } from "@/stores/favorites-store";
+import { useNavigate } from "react-router-dom";
+import { toolInfo } from "./toolInfo";
 
-export default function SimpleTool() {
-  // 实现标准按钮的回调
+export default function ManualTool() {
+  const navigate = useNavigate();
+  const { minimizeTool } = useMinimizedToolsActions();
+  const { toggleFavorite } = useFavoriteActions();
+  const isFavorite = useIsFavorite(toolInfo.id);
+
+  // 最小化逻辑（不保存状态）
   const handleMinimize = () => {
-    // 最小化逻辑
+    minimizeTool(toolInfo); // 不传递 state 参数
+    navigate("/tools");
   };
 
+  // 收藏逻辑
   const handleToggleFavorite = () => {
-    // 收藏逻辑
+    toggleFavorite(toolInfo.id);
   };
 
   return (
     <ToolLayout
-      toolName="Simple Tool"
-      toolDescription="A basic tool"
+      toolName={toolInfo.name}
+      toolDescription={toolInfo.description}
       onMinimize={handleMinimize}
       onToggleFavorite={handleToggleFavorite}
-      isFavorite={false}
+      isFavorite={isFavorite}
     >
       {/* 工具内容 */}
     </ToolLayout>
@@ -159,7 +223,58 @@ export default function SimpleTool() {
 }
 ```
 
-### 2. 注册自定义按钮
+### 3. 需要保存状态的工具实现
+
+**只有当工具确实需要保存用户输入或计算结果时才使用此方法：**
+
+```typescript
+import { useState, useEffect } from "react";
+import { useToolControls } from "@/hooks/use-tool-controls";
+import { ToolLayout } from "@/components/layout/tool-layout";
+import { useIsToolMinimized, useToolState, useMinimizedToolsActions } from "@/stores/minimized-tools-store";
+import { toolInfo } from "./toolInfo";
+
+export default function StatefulTool() {
+  // 工具状态
+  const [inputValue, setInputValue] = useState("");
+  const [calculation, setCalculation] = useState(0);
+  
+  // 将需要保存的状态组合
+  const toolState = {
+    inputValue,
+    calculation,
+  };
+
+  // 使用工具控制（保存状态）
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    state: toolState,  // 传递状态以保存
+  });
+
+  // 状态恢复逻辑
+  const isMinimized = useIsToolMinimized(toolInfo.id);
+  const savedState = useToolState(toolInfo.id);
+  const { restoreTool } = useMinimizedToolsActions();
+
+  useEffect(() => {
+    if (isMinimized && savedState) {
+      // 恢复保存的状态
+      const typedState = savedState as typeof toolState;
+      setInputValue(typedState.inputValue || "");
+      setCalculation(typedState.calculation || 0);
+      restoreTool(toolInfo.id);
+    }
+  }, [isMinimized, savedState, restoreTool]);
+
+  return (
+    <ToolLayout {...toolLayoutProps}>
+      {/* 工具内容 */}
+    </ToolLayout>
+  );
+}
+```
+
+### 4. 注册自定义按钮
 
 对于需要特殊功能的工具：
 
@@ -227,6 +342,73 @@ export default function AdvancedTool() {
 
 #### 标准化实现模板
 
+**推荐：使用 `useToolControls` Hook（默认不保存状态）**
+
+```typescript
+import { useToolControls } from "@/hooks/use-tool-controls";
+import { ToolLayout } from "@/components/layout/tool-layout";
+import { toolInfo } from "./toolInfo";
+
+export default function StandardTool() {
+  // 使用标准化的工具控制（默认不保存状态）
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    // 不传递 state 参数 = 不保存状态
+  });
+
+  return (
+    <ToolLayout {...toolLayoutProps}>
+      {/* 工具内容 */}
+    </ToolLayout>
+  );
+}
+```
+
+**高级：需要保存状态时的实现**
+
+```typescript
+import { useState, useEffect, useCallback } from "react";
+import { useToolControls } from "@/hooks/use-tool-controls";
+import { ToolLayout } from "@/components/layout/tool-layout";
+import { useIsToolMinimized, useToolState, useMinimizedToolsActions } from "@/stores/minimized-tools-store";
+import { toolInfo } from "./toolInfo";
+
+export default function StatefulTool() {
+  const [toolState, setToolState] = useState({
+    inputValue: "",
+    selectedOption: "default",
+    // 其他需要保存的状态...
+  });
+
+  // 使用标准化的工具控制（保存状态）
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    state: toolState,  // 传递状态以保存
+  });
+
+  // 状态恢复逻辑（仅在需要保存状态时使用）
+  const isMinimized = useIsToolMinimized(toolInfo.id);
+  const savedState = useToolState(toolInfo.id);
+  const { restoreTool } = useMinimizedToolsActions();
+
+  useEffect(() => {
+    if (isMinimized && savedState) {
+      // 恢复保存的状态
+      setToolState(savedState as typeof toolState);
+      restoreTool(toolInfo.id);
+    }
+  }, [isMinimized, savedState, restoreTool]);
+
+  return (
+    <ToolLayout {...toolLayoutProps}>
+      {/* 工具内容 */}
+    </ToolLayout>
+  );
+}
+```
+
+**传统实现（不推荐，仅用于理解）**
+
 ```typescript
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -235,37 +417,26 @@ import { useMinimizedToolsActions, useIsToolMinimized, useToolState } from "@/st
 import { useFavoriteActions, useIsFavorite } from "@/stores/favorites-store";
 import { toolInfo } from "./toolInfo";
 
-export default function StandardTool() {
+export default function ManualImplementationTool() {
   const navigate = useNavigate();
   
-  // 标准化的存储hooks
+  // 手动实现的存储hooks
   const { minimizeTool, restoreTool } = useMinimizedToolsActions();
   const { toggleFavorite } = useFavoriteActions();
   const isFavorite = useIsFavorite(toolInfo.id);
   const isMinimized = useIsToolMinimized(toolInfo.id);
   const savedState = useToolState(toolInfo.id);
 
-  // 标准化的最小化实现
+  // 手动实现的最小化（不保存状态）
   const handleMinimize = useCallback(() => {
-    const toolState = {
-      // 收集工具状态
-    };
-    minimizeTool(toolInfo, toolState);
+    minimizeTool(toolInfo); // 不传递状态参数
     navigate("/tools");
   }, [minimizeTool, navigate]);
 
-  // 标准化的收藏实现
+  // 手动实现的收藏
   const handleToggleFavorite = useCallback(() => {
     toggleFavorite(toolInfo.id);
   }, [toggleFavorite]);
-
-  // 标准化的恢复逻辑
-  useEffect(() => {
-    if (isMinimized && savedState) {
-      // 恢复状态逻辑
-      restoreTool(toolInfo.id);
-    }
-  }, [isMinimized, savedState, restoreTool]);
 
   return (
     <ToolLayout

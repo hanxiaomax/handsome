@@ -4,64 +4,70 @@
 
 The ToolLayout framework provides a standardized layout for all tool pages with consistent navigation, window controls, and responsive design.
 
+**重要：默认情况下，最小化按钮不保存工具状态。只有当工具明确需要保存状态时，才需要额外实现状态管理。**
+
 ## Basic Usage
 
-### 1. Import Required Dependencies
+### 1. 推荐方式：使用 useToolControls Hook
+
+最简单的工具实现（默认不保存状态）：
 
 ```typescript
-import { useState, useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useToolControls } from '@/hooks/use-tool-controls'
 import { ToolLayout } from '@/components/layout/tool-layout'
-import { useMinimizedTools } from '@/contexts/minimized-tools-context'
 import { toolInfo } from './toolInfo'
+
+export default function MyTool() {
+  // 使用标准化工具控制（默认不保存状态）
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    // 不传递 state 参数 = 不保存状态
+  });
+
+  return (
+    <ToolLayout {...toolLayoutProps}>
+      {/* Your tool content here */}
+    </ToolLayout>
+  )
+}
 ```
 
-### 2. Implement Window Control Handlers
+### 2. 传统方式：手动实现控制逻辑
+
+如果需要自定义控制逻辑：
 
 ```typescript
+import { useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ToolLayout } from '@/components/layout/tool-layout'
+import { useMinimizedToolsActions } from '@/stores/minimized-tools-store'
+import { useFavoriteActions, useIsFavorite } from '@/stores/favorites-store'
+import { toolInfo } from './toolInfo'
+
 export default function MyTool() {
   const navigate = useNavigate()
-  const { minimizeTool } = useMinimizedTools()
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const { minimizeTool } = useMinimizedToolsActions()
+  const { toggleFavorite } = useFavoriteActions()
+  const isFavorite = useIsFavorite(toolInfo.id)
 
-  // Close: Navigate back to homepage
-  const handleClose = useCallback(() => {
-    navigate('/')
-  }, [navigate])
-
-  // Minimize: Add to minimized drawer and return to home
+  // Minimize: 不保存状态，直接最小化
   const handleMinimize = useCallback(() => {
-    minimizeTool(toolInfo, { /* optional state to preserve */ })
-    navigate('/')
+    minimizeTool(toolInfo) // 不传递状态参数
+    navigate('/tools')
   }, [minimizeTool, navigate])
 
-  // Fullscreen: Toggle browser fullscreen mode
-  const handleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen()
-    } else {
-      document.exitFullscreen()
-    }
-  }, [])
-
-  // Monitor fullscreen state changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [])
+  // Toggle favorite
+  const handleToggleFavorite = useCallback(() => {
+    toggleFavorite(toolInfo.id)
+  }, [toggleFavorite])
 
   return (
     <ToolLayout
       toolName={toolInfo.name}
       toolDescription={toolInfo.description}
-      onClose={handleClose}
       onMinimize={handleMinimize}
-      onFullscreen={handleFullscreen}
-      isFullscreen={isFullscreen}
+      onToggleFavorite={handleToggleFavorite}
+      isFavorite={isFavorite}
     >
       {/* Your tool content here */}
     </ToolLayout>
@@ -69,90 +75,48 @@ export default function MyTool() {
 }
 ```
 
-## Complete Example: Simple Text Tool
+## Complete Example 1: Simple Text Tool (不保存状态)
+
+大多数简单工具的推荐实现：
 
 ```typescript
-import { useState, useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ToolLayout } from '@/components/layout/tool-layout'
-import { useMinimizedTools } from '@/contexts/minimized-tools-context'
+import { useToolControls } from '@/hooks/use-tool-controls'
 import { toolInfo } from './toolInfo'
 
-interface TextToolState {
-  inputText: string
-  outputText: string
-  isProcessing: boolean
-}
+export default function SimpleTextTool() {
+  const [inputText, setInputText] = useState('')
+  const [outputText, setOutputText] = useState('')
+  const [isProcessing, setIsProcessing] = useState(false)
 
-export default function TextTool() {
-  const navigate = useNavigate()
-  const { minimizeTool } = useMinimizedTools()
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [state, setState] = useState<TextToolState>({
-    inputText: '',
-    outputText: '',
-    isProcessing: false
+  // 使用标准化工具控制（不保存状态）
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    // 不传递 state 参数 = 不保存状态
   })
-
-  // Window control handlers
-  const handleClose = useCallback(() => {
-    navigate('/')
-  }, [navigate])
-
-  const handleMinimize = useCallback(() => {
-    minimizeTool(toolInfo, { textToolState: state })
-    navigate('/')
-  }, [minimizeTool, state, navigate])
-
-  const handleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen()
-    } else {
-      document.exitFullscreen()
-    }
-  }, [])
-
-  // Monitor fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  }, [])
 
   // Tool-specific functionality
   const handleProcess = useCallback(() => {
-    setState(s => ({ ...s, isProcessing: true }))
+    setIsProcessing(true)
     
     // Simulate processing
     setTimeout(() => {
-      setState(s => ({
-        ...s,
-        outputText: s.inputText.toUpperCase(),
-        isProcessing: false
-      }))
+      setOutputText(inputText.toUpperCase())
+      setIsProcessing(false)
     }, 500)
-  }, [])
+  }, [inputText])
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setState(s => ({ ...s, inputText: e.target.value }))
+    setInputText(e.target.value)
   }, [])
 
   return (
-    <ToolLayout
-      toolName={toolInfo.name}
-      toolDescription={toolInfo.description}
-      onClose={handleClose}
-      onMinimize={handleMinimize}
-      onFullscreen={handleFullscreen}
-      isFullscreen={isFullscreen}
-    >
-      <div className="p-6 space-y-6">
+    <ToolLayout {...toolLayoutProps}>
+      <div className="w-full p-6 space-y-6 mt-5">
         <Card>
           <CardHeader>
             <CardTitle>Text Input</CardTitle>
@@ -160,27 +124,169 @@ export default function TextTool() {
           <CardContent className="space-y-4">
             <Textarea
               placeholder="Enter your text here..."
-              value={state.inputText}
+              value={inputText}
               onChange={handleInputChange}
               className="min-h-[120px]"
             />
             <Button 
               onClick={handleProcess}
-              disabled={state.isProcessing || !state.inputText}
+              disabled={isProcessing || !inputText}
             >
-              {state.isProcessing ? 'Processing...' : 'Convert to Uppercase'}
+              {isProcessing ? 'Processing...' : 'Convert to Uppercase'}
             </Button>
           </CardContent>
         </Card>
 
-        {state.outputText && (
+        {outputText && (
           <Card>
             <CardHeader>
               <CardTitle>Output</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea
-                value={state.outputText}
+                value={outputText}
+                readOnly
+                className="min-h-[120px] bg-muted"
+              />
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </ToolLayout>
+  )
+}
+```
+
+## Complete Example 2: Complex Text Tool (保存状态)
+
+当工具有复杂输入或重要工作进度时：
+
+```typescript
+import { useState, useCallback, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { ToolLayout } from '@/components/layout/tool-layout'
+import { useToolControls } from '@/hooks/use-tool-controls'
+import { useIsToolMinimized, useToolState, useMinimizedToolsActions } from '@/stores/minimized-tools-store'
+import { toolInfo } from './toolInfo'
+
+interface TextToolState {
+  inputText: string
+  outputText: string
+  selectedMode: string
+}
+
+export default function ComplexTextTool() {
+  const [inputText, setInputText] = useState('')
+  const [outputText, setOutputText] = useState('')
+  const [selectedMode, setSelectedMode] = useState('uppercase')
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  // 工具状态（需要保存的部分）
+  const toolState: TextToolState = {
+    inputText,
+    outputText,
+    selectedMode,
+  }
+
+  // 使用标准化工具控制（保存状态）
+  const { toolLayoutProps } = useToolControls({
+    toolInfo,
+    state: toolState,  // 传递状态以保存
+  })
+
+  // 状态恢复逻辑
+  const isMinimized = useIsToolMinimized(toolInfo.id)
+  const savedState = useToolState(toolInfo.id)
+  const { restoreTool } = useMinimizedToolsActions()
+
+  useEffect(() => {
+    if (isMinimized && savedState) {
+      // 恢复保存的状态
+      const typedState = savedState as TextToolState
+      setInputText(typedState.inputText || '')
+      setOutputText(typedState.outputText || '')
+      setSelectedMode(typedState.selectedMode || 'uppercase')
+      restoreTool(toolInfo.id)
+    }
+  }, [isMinimized, savedState, restoreTool])
+
+  // Tool-specific functionality
+  const handleProcess = useCallback(() => {
+    setIsProcessing(true)
+    
+    setTimeout(() => {
+      let result = inputText
+      switch (selectedMode) {
+        case 'uppercase':
+          result = inputText.toUpperCase()
+          break
+        case 'lowercase':
+          result = inputText.toLowerCase()
+          break
+        case 'reverse':
+          result = inputText.split('').reverse().join('')
+          break
+      }
+      setOutputText(result)
+      setIsProcessing(false)
+    }, 500)
+  }, [inputText, selectedMode])
+
+  return (
+    <ToolLayout {...toolLayoutProps}>
+      <div className="w-full p-6 space-y-6 mt-5">
+        <Card>
+          <CardHeader>
+            <CardTitle>Complex Text Processor</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Button
+                variant={selectedMode === 'uppercase' ? 'default' : 'outline'}
+                onClick={() => setSelectedMode('uppercase')}
+              >
+                Uppercase
+              </Button>
+              <Button
+                variant={selectedMode === 'lowercase' ? 'default' : 'outline'}
+                onClick={() => setSelectedMode('lowercase')}
+              >
+                Lowercase
+              </Button>
+              <Button
+                variant={selectedMode === 'reverse' ? 'default' : 'outline'}
+                onClick={() => setSelectedMode('reverse')}
+              >
+                Reverse
+              </Button>
+            </div>
+            
+            <Textarea
+              placeholder="Enter your text here..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className="min-h-[120px]"
+            />
+            
+            <Button 
+              onClick={handleProcess}
+              disabled={isProcessing || !inputText}
+            >
+              {isProcessing ? 'Processing...' : `Convert to ${selectedMode}`}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {outputText && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Output</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={outputText}
                 readOnly
                 className="min-h-[120px] bg-muted"
               />

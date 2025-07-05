@@ -14,7 +14,7 @@ export function MinimizedToolsIndicator() {
   }
 
   return (
-    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+    <div className="fixed bottom-4 right-4 z-50">
       <MinimizedToolsDrawer>
         <Button
           variant="secondary"
