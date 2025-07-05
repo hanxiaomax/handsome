@@ -240,7 +240,6 @@ export default function UnixTimestampConverter() {
         });
       },
       disabled: !state.inputValue,
-      variant: "outline",
     },
     {
       id: "reset-to-current",
