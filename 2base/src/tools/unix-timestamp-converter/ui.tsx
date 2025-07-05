@@ -22,6 +22,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
   Clock,
   Copy,
   ArrowLeftRight,
@@ -717,34 +722,65 @@ export default function UnixTimestampConverter() {
                               : "border-muted bg-muted/20"
                           }`}
                         >
-                          {/* Format Header */}
+                          {/* Simplified Format Header */}
                           <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs">
-                                {format.category}
-                              </Badge>
-                              <span className="font-medium text-sm">
-                                {format.name}
-                              </span>
-                            </div>
+                            <HoverCard>
+                              <HoverCardTrigger asChild>
+                                <div className="flex items-center gap-2 cursor-help">
+                                  <span className="font-medium text-sm hover:text-primary transition-colors">
+                                    {format.name}
+                                  </span>
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {format.category}
+                                  </Badge>
+                                </div>
+                              </HoverCardTrigger>
+                              <HoverCardContent className="w-80" side="left">
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {format.category}
+                                    </Badge>
+                                    <span className="font-semibold text-sm">
+                                      {format.name}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">
+                                    {format.description}
+                                  </p>
+                                  {hasValue && (
+                                    <div className="pt-2 border-t">
+                                      <p className="text-xs text-muted-foreground mb-1">
+                                        Current Value:
+                                      </p>
+                                      <code className="text-xs font-mono break-all bg-muted/50 px-2 py-1 rounded block">
+                                        {value}
+                                      </code>
+                                    </div>
+                                  )}
+                                </div>
+                              </HoverCardContent>
+                            </HoverCard>
                             {hasValue && (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleCopy(value, format.name)}
-                                className="h-6 w-6 p-0"
+                                className="h-6 w-6 p-0 opacity-70 hover:opacity-100"
+                                title={`Copy ${format.name}`}
                               >
                                 <Copy className="h-3 w-3" />
                               </Button>
                             )}
                           </div>
 
-                          {/* Format Description */}
-                          <p className="text-xs text-muted-foreground mb-2">
-                            {format.description}
-                          </p>
-
-                          {/* Format Value */}
+                          {/* Simplified Format Value */}
                           <div>
                             {hasValue ? (
                               <code className="text-sm font-mono break-all bg-background px-2 py-1 rounded border block">
