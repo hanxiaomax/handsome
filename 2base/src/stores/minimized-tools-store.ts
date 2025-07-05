@@ -26,7 +26,12 @@ export const useMinimizedToolsStore = create<MinimizedToolsStore>()(
       minimizedTools: [],
 
       minimizeTool: (toolInfo: ToolInfo, state?: Record<string, unknown>) => {
+        console.log("Store minimizeTool called with:", toolInfo.id, state); // Debug log
         set((currentState) => {
+          console.log(
+            "Current minimized tools:",
+            currentState.minimizedTools.length
+          ); // Debug log
           const existingIndex = currentState.minimizedTools.findIndex(
             (tool) => tool.id === toolInfo.id
           );
@@ -40,13 +45,21 @@ export const useMinimizedToolsStore = create<MinimizedToolsStore>()(
 
           if (existingIndex >= 0) {
             // Update existing minimized tool
+            console.log(
+              "Updating existing minimized tool at index:",
+              existingIndex
+            ); // Debug log
             const updated = [...currentState.minimizedTools];
             updated[existingIndex] = newTool;
+            console.log("Updated minimized tools count:", updated.length); // Debug log
             return { minimizedTools: updated };
           } else {
             // Add new minimized tool
+            console.log("Adding new minimized tool"); // Debug log
+            const newList = [...currentState.minimizedTools, newTool];
+            console.log("New minimized tools count:", newList.length); // Debug log
             return {
-              minimizedTools: [...currentState.minimizedTools, newTool],
+              minimizedTools: newList,
             };
           }
         });

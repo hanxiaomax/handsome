@@ -4,6 +4,13 @@ export interface TimestampFormat {
   microseconds: number;
 }
 
+export interface DateFormatInfo {
+  id: string;
+  name: string;
+  description: string;
+  category: "timestamp" | "standard" | "technical";
+}
+
 export interface FormattedDate {
   iso8601: string;
   iso8601Extended: string;
@@ -41,11 +48,16 @@ export interface ConversionResult {
 export interface ConverterState {
   currentTimestamp: number;
   inputValue: string;
-  inputType: "timestamp" | "datetime" | "datepicker";
+  inputType: "timestamp" | "datetime";
   selectedFormat: "seconds" | "milliseconds" | "microseconds";
-  selectedDate: Date | undefined;
-  selectedTime: { hour: number; minute: number; second: number };
-  showCodeExamples: boolean;
+  datetimeFormat:
+    | "freeform"
+    | "iso8601"
+    | "rfc2822"
+    | "us"
+    | "locale"
+    | "custom";
+  customFormat: string;
   isProcessing: boolean;
   error: string | null;
 }
@@ -58,5 +70,11 @@ export interface CodeExample {
 }
 
 export type TimestampInputFormat = "seconds" | "milliseconds" | "microseconds";
-export type InputType = "timestamp" | "datetime" | "datepicker";
+export type InputType = "timestamp" | "datetime";
+export type DatetimeFormat =
+  | "freeform"
+  | "iso8601"
+  | "rfc2822"
+  | "us"
+  | "locale";
 export type OutputFormat = "iso8601" | "rfc2822" | "locale" | "custom";

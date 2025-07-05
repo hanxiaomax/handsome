@@ -5,7 +5,9 @@ import type {
   ConversionResult,
   CodeExample,
   TimestampInputFormat,
+  DateFormatInfo,
 } from "../types";
+import { format, parse, isValid } from "date-fns";
 
 export class UnixTimestampEngine {
   private timezones: TimezoneInfo[] = [
@@ -59,6 +61,63 @@ export class UnixTimestampEngine {
     },
   ];
 
+  private dateFormats: DateFormatInfo[] = [
+    {
+      id: "seconds",
+      name: "Unix Timestamp (Seconds)",
+      description: "Number of seconds since January 1, 1970 UTC",
+      category: "timestamp",
+    },
+    {
+      id: "milliseconds",
+      name: "Unix Timestamp (Milliseconds)",
+      description: "Number of milliseconds since January 1, 1970 UTC",
+      category: "timestamp",
+    },
+    {
+      id: "microseconds",
+      name: "Unix Timestamp (Microseconds)",
+      description: "Number of microseconds since January 1, 1970 UTC",
+      category: "timestamp",
+    },
+    {
+      id: "iso8601",
+      name: "ISO 8601",
+      description: "International standard date and time representation",
+      category: "standard",
+    },
+    {
+      id: "rfc2822",
+      name: "RFC 2822",
+      description: "Internet Message Format date standard",
+      category: "technical",
+    },
+    {
+      id: "rfc3339",
+      name: "RFC 3339",
+      description: "Date and time format for Internet protocols",
+      category: "technical",
+    },
+    {
+      id: "usFormat",
+      name: "US Format",
+      description: "Common American date format with 12-hour time",
+      category: "standard",
+    },
+    {
+      id: "iso8601Extended",
+      name: "ISO 8601 Extended",
+      description: "ISO 8601 with space separator and timezone",
+      category: "standard",
+    },
+    {
+      id: "locale",
+      name: "Local Format",
+      description: "Format based on user's locale settings",
+      category: "standard",
+    },
+  ];
+
   /**
    * Get current Unix timestamp in all formats
    */
@@ -69,6 +128,13 @@ export class UnixTimestampEngine {
       milliseconds: now,
       microseconds: now * 1000,
     };
+  }
+
+  /**
+   * Get date format information
+   */
+  getDateFormats(): DateFormatInfo[] {
+    return this.dateFormats;
   }
 
   /**
@@ -298,22 +364,22 @@ export class UnixTimestampEngine {
   }
 
   /**
-   * Convert Date with time to Unix timestamp
+   * Convert from date picker to timestamp
    */
   convertDatePickerToTimestamp(
-    date: Date,
-    time: { hour: number; minute: number; second: number }
+    date: string,
+    time: string
   ): ConversionResult | null {
     try {
-      // Create new date with the selected time
-      const combinedDate = new Date(date);
-      combinedDate.setHours(time.hour, time.minute, time.second, 0);
+      // Combine date and time
+      const dateTimeString = `${date}T${time}`;
+      const dateObj = new Date(dateTimeString);
 
-      if (isNaN(combinedDate.getTime())) {
+      if (isNaN(dateObj.getTime())) {
         return null;
       }
 
-      const timestampMs = combinedDate.getTime();
+      const timestampMs = dateObj.getTime();
 
       // Generate all timestamp formats
       const timestamp: TimestampFormat = {
@@ -323,26 +389,19 @@ export class UnixTimestampEngine {
       };
 
       // Generate enhanced formatted dates
-      const formatted: FormattedDate =
-        this.generateFormattedDates(combinedDate);
+      const formatted: FormattedDate = this.generateFormattedDates(dateObj);
 
       // Generate timezone-specific times
       const timezones = this.timezones.slice(0, 6).map((tz) => ({
         timezone: tz,
-        formatted: this.formatDateInTimezone(combinedDate, tz.id),
+        formatted: this.formatDateInTimezone(dateObj, tz.id),
       }));
 
       // Generate relative time
       const relative = this.formatRelativeTime(timestamp.seconds);
 
-      const inputString = `${combinedDate.toLocaleDateString()} ${String(
-        time.hour
-      ).padStart(2, "0")}:${String(time.minute).padStart(2, "0")}:${String(
-        time.second
-      ).padStart(2, "0")}`;
-
       return {
-        input: inputString,
+        input: dateTimeString,
         timestamp,
         formatted,
         timezones,
@@ -529,4 +588,109 @@ datetime.datetime.fromisoformat("${date
       },
     ];
   }
+}
+
+export const DATETIME_FORMATS = {
+  freeform: {
+    label: "Free-form Input",
+    description: "Natural language date/time input",
+    placeholder: "2024-01-01 12:00:00 or January 1, 2024",
+    parser: (input: string) => {
+      const date = new Date(input);
+      return isValid(date) ? date : null;
+    },
+    formatter: (date: Date) => date.toISOString(),
+  },
+  iso8601: {
+    label: "ISO 8601",
+    description: "International standard format",
+    placeholder: "2024-01-01T12:00:00.000Z",
+    parser: (input: string) => {
+      const date = new Date(input);
+      return isValid(date) ? date : null;
+    },
+    formatter: (date: Date) => date.toISOString(),
+  },
+  rfc2822: {
+    label: "RFC 2822",
+    description: "Internet message format",
+    placeholder: "Mon, 01 Jan 2024 12:00:00 +0000",
+    parser: (input: string) => {
+      const date = new Date(input);
+      return isValid(date) ? date : null;
+    },
+    formatter: (date: Date) => date.toUTCString(),
+  },
+  us: {
+    label: "US Format",
+    description: "Month/Day/Year format",
+    placeholder: "01/01/2024 12:00:00",
+    parser: (input: string) => {
+      const date = new Date(input);
+      return isValid(date) ? date : null;
+    },
+    formatter: (date: Date) => date.toLocaleString("en-US"),
+  },
+  locale: {
+    label: "Local Format",
+    description: "Browser locale format",
+    placeholder: "1/1/2024, 12:00:00 PM",
+    parser: (input: string) => {
+      const date = new Date(input);
+      return isValid(date) ? date : null;
+    },
+    formatter: (date: Date) => date.toLocaleString(),
+  },
+  custom: {
+    label: "Custom Format",
+    description: "User-defined format string",
+    placeholder: "yyyy-MM-dd HH:mm:ss",
+    parser: (input: string, customFormat?: string) => {
+      if (!customFormat) return null;
+      try {
+        const date = parse(input, customFormat, new Date());
+        return isValid(date) ? date : null;
+      } catch {
+        return null;
+      }
+    },
+    formatter: (date: Date, customFormat?: string) => {
+      if (!customFormat) return date.toISOString();
+      try {
+        return format(date, customFormat);
+      } catch {
+        return date.toISOString();
+      }
+    },
+  },
+};
+
+export function parseDateTime(
+  input: string,
+  formatType: keyof typeof DATETIME_FORMATS,
+  customFormat?: string
+): Date | null {
+  const formatConfig = DATETIME_FORMATS[formatType];
+  if (!formatConfig) return null;
+
+  if (formatType === "custom") {
+    return formatConfig.parser(input, customFormat);
+  }
+
+  return formatConfig.parser(input);
+}
+
+export function formatDateTime(
+  date: Date,
+  formatType: keyof typeof DATETIME_FORMATS,
+  customFormat?: string
+): string {
+  const formatConfig = DATETIME_FORMATS[formatType];
+  if (!formatConfig) return date.toISOString();
+
+  if (formatType === "custom") {
+    return formatConfig.formatter(date, customFormat);
+  }
+
+  return formatConfig.formatter(date);
 }
