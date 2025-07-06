@@ -58,6 +58,7 @@ export interface ConverterState {
     | "locale"
     | "custom";
   customFormat: string;
+  selectedTimezone: string;
   isProcessing: boolean;
   error: string | null;
 }

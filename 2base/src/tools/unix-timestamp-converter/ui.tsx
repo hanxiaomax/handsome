@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+
 import { ToolLayout } from "@/components/layout/tool-layout";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -22,16 +22,19 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Clock,
   Copy,
-  ArrowLeftRight,
-  CalendarIcon,
   Zap,
+  CalendarIcon,
+  CornerRightDown,
+  ArrowLeftRight,
   Info,
   Download,
   FileX,
@@ -54,21 +57,45 @@ import type { CustomToolButton } from "@/components/layout/tool-layout";
 const DateTimePicker = ({
   date,
   onSelect,
+  onDateTimeChange,
 }: {
   date: Date | undefined;
   onSelect: (date: Date | undefined) => void;
+  onDateTimeChange?: (dateTimeString: string) => void;
 }) => {
   const [time, setTime] = useState(
     date ? format(date, "HH:mm:ss") : "12:00:00"
+  );
+
+  // Update time when date changes from outside
+  useEffect(() => {
+    if (date) {
+      const newTime = format(date, "HH:mm:ss");
+      setTime(newTime);
+    }
+  }, [date]);
+
+  const updateDateTime = useCallback(
+    (newDate: Date) => {
+      onSelect(newDate);
+      // Also update the input value immediately
+      if (onDateTimeChange) {
+        onDateTimeChange(format(newDate, "yyyy-MM-dd HH:mm:ss"));
+      }
+    },
+    [onSelect, onDateTimeChange]
   );
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       const [hours, minutes, seconds] = time.split(":").map(Number);
       selectedDate.setHours(hours, minutes, seconds, 0);
-      onSelect(selectedDate);
+      updateDateTime(selectedDate);
     } else {
       onSelect(undefined);
+      if (onDateTimeChange) {
+        onDateTimeChange("");
+      }
     }
   };
 
@@ -78,41 +105,48 @@ const DateTimePicker = ({
       const [hours, minutes, seconds] = newTime.split(":").map(Number);
       const newDate = new Date(date);
       newDate.setHours(hours, minutes, seconds, 0);
-      onSelect(newDate);
+      updateDateTime(newDate);
     }
   };
 
   return (
-    <div className="flex gap-2">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "w-[240px] justify-start text-left font-normal",
-              !date && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "PPP") : <span>Pick a date</span>}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={handleDateSelect}
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
-      <Input
-        type="time"
-        step="1"
-        value={time}
-        onChange={(e) => handleTimeChange(e.target.value)}
-        className="w-32"
-      />
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-[200px] justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date ? format(date, "PPP") : <span>Pick a date</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={handleDateSelect}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+        <Input
+          type="time"
+          step="1"
+          value={time}
+          onChange={(e) => handleTimeChange(e.target.value)}
+          className="w-32"
+        />
+      </div>
+      {date && (
+        <div className="text-xs text-muted-foreground">
+          Selected: {format(date, "yyyy-MM-dd HH:mm:ss")}
+        </div>
+      )}
     </div>
   );
 };
@@ -131,7 +165,8 @@ export default function UnixTimestampConverter() {
     inputType: "timestamp",
     selectedFormat: "seconds",
     datetimeFormat: "freeform",
-    customFormat: "yyyy-MM-dd HH:mm:ss",
+    customFormat: "YYYY-MM-DD HH:mm:ss",
+    selectedTimezone: "UTC",
     isProcessing: false,
     error: null,
   });
@@ -162,9 +197,7 @@ export default function UnixTimestampConverter() {
           <div className="text-xs text-muted-foreground">
             Current timestamp: {state.currentTimestamp}
           </div>
-          <div className="text-xs text-muted-foreground">
-            Input type: {state.inputType}
-          </div>
+
           <div className="text-xs text-muted-foreground">
             Selected format: {state.selectedFormat}
           </div>
@@ -235,6 +268,7 @@ export default function UnixTimestampConverter() {
           selectedFormat: "seconds",
           datetimeFormat: "freeform",
           customFormat: "yyyy-MM-dd HH:mm:ss",
+          selectedTimezone: "UTC",
           isProcessing: false,
           error: null,
         });
@@ -281,69 +315,64 @@ export default function UnixTimestampConverter() {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-conversion with debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (state.inputValue.trim()) {
-        try {
-          let timestamp: number;
+  // Manual conversion function
+  const handleConvert = useCallback(() => {
+    if (!state.inputValue.trim()) {
+      setState((s) => ({ ...s, error: "Please enter a value to convert" }));
+      return;
+    }
 
-          if (state.inputType === "timestamp") {
-            const value = parseFloat(state.inputValue);
-            if (isNaN(value)) {
-              setState((s) => ({ ...s, error: "Invalid timestamp format" }));
-              return;
-            }
+    try {
+      let timestamp: number;
 
-            switch (state.selectedFormat) {
-              case "seconds":
-                timestamp = value;
-                break;
-              case "milliseconds":
-                timestamp = value / 1000;
-                break;
-              case "microseconds":
-                timestamp = value / 1000000;
-                break;
-              default:
-                timestamp = value;
-            }
-          } else {
-            // Parse datetime string
-            const customFormat =
-              state.datetimeFormat === "custom"
-                ? state.customFormat
-                : undefined;
-            const date = parseDateTime(
-              state.inputValue,
-              state.datetimeFormat,
-              customFormat
-            );
+      if (state.inputType === "timestamp") {
+        const value = parseFloat(state.inputValue);
+        if (isNaN(value)) {
+          setState((s) => ({ ...s, error: "Invalid timestamp format" }));
+          return;
+        }
 
-            if (!date) {
-              setState((s) => ({ ...s, error: "Invalid datetime format" }));
-              return;
-            }
-
-            timestamp = Math.floor(date.getTime() / 1000);
-          }
-
-          const conversionResult = engine.convertSingleTimestamp(
-            timestamp.toString(),
-            state.selectedFormat
-          );
-          setResult(conversionResult);
-          setState((s) => ({ ...s, error: null }));
-        } catch {
-          setState((s) => ({ ...s, error: "Conversion failed" }));
+        switch (state.selectedFormat) {
+          case "seconds":
+            timestamp = value;
+            break;
+          case "milliseconds":
+            timestamp = value / 1000;
+            break;
+          case "microseconds":
+            timestamp = value / 1000000;
+            break;
+          default:
+            timestamp = value;
         }
       } else {
-        setResult(null);
-        setState((s) => ({ ...s, error: null }));
-      }
-    }, 300);
+        // Parse datetime string
+        const customFormat =
+          state.datetimeFormat === "custom" ? state.customFormat : undefined;
+        const date = parseDateTime(
+          state.inputValue,
+          state.datetimeFormat,
+          customFormat
+        );
 
-    return () => clearTimeout(timer);
+        if (!date) {
+          setState((s) => ({ ...s, error: "Invalid datetime format" }));
+          return;
+        }
+
+        timestamp = Math.floor(date.getTime() / 1000);
+      }
+
+      const conversionResult = engine.convertSingleTimestamp(
+        timestamp.toString(),
+        state.selectedFormat
+      );
+      setResult(conversionResult);
+      setState((s) => ({ ...s, error: null }));
+      toast.success("Conversion completed successfully");
+    } catch {
+      setState((s) => ({ ...s, error: "Conversion failed" }));
+    }
   }, [
     state.inputValue,
     state.inputType,
@@ -371,17 +400,44 @@ export default function UnixTimestampConverter() {
     toast.success("Current timestamp set as input");
   }, []);
 
-  const handleSwap = useCallback(() => {
-    if (result) {
-      setState((s) => ({
-        ...s,
-        inputValue: result.formatted.iso8601,
-        inputType: "datetime",
-        datetimeFormat: "freeform",
-      }));
-      toast.success("Input and output swapped");
+  const handleSwap = useCallback((value: string, formatName: string) => {
+    // Determine input type based on format
+    let newInputType: "timestamp" | "datetime" = "datetime";
+    let newFormat: "seconds" | "milliseconds" | "microseconds" = "seconds";
+
+    if (formatName.includes("Seconds") || formatName === "Unix Seconds") {
+      newInputType = "timestamp";
+      newFormat = "seconds";
+    } else if (
+      formatName.includes("Milliseconds") ||
+      formatName === "Unix Milliseconds"
+    ) {
+      newInputType = "timestamp";
+      newFormat = "milliseconds";
+    } else if (
+      formatName.includes("Microseconds") ||
+      formatName === "Unix Microseconds"
+    ) {
+      newInputType = "timestamp";
+      newFormat = "microseconds";
     }
-  }, [result]);
+
+    setState((s) => ({
+      ...s,
+      inputValue: value,
+      inputType: newInputType,
+      selectedFormat: newFormat,
+      datetimeFormat: "freeform",
+    }));
+
+    // Clear current result and date selection
+    setResult(null);
+    setSelectedDate(undefined);
+
+    toast.success(`${formatName} set as input`, {
+      description: "Ready to convert to other formats",
+    });
+  }, []);
 
   const handleDatetimeFormatChange = useCallback(
     (newFormat: keyof typeof DATETIME_FORMATS) => {
@@ -414,9 +470,27 @@ export default function UnixTimestampConverter() {
       case "iso8601Extended":
         return result.formatted.iso8601Extended;
       case "usFormat":
-        return result.formatted.usFormat;
+        // Re-format with selected timezone
+        return new Date(result.timestamp.seconds * 1000).toLocaleString(
+          "en-US",
+          {
+            timeZone: state.selectedTimezone,
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          }
+        );
       case "locale":
-        return result.formatted.locale;
+        // Re-format with selected timezone
+        return new Date(result.timestamp.seconds * 1000).toLocaleString(
+          undefined,
+          {
+            timeZone: state.selectedTimezone,
+          }
+        );
       case "rfc2822":
         return result.formatted.rfc2822;
       case "rfc3339":
@@ -443,80 +517,65 @@ export default function UnixTimestampConverter() {
         className="w-full max-w-7xl mx-auto p-4 h-[calc(100vh-120px)]"
       >
         {/* Main Content - Left-Right Layout with Fixed Heights */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-          {/* Left Side - Input Controls with Current Time */}
-          <div className="space-y-4 overflow-hidden">
-            {/* Current Time Display - Top of Left Panel */}
-            <Card
-              id="current-time-section"
-              className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20"
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        Current Time
-                      </p>
-                      <p className="text-lg font-mono font-semibold text-primary">
-                        {state.currentTimestamp.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
-                        {new Date().toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handleCopy(
-                            state.currentTimestamp.toString(),
-                            "Current timestamp"
-                          )
-                        }
-                        className="h-8 w-8 p-0"
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleQuickConvert}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Zap className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+          {/* Left Side - Input Controls (1 column) */}
+          <div className="lg:col-span-1 space-y-4 overflow-hidden">
             {/* Input Controls */}
             <Card id="input-section" className="flex-1">
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Input & Controls</CardTitle>
-                  {result && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSwap}
-                      className="flex items-center gap-2"
-                    >
-                      <ArrowLeftRight className="h-4 w-4" />
-                      Swap
-                    </Button>
-                  )}
-                </div>
+                <CardTitle className="text-lg">Input & Controls</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Current Time Display - Top of Controls */}
+                <div
+                  id="current-time-section"
+                  className="p-3 rounded-lg border bg-muted/20"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Current Time
+                        </p>
+                        <p className="text-sm font-mono font-semibold text-primary">
+                          {state.currentTimestamp.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <p className="text-xs font-medium">
+                          {new Date().toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleCopy(
+                              state.currentTimestamp.toString(),
+                              "Current timestamp"
+                            )
+                          }
+                          className="h-6 w-6 p-0"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleQuickConvert}
+                          className="h-6 w-6 p-0"
+                        >
+                          <CornerRightDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Input Type Selection */}
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -654,6 +713,12 @@ export default function UnixTimestampConverter() {
                             <DateTimePicker
                               date={selectedDate}
                               onSelect={setSelectedDate}
+                              onDateTimeChange={(dateTimeString) =>
+                                setState((s) => ({
+                                  ...s,
+                                  inputValue: dateTimeString,
+                                }))
+                              }
                             />
                           )}
 
@@ -693,124 +758,181 @@ export default function UnixTimestampConverter() {
                   {state.error && (
                     <p className="text-sm text-destructive">{state.error}</p>
                   )}
+
+                  {/* Convert Button */}
+                  <Button
+                    onClick={handleConvert}
+                    disabled={!state.inputValue.trim()}
+                    className="w-full flex items-center justify-center gap-2"
+                    size="lg"
+                  >
+                    <Zap className="h-4 w-4" />
+                    Convert
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Right Side - Results Display with Independent Scrolling */}
-          <div className="flex flex-col h-full min-h-0">
-            <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              <CardHeader className="pb-3 flex-shrink-0 border-b">
+          {/* Right Side - Results Display with Independent Scrolling (2 columns) */}
+          <Card className="lg:col-span-2 flex flex-col h-full min-h-0">
+            <CardHeader className="pb-3 flex-shrink-0 space-y-3">
+              <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">
                   {result ? "Conversion Results" : "Enter a value to convert"}
                 </CardTitle>
-              </CardHeader>
-              <div className="flex-1 min-h-0 overflow-y-auto p-6">
-                {result ? (
-                  <div className="space-y-3">
-                    {dateFormats.map((format) => {
-                      const value = getFormatValue(format.id);
-                      const hasValue = !!value;
+              </div>
 
-                      return (
-                        <div
-                          key={format.id}
-                          className={`p-3 rounded-lg border transition-all duration-200 ${
-                            hasValue
-                              ? "border-primary/20 bg-primary/5"
-                              : "border-muted bg-muted/20"
-                          }`}
-                        >
-                          {/* Simplified Format Header */}
-                          <div className="flex items-center justify-between mb-2">
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <div className="flex items-center gap-2 cursor-help">
-                                  <span className="font-medium text-sm hover:text-primary transition-colors">
+              {/* Timezone Selection */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Display Timezone</Label>
+                <Select
+                  value={state.selectedTimezone}
+                  onValueChange={(value: string) =>
+                    setState((s) => ({ ...s, selectedTimezone: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {engine.getTimezones().map((timezone) => (
+                      <SelectItem key={timezone.id} value={timezone.id}>
+                        {timezone.name} ({timezone.offset})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 overflow-y-auto pr-2">
+              {result ? (
+                <div className="space-y-2">
+                  {dateFormats.map((format) => {
+                    const value = getFormatValue(format.id);
+                    const hasValue = !!value;
+
+                    return (
+                      <div
+                        key={format.id}
+                        className="flex items-center justify-between py-2 px-3 rounded border hover:bg-muted/20 transition-colors"
+                      >
+                        {/* Left: Format name and value */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-xs text-muted-foreground">
+                              {format.name}
+                            </span>
+                            {/* Show timezone indicator for time-related formats */}
+                            {(format.id === "locale" ||
+                              format.id === "usFormat") && (
+                              <span className="text-xs text-primary">
+                                ({state.selectedTimezone})
+                              </span>
+                            )}
+                          </div>
+                          {hasValue ? (
+                            <code className="text-sm font-mono break-all text-foreground block">
+                              {value}
+                            </code>
+                          ) : (
+                            <span className="text-sm text-muted-foreground italic">
+                              No conversion yet
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Right: Action buttons */}
+                        {hasValue && (
+                          <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                            {/* Info Dialog */}
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 opacity-60 hover:opacity-100"
+                                  title="Format Info"
+                                >
+                                  <Info className="h-3 w-3" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle className="text-lg">
                                     {format.name}
-                                  </span>
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    {format.category}
-                                  </Badge>
-                                </div>
-                              </HoverCardTrigger>
-                              <HoverCardContent className="w-80" side="left">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      {format.category}
-                                    </Badge>
-                                    <span className="font-semibold text-sm">
-                                      {format.name}
-                                    </span>
+                                  </DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 pt-4">
+                                  <div>
+                                    <h4 className="font-medium text-sm mb-1 text-muted-foreground">
+                                      Category
+                                    </h4>
+                                    <p className="text-sm">{format.category}</p>
                                   </div>
-                                  <p className="text-sm text-muted-foreground">
-                                    {format.description}
-                                  </p>
+                                  <div>
+                                    <h4 className="font-medium text-sm mb-1 text-muted-foreground">
+                                      Description
+                                    </h4>
+                                    <p className="text-sm text-foreground leading-relaxed">
+                                      {format.description}
+                                    </p>
+                                  </div>
                                   {hasValue && (
                                     <div className="pt-2 border-t">
-                                      <p className="text-xs text-muted-foreground mb-1">
-                                        Current Value:
-                                      </p>
-                                      <code className="text-xs font-mono break-all bg-muted/50 px-2 py-1 rounded block">
+                                      <h4 className="font-medium text-sm mb-2 text-muted-foreground">
+                                        Current Value
+                                      </h4>
+                                      <code className="text-sm font-mono break-all px-3 py-2 border rounded bg-muted/20 block">
                                         {value}
                                       </code>
                                     </div>
                                   )}
                                 </div>
-                              </HoverCardContent>
-                            </HoverCard>
-                            {hasValue && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleCopy(value, format.name)}
-                                className="h-6 w-6 p-0 opacity-70 hover:opacity-100"
-                                title={`Copy ${format.name}`}
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </div>
+                              </DialogContent>
+                            </Dialog>
 
-                          {/* Simplified Format Value */}
-                          <div>
-                            {hasValue ? (
-                              <code className="text-sm font-mono break-all bg-background px-2 py-1 rounded border block">
-                                {value}
-                              </code>
-                            ) : (
-                              <span className="text-sm text-muted-foreground italic">
-                                No conversion yet
-                              </span>
-                            )}
+                            {/* Swap Button */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSwap(value, format.name)}
+                              className="h-6 w-6 p-0 opacity-60 hover:opacity-100"
+                              title={`Use ${format.name} as input`}
+                            >
+                              <ArrowLeftRight className="h-3 w-3" />
+                            </Button>
+
+                            {/* Copy Button */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopy(value, format.name)}
+                              className="h-6 w-6 p-0 opacity-60 hover:opacity-100"
+                              title={`Copy ${format.name}`}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
                           </div>
-                        </div>
-                      );
-                    })}
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <div className="text-muted-foreground space-y-2 text-center">
+                    <Clock className="h-12 w-12 mx-auto opacity-50" />
+                    <p className="text-lg font-medium">Ready to convert</p>
+                    <p className="text-sm">
+                      Input a Unix timestamp or date/time string to see
+                      conversion results
+                    </p>
                   </div>
-                ) : (
-                  <div className="h-full flex items-center justify-center">
-                    <div className="text-muted-foreground space-y-2 text-center">
-                      <Clock className="h-12 w-12 mx-auto opacity-50" />
-                      <p className="text-lg font-medium">Ready to convert</p>
-                      <p className="text-sm">
-                        Input a Unix timestamp or date/time string to see
-                        conversion results
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </ToolLayout>
