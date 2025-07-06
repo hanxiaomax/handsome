@@ -10,54 +10,54 @@ import type {
 import { format, parse, isValid } from "date-fns";
 
 export class UnixTimestampEngine {
-  private timezones: TimezoneInfo[] = [
+  private timezoneConfigs = [
     {
       id: "UTC",
       name: "Coordinated Universal Time",
       abbreviation: "UTC",
-      offset: "+00:00",
+      ianaTz: "UTC",
     },
     {
       id: "EST",
       name: "Eastern Standard Time",
       abbreviation: "EST",
-      offset: "-05:00",
+      ianaTz: "America/New_York",
     },
     {
       id: "PST",
       name: "Pacific Standard Time",
       abbreviation: "PST",
-      offset: "-08:00",
+      ianaTz: "America/Los_Angeles",
     },
     {
       id: "GMT",
       name: "Greenwich Mean Time",
       abbreviation: "GMT",
-      offset: "+00:00",
+      ianaTz: "Europe/London",
     },
     {
       id: "JST",
       name: "Japan Standard Time",
       abbreviation: "JST",
-      offset: "+09:00",
+      ianaTz: "Asia/Tokyo",
     },
     {
       id: "CET",
       name: "Central European Time",
       abbreviation: "CET",
-      offset: "+01:00",
+      ianaTz: "Europe/Paris",
     },
     {
       id: "IST",
       name: "India Standard Time",
       abbreviation: "IST",
-      offset: "+05:30",
+      ianaTz: "Asia/Kolkata",
     },
     {
       id: "CST",
       name: "China Standard Time",
       abbreviation: "CST",
-      offset: "+08:00",
+      ianaTz: "Asia/Shanghai",
     },
   ];
 
@@ -138,10 +138,70 @@ export class UnixTimestampEngine {
   }
 
   /**
-   * Get available timezones
+   * Get timezone offset for a given timezone at a specific date
+   */
+  private getTimezoneOffset(ianaTz: string, date: Date = new Date()): string {
+    try {
+      // Use a more direct method to calculate timezone offset
+      // Create two dates representing the same moment in UTC and target timezone
+
+      // Method 1: Use Intl.DateTimeFormat to get the actual time representation
+      const utcFormatter = new Intl.DateTimeFormat("sv-SE", {
+        timeZone: "UTC",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+
+      const tzFormatter = new Intl.DateTimeFormat("sv-SE", {
+        timeZone: ianaTz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+
+      // Get formatted strings (sv-SE format: YYYY-MM-DD HH:mm:ss)
+      const utcStr = utcFormatter.format(date);
+      const tzStr = tzFormatter.format(date);
+
+      // Parse back to dates (these will be interpreted in local timezone, but the difference is what matters)
+      const utcParsed = new Date(utcStr.replace(" ", "T") + "Z");
+      const tzParsed = new Date(tzStr.replace(" ", "T") + "Z");
+
+      // Calculate offset in minutes
+      const offsetMs = tzParsed.getTime() - utcParsed.getTime();
+      const offsetMinutes = Math.round(offsetMs / (1000 * 60));
+
+      // Convert to +/-HH:mm format
+      const sign = offsetMinutes >= 0 ? "+" : "-";
+      const absMinutes = Math.abs(offsetMinutes);
+      const hours = Math.floor(absMinutes / 60);
+      const minutes = absMinutes % 60;
+
+      return `${sign}${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}`;
+    } catch {
+      return "+00:00";
+    }
+  }
+
+  /**
+   * Get available timezones with dynamic offsets
    */
   getTimezones(): TimezoneInfo[] {
-    return this.timezones;
+    return this.timezoneConfigs.map((config) => ({
+      id: config.id,
+      name: config.name,
+      abbreviation: config.abbreviation,
+      offset: this.getTimezoneOffset(config.ianaTz),
+    }));
   }
 
   /**
@@ -181,28 +241,31 @@ export class UnixTimestampEngine {
       rfc2822Alternative,
       rfc3339: date.toISOString(),
       usFormat,
-      locale: date.toLocaleString(),
-      localeDate: date.toLocaleDateString(),
-      localeTime: date.toLocaleTimeString(),
+      locale: date.toLocaleString(undefined, {
+        hour12: false,
+        timeZone: "UTC",
+      }),
+      localeDate: date.toLocaleDateString(undefined, { timeZone: "UTC" }),
+      localeTime: date.toLocaleTimeString(undefined, {
+        hour12: false,
+        timeZone: "UTC",
+      }),
     };
   }
 
   /**
-   * Format date in US style: 05/29/2025 @ 3:28pm UTC
+   * Format date in US style: 05/29/2025 @ 15:28 UTC (24-hour format)
    */
   private formatUSStyle(date: Date): string {
     const month = String(date.getUTCMonth() + 1).padStart(2, "0");
     const day = String(date.getUTCDate()).padStart(2, "0");
     const year = date.getUTCFullYear();
 
-    let hour = date.getUTCHours();
+    const hour = String(date.getUTCHours()).padStart(2, "0");
     const minute = String(date.getUTCMinutes()).padStart(2, "0");
-    const ampm = hour >= 12 ? "pm" : "am";
+    const second = String(date.getUTCSeconds()).padStart(2, "0");
 
-    hour = hour % 12;
-    if (hour === 0) hour = 12;
-
-    return `${month}/${day}/${year} @ ${hour}:${minute}${ampm} UTC`;
+    return `${month}/${day}/${year} @ ${hour}:${minute}:${second} UTC`;
   }
 
   /**
@@ -295,10 +358,12 @@ export class UnixTimestampEngine {
     const formatted: FormattedDate = this.generateFormattedDates(date);
 
     // Generate timezone-specific times
-    const timezones = this.timezones.slice(0, 6).map((tz) => ({
-      timezone: tz,
-      formatted: this.formatDateInTimezone(date, tz.id),
-    }));
+    const timezones = this.getTimezones()
+      .slice(0, 6)
+      .map((tz) => ({
+        timezone: tz,
+        formatted: this.formatDateInTimezone(date, tz.id),
+      }));
 
     // Generate relative time
     const relative = this.formatRelativeTime(timestamp.seconds);
@@ -346,10 +411,12 @@ export class UnixTimestampEngine {
     const formatted: FormattedDate = this.generateFormattedDates(date);
 
     // Generate timezone-specific times
-    const timezones = this.timezones.slice(0, 6).map((tz) => ({
-      timezone: tz,
-      formatted: this.formatDateInTimezone(date, tz.id),
-    }));
+    const timezones = this.getTimezones()
+      .slice(0, 6)
+      .map((tz) => ({
+        timezone: tz,
+        formatted: this.formatDateInTimezone(date, tz.id),
+      }));
 
     // Generate relative time
     const relative = this.formatRelativeTime(timestamp.seconds);
@@ -392,10 +459,12 @@ export class UnixTimestampEngine {
       const formatted: FormattedDate = this.generateFormattedDates(dateObj);
 
       // Generate timezone-specific times
-      const timezones = this.timezones.slice(0, 6).map((tz) => ({
-        timezone: tz,
-        formatted: this.formatDateInTimezone(dateObj, tz.id),
-      }));
+      const timezones = this.getTimezones()
+        .slice(0, 6)
+        .map((tz) => ({
+          timezone: tz,
+          formatted: this.formatDateInTimezone(dateObj, tz.id),
+        }));
 
       // Generate relative time
       const relative = this.formatRelativeTime(timestamp.seconds);
@@ -463,25 +532,12 @@ export class UnixTimestampEngine {
    */
   private formatDateInTimezone(date: Date, timezoneId: string): string {
     try {
+      // Find the IANA timezone for the given timezone ID
+      const tzConfig = this.timezoneConfigs.find((tz) => tz.id === timezoneId);
+      const ianaTz = tzConfig ? tzConfig.ianaTz : "UTC";
+
       const formatter = new Intl.DateTimeFormat("en-US", {
-        timeZone:
-          timezoneId === "UTC"
-            ? "UTC"
-            : timezoneId === "EST"
-            ? "America/New_York"
-            : timezoneId === "PST"
-            ? "America/Los_Angeles"
-            : timezoneId === "GMT"
-            ? "Europe/London"
-            : timezoneId === "JST"
-            ? "Asia/Tokyo"
-            : timezoneId === "CET"
-            ? "Europe/Paris"
-            : timezoneId === "IST"
-            ? "Asia/Kolkata"
-            : timezoneId === "CST"
-            ? "Asia/Shanghai"
-            : "UTC",
+        timeZone: ianaTz,
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
@@ -629,17 +685,25 @@ export const DATETIME_FORMATS = {
       const date = new Date(input);
       return isValid(date) ? date : null;
     },
-    formatter: (date: Date) => date.toLocaleString("en-US"),
+    formatter: (date: Date) =>
+      date.toLocaleString("en-US", {
+        hour12: false,
+        timeZone: "UTC",
+      }),
   },
   locale: {
     label: "Local Format",
     description: "Browser locale format",
-    placeholder: "1/1/2024, 12:00:00 PM",
+    placeholder: "1/1/2024, 12:00:00",
     parser: (input: string) => {
       const date = new Date(input);
       return isValid(date) ? date : null;
     },
-    formatter: (date: Date) => date.toLocaleString(),
+    formatter: (date: Date) =>
+      date.toLocaleString(undefined, {
+        hour12: false,
+        timeZone: "UTC",
+      }),
   },
   custom: {
     label: "Custom Format",

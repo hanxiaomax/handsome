@@ -404,22 +404,43 @@ export default function UnixTimestampConverter() {
     // Determine input type based on format
     let newInputType: "timestamp" | "datetime" = "datetime";
     let newFormat: "seconds" | "milliseconds" | "microseconds" = "seconds";
+    let newDatetimeFormat: keyof typeof DATETIME_FORMATS = "freeform";
 
-    if (formatName.includes("Seconds") || formatName === "Unix Seconds") {
+    // Check if it's a timestamp format
+    if (
+      formatName.includes("Seconds") ||
+      formatName === "Unix Timestamp (Seconds)"
+    ) {
       newInputType = "timestamp";
       newFormat = "seconds";
     } else if (
       formatName.includes("Milliseconds") ||
-      formatName === "Unix Milliseconds"
+      formatName === "Unix Timestamp (Milliseconds)"
     ) {
       newInputType = "timestamp";
       newFormat = "milliseconds";
     } else if (
       formatName.includes("Microseconds") ||
-      formatName === "Unix Microseconds"
+      formatName === "Unix Timestamp (Microseconds)"
     ) {
       newInputType = "timestamp";
       newFormat = "microseconds";
+    } else {
+      // It's a datetime format
+      newInputType = "datetime";
+
+      // Determine the appropriate datetime format
+      if (formatName === "ISO 8601") {
+        newDatetimeFormat = "iso8601";
+      } else if (formatName === "RFC 2822") {
+        newDatetimeFormat = "rfc2822";
+      } else if (formatName === "US Format") {
+        newDatetimeFormat = "us";
+      } else if (formatName === "Local Format") {
+        newDatetimeFormat = "locale";
+      } else {
+        newDatetimeFormat = "freeform";
+      }
     }
 
     setState((s) => ({
@@ -427,7 +448,7 @@ export default function UnixTimestampConverter() {
       inputValue: value,
       inputType: newInputType,
       selectedFormat: newFormat,
-      datetimeFormat: "freeform",
+      datetimeFormat: newDatetimeFormat,
     }));
 
     // Clear current result and date selection
@@ -458,6 +479,22 @@ export default function UnixTimestampConverter() {
   const getFormatValue = (formatId: string) => {
     if (!result) return "";
 
+    // Helper function to get IANA timezone ID from our simplified timezone ID
+    const getIanaTimezone = (timezoneId: string): string => {
+      // We need to map simplified timezone IDs to IANA timezone IDs
+      const timezoneMapping: Record<string, string> = {
+        UTC: "UTC",
+        EST: "America/New_York",
+        PST: "America/Los_Angeles",
+        GMT: "Europe/London",
+        JST: "Asia/Tokyo",
+        CET: "Europe/Paris",
+        IST: "Asia/Kolkata",
+        CST: "Asia/Shanghai",
+      };
+      return timezoneMapping[timezoneId] || "UTC";
+    };
+
     switch (formatId) {
       case "seconds":
         return result.timestamp.seconds.toString();
@@ -470,25 +507,33 @@ export default function UnixTimestampConverter() {
       case "iso8601Extended":
         return result.formatted.iso8601Extended;
       case "usFormat":
-        // Re-format with selected timezone
+        // Re-format with selected timezone using correct IANA timezone ID
         return new Date(result.timestamp.seconds * 1000).toLocaleString(
           "en-US",
           {
-            timeZone: state.selectedTimezone,
+            timeZone: getIanaTimezone(state.selectedTimezone),
             month: "2-digit",
             day: "2-digit",
             year: "numeric",
             hour: "2-digit",
             minute: "2-digit",
             second: "2-digit",
+            hour12: false,
           }
         );
       case "locale":
-        // Re-format with selected timezone
+        // Re-format with selected timezone using correct IANA timezone ID
         return new Date(result.timestamp.seconds * 1000).toLocaleString(
           undefined,
           {
-            timeZone: state.selectedTimezone,
+            timeZone: getIanaTimezone(state.selectedTimezone),
+            hour12: false,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
           }
         );
       case "rfc2822":
@@ -539,14 +584,32 @@ export default function UnixTimestampConverter() {
                           Current Time
                         </p>
                         <p className="text-sm font-mono font-semibold text-primary">
-                          {state.currentTimestamp.toLocaleString()}
+                          {new Date(
+                            state.currentTimestamp * 1000
+                          ).toLocaleString(undefined, {
+                            hour12: false,
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="text-right">
                         <p className="text-xs font-medium">
-                          {new Date().toLocaleString()}
+                          {new Date().toLocaleString(undefined, {
+                            hour12: false,
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })}
                         </p>
                       </div>
                       <div className="flex gap-1">
@@ -723,34 +786,54 @@ export default function UnixTimestampConverter() {
                           )}
 
                         {/* Text Input */}
-                        <Input
-                          value={state.inputValue}
-                          onChange={(e) =>
-                            setState((s) => ({
-                              ...s,
-                              inputValue: e.target.value,
-                            }))
-                          }
-                          placeholder={
-                            state.datetimeFormat === "custom"
-                              ? state.customFormat
-                              : currentFormatConfig.placeholder
-                          }
-                          className="font-mono"
-                          disabled={
-                            state.datetimeFormat !== "freeform" &&
-                            state.datetimeFormat !== "custom" &&
-                            !!selectedDate
-                          }
-                        />
-
-                        {state.datetimeFormat !== "freeform" &&
-                          state.datetimeFormat !== "custom" && (
-                            <p className="text-xs text-muted-foreground">
-                              Use the date picker above or edit the text
-                              directly
-                            </p>
-                          )}
+                        <div className="space-y-2">
+                          <Label className="text-xs font-medium">
+                            Input Value
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={state.inputValue}
+                              onChange={(e) =>
+                                setState((s) => ({
+                                  ...s,
+                                  inputValue: e.target.value,
+                                }))
+                              }
+                              placeholder={
+                                state.datetimeFormat === "custom"
+                                  ? state.customFormat
+                                  : currentFormatConfig.placeholder
+                              }
+                              className="font-mono flex-1"
+                            />
+                            {state.inputValue && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    state.inputValue
+                                  );
+                                  toast.success("Copied!", {
+                                    description:
+                                      "DateTime string copied to clipboard",
+                                  });
+                                }}
+                                className="h-8 w-8 p-0 flex-shrink-0"
+                                title="Copy DateTime String"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                          {state.datetimeFormat !== "freeform" &&
+                            state.datetimeFormat !== "custom" && (
+                              <p className="text-xs text-muted-foreground">
+                                Use the date picker above or edit the text
+                                directly
+                              </p>
+                            )}
+                        </div>
                       </div>
                     </div>
                   )}
